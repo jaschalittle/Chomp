@@ -1,0 +1,9 @@
+top:
+unconverted = getvalue(_PI, 1) 'in microseconds
+converted = getvalue(_PIC, 1)
+
+offset = 180 'ms, empirically derived
+' LIDAR PWM scaling 1 meter per ms
+print("\rDistance: ", (unconverted - offset) / 10, "cm ", "(", unconverted, ":", converted, ")")
+wait(250)
+goto top
