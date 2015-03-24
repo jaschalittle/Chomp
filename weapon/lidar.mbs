@@ -1,9 +1,11 @@
 top:
-unconverted = getvalue(_PI, 1) 'in microseconds
-converted = getvalue(_PIC, 1)
-
-offset = 180 'ms, empirically derived
+LIDAR_RATE = 100 'Hz
+OFFSET = 80 ' in counts, rough empirical value based on reading when you cover the lidar lens
+unconverted = getvalue(_PI, 1) 'in counts, out of 4096
 ' LIDAR PWM scaling 1 meter per ms
-print("\rDistance: ", (unconverted - offset) / 10, "cm ", "(", unconverted, ":", converted, ")")
-wait(250)
+' unconverted/4096 * (1000ms / LIDAR_RATE) = pulse width in ms, distance in m
+' microbasic has no floats so we're gonna leave this in cm
+distance = ((unconverted - OFFSET) * 100 * (1000 / LIDAR_RATE))/4096 
+print("\rDistance: ", distance, "cm ", "(", unconverted, ")")
+wait(100)
 goto top
