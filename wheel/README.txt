@@ -25,13 +25,13 @@ Setting "Capture Polarity" to "Inverted" (via the Roborun UI) on the wheels that
 ---------------------------------
 
 Wheel 1: Type A, Left Front
-Channel 2, Polarity Direct
+Channel 2, Polarity Inverted
 
 Wheel 2: Type B, Right Front
 Channel 6, Polarity Direct
 
 Wheel 3: Type A, Right Back
-Channel 6, Polarity Inverted
+Channel 6, Polarity Direct
 
 Wheel 4: Type B, Left Back
 Channel 2, Polarity Inverted

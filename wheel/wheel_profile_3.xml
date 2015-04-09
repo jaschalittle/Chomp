@@ -6,7 +6,7 @@
         <Nodes>
           <Node Text="Scripting">
             <Nodes>
-              <Node Text="Script Auto-Start" Value="1">
+              <Node Text="Script Auto-Start" Value="0">
                 <Nodes />
               </Node>
             </Nodes>
@@ -395,7 +395,7 @@
                   </Node>
                 </Nodes>
               </Node>
-              <Node Text="Capture Polarity" Value="1">
+              <Node Text="Capture Polarity" Value="0">
                 <Nodes />
               </Node>
               <Node Text="Input Deadband (%)" Value="5">
