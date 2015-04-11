@@ -374,7 +374,7 @@
       </Node>
       <Node Text="Pulse Inputs">
         <Nodes>
-          <Node Text="PIn1" Value="Stick">
+          <Node Text="PIn1" Value="">
             <Nodes>
               <Node Text="Capture Type" Value="1">
                 <Nodes />
@@ -387,10 +387,10 @@
                   <Node Text="Input Min" Value="920">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Center" Value="1373">
+                  <Node Text="Input Center" Value="1521">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Max" Value="1988">
+                  <Node Text="Input Max" Value="2118">
                     <Nodes />
                   </Node>
                 </Nodes>
@@ -479,7 +479,7 @@
               </Node>
             </Nodes>
           </Node>
-          <Node Text="PIn4" Value="Enable/Disable">
+          <Node Text="PIn4" Value="">
             <Nodes>
               <Node Text="Capture Type" Value="1">
                 <Nodes />
