@@ -624,7 +624,7 @@
               <Node Text="Over Voltage Limit (V)" Value="600">
                 <Nodes />
               </Node>
-              <Node Text="Under Voltage Limit (V)" Value="50">
+              <Node Text="Under Voltage Limit (V)" Value="420">
                 <Nodes />
               </Node>
             </Nodes>

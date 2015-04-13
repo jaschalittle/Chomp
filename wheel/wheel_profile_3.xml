@@ -173,7 +173,7 @@
           </Node>
           <Node Text="DIn5" Value="">
             <Nodes>
-              <Node Text="Active Level" Value="0">
+              <Node Text="Active Level" Value="1">
                 <Nodes />
               </Node>
               <Node Text="Action" Value="16">
@@ -624,7 +624,7 @@
               <Node Text="Over Voltage Limit (V)" Value="600">
                 <Nodes />
               </Node>
-              <Node Text="Under Voltage Limit (V)" Value="50">
+              <Node Text="Under Voltage Limit (V)" Value="420">
                 <Nodes />
               </Node>
             </Nodes>
