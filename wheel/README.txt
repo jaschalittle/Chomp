@@ -1,3 +1,7 @@
+********Firmware******
+MBL1660 controllers should be upgraded to version 1.4b
+
+
 ********Loading wheel configurations********
 
 Connect your computer to the controller via USB
@@ -11,29 +15,38 @@ Hit "Download to Device"
 
 ********Wheel Configuration Notes********
 
-Input from the right side of the stick goes to channel 2 on the receiver (so that should go to the left wheels)
-Input from the left side of the stick goes to channel 6 on the receiver (so that should go to the right wheels)
+The robot is using elevon mixing, which outputs on Ch1 and Ch2.   Ch1 control the port wheel modules, and Ch2
+controls the starboard side.  
+
+All wheel modules should rotate clockwise as viewed from the wheel side, with a positive (greater than 1.5ms pulse).
+Therefore, one side of the robot should be inverted, if we want to use the same sense on both RC channels. 
+
+Futaba setup:
+  Elevon mixing:
+    Ail: 50% (increase this for more aggressive turning rates)
+    Ele: 100%
+    Diff: 0%
+  Reverse Ch2
 
 Enable/Disable (controlled by "Switch B" on the Futaba) goes to channel 7 on the receiver
 
-L/R input is read by RC1 on the roboteq controller
+Driving input is read by RC1 on the roboteq controller
 Enable/Disable is read by RC4 on the roboteq controller
 
 Weird facts:
-Channel 2 and Channel 6 have different min/max/centers and thus need different configs
-Setting "Capture Polarity" to "Inverted" (via the Roborun UI) on the wheels that need to be inverted doesn't seem to have any effect, so instead wrote a mbs script that actually accomplishes that and set it to run on startup on configs 3, 4
+Setting "Capture Polarity" to "Inverted" (via the Roborun UI) on the wheels that need to be inverted doesn't
+seem to have any effect.  Setting one of the unused digital inputs to Active Low, and its action to: invert direction
+does however.
 ---------------------------------
 
-Wheel 1: Type A, Left Front
-Channel 2, Polarity Inverted
+Wheel 1: Type A, Port Front
+Channel 2, Polarity Inverted (Din5)
 
-Wheel 2: Type B, Right Front
+Wheel 2: Type B, Starboard Front
 Channel 6, Polarity Direct
 
-Wheel 3: Type A, Right Back
+Wheel 3: Type A, Starboard Back
 Channel 6, Polarity Direct
 
-Wheel 4: Type B, Left Back
-Channel 2, Polarity Inverted
-
-
+Wheel 4: Type B, Port Back
+Channel 2, Polarity Inverted (Din5)

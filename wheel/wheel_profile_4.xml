@@ -6,7 +6,7 @@
         <Nodes>
           <Node Text="Scripting">
             <Nodes>
-              <Node Text="Script Auto-Start" Value="1">
+              <Node Text="Script Auto-Start" Value="0">
                 <Nodes />
               </Node>
             </Nodes>
@@ -173,10 +173,10 @@
           </Node>
           <Node Text="DIn5" Value="">
             <Nodes>
-              <Node Text="Active Level" Value="0">
+              <Node Text="Active Level" Value="1">
                 <Nodes />
               </Node>
-              <Node Text="Action" Value="16">
+              <Node Text="Action" Value="22">
                 <Nodes />
               </Node>
             </Nodes>
@@ -374,7 +374,7 @@
       </Node>
       <Node Text="Pulse Inputs">
         <Nodes>
-          <Node Text="PIn1" Value="Stick">
+          <Node Text="PIn1" Value="">
             <Nodes>
               <Node Text="Capture Type" Value="1">
                 <Nodes />
@@ -384,18 +384,18 @@
               </Node>
               <Node Text="Range" Value="">
                 <Nodes>
-                  <Node Text="Input Min" Value="1112">
+                  <Node Text="Input Min" Value="923">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Center" Value="1528">
+                  <Node Text="Input Center" Value="1524">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Max" Value="2125">
+                  <Node Text="Input Max" Value="2124">
                     <Nodes />
                   </Node>
                 </Nodes>
               </Node>
-              <Node Text="Capture Polarity" Value="1">
+              <Node Text="Capture Polarity" Value="0">
                 <Nodes />
               </Node>
               <Node Text="Input Deadband (%)" Value="5">
@@ -479,7 +479,7 @@
               </Node>
             </Nodes>
           </Node>
-          <Node Text="PIn4" Value="Enable/Disable">
+          <Node Text="PIn4" Value="">
             <Nodes>
               <Node Text="Capture Type" Value="1">
                 <Nodes />
@@ -624,7 +624,7 @@
               <Node Text="Over Voltage Limit (V)" Value="600">
                 <Nodes />
               </Node>
-              <Node Text="Under Voltage Limit (V)" Value="50">
+              <Node Text="Under Voltage Limit (V)" Value="420">
                 <Nodes />
               </Node>
             </Nodes>
