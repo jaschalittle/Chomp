@@ -1,11 +1,57 @@
-top:
-LIDAR_RATE = 100 'Hz
+LIDAR_INPUT_PIN = 3
+LIDAR_RATE = 100 'Hz - if you adjust this adjust CHOMP_FILTER_COUNT also
 OFFSET = 80 ' in counts, rough empirical value based on reading when you cover the lidar lens
-unconverted = getvalue(_PI, 1) 'in counts, out of 4096
+CHOMP_FILTER_COUNT = 50 ' how many successive readings below chomp thresh we need in order to chomp
+CHOMP_THRESH = 20 'in cm, threshold for chomping
+
+AUTOCHOMP_ED_PIN = 2
+AUTOCHOMP_ED_THRESH = 100 ' In counts, what is our trigger level for autochomp enable/disable?
+
+chomp_count = 0
+poll:
+unconverted = getvalue(_PI, LIDAR_INPUT_PIN) 'in counts, out of 4096
 ' LIDAR PWM scaling 1 meter per ms
 ' unconverted/4096 * (1000ms / LIDAR_RATE) = pulse width in ms, distance in m
 ' microbasic has no floats so we're gonna leave this in cm
 distance = ((unconverted - OFFSET) * 100 * (1000 / LIDAR_RATE))/4096 
 print("\rDistance: ", distance, "cm ", "(", unconverted, ")")
-wait(100)
-goto top
+if distance < CHOMP_THRESH then
+	chomp_count = chomp_count + 1
+	print("\rChompcount ", chomp_count)
+	if chomp_count > CHOMP_FILTER_COUNT then
+		goto chomp
+	end if		
+else
+	chomp_count = 0
+end if
+wait(10)
+goto poll
+
+chomp:
+JAW_ANGLE_INPUT_PIN = 1
+JAW_CLOSED = 100
+JAW_OPEN = 1000
+GOOD_BITE_CURRENT = 5
+' set velocity? or maybe command is what you want?
+' setcommand(_MOTVEL, 1, vel)
+chomping:
+print("\rCHOMPING! Jaw ",jaw_angle, " current ", motor_current)
+motor_current = getvalue(_MOTAMPS, 1)
+jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
+if jaw_angle < JAW_CLOSED then
+	' if jaws close, and motor amps are below some threshold, retract
+	if motor_current < GOOD_BITE_CURRENT then
+		' set velocity reversed
+		print("\rDidn't get anything!")
+		goto retracting
+	end if		
+end if
+goto chomping
+
+retracting:
+jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
+print("\rRetracting! ", jaw_angle)
+if jaw_angle > JAW_OPEN then
+	goto poll
+end if
+goto retracting
