@@ -4,26 +4,29 @@ OFFSET = 80 ' in counts, rough empirical value based on reading when you cover t
 CHOMP_FILTER_COUNT = 50 ' how many successive readings below chomp thresh we need in order to chomp
 CHOMP_THRESH = 20 'in cm, threshold for chomping
 
-AUTOCHOMP_ED_PIN = 2
-AUTOCHOMP_ED_THRESH = 100 ' In counts, what is our trigger level for autochomp enable/disable?
+dim enabled as boolean
+enabled = true ' TODO - set this to false when you're done testing!!
 
 poll:
 chomp_count = 0
 polling:
+gosub check_enable
 unconverted = getvalue(_PI, LIDAR_INPUT_PIN) 'in counts, out of 4096
 ' LIDAR PWM scaling 1 meter per ms
 ' unconverted/4096 * (1000ms / LIDAR_RATE) = pulse width in ms, distance in m
 ' microbasic has no floats so we're gonna leave this in cm
 distance = ((unconverted - OFFSET) * 100 * (1000 / LIDAR_RATE))/4096 
 print("\rDistance: ", distance, "cm ", "(", unconverted, ")")
-if distance < CHOMP_THRESH then
-	chomp_count = chomp_count + 1
-	print("\rChompcount ", chomp_count)
-	if chomp_count > CHOMP_FILTER_COUNT then
-		goto chomp
-	end if		
-else
-	chomp_count = 0
+if enabled then
+	if distance < CHOMP_THRESH then
+		chomp_count = chomp_count + 1
+		print("\rChompcount ", chomp_count)
+		if chomp_count > CHOMP_FILTER_COUNT then
+			goto chomp
+		end if		
+	else
+		chomp_count = 0
+	end if
 end if
 wait(10)
 goto polling
@@ -36,7 +39,13 @@ JAW_OPEN = 1000
 GOOD_BITE_CURRENT = 5
 'placeholder
 jaw_angle = JAW_OPEN
+
 chomping:
+gosub check_enable
+if not enabled then
+	goto polling
+end if
+
 print("\rCHOMPING! Jaw ",jaw_angle, " current ", motor_current)
 motor_current = getvalue(_MOTAMPS, 1)
 'jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
@@ -57,9 +66,16 @@ wait(100)
 goto chomping
 
 retracting:
+
+gosub check_enable
+if not enabled then
+	goto polling
+end if
+
 'jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
 print("\rRetracting! ", jaw_angle)
 if jaw_angle > JAW_OPEN then
+	setcommand(_GO, 1, 0)
 	goto poll
 else
 	'placeholder
@@ -68,3 +84,17 @@ else
 end if
 wait(100)
 goto retracting
+
+AUTOCHOMP_ED_PIN = 2
+AUTOCHOMP_ED_THRESH = 100 ' In counts, what is our trigger level for autochomp enable/disable?
+
+check_enable:
+	autochomp_ed = getvalue(_PI, AUTOCHOMP_ED_PIN)
+	if autochomp_ed > AUTOCHOMP_ED_THRESH then
+		enabled = false
+		setcommand(_GO, 1, 0)
+	else
+		enabled = true		
+	end if
+	'print("\rChecking enable: ", "(", autochomp_ed, ") ",enabled)
+	return
