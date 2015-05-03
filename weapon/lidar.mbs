@@ -34,9 +34,9 @@ goto polling
 chomp:
 CHOMP_CMD = 25 ' intensity of chomping
 JAW_ANGLE_INPUT_PIN = 1
-JAW_CLOSED = 100
-JAW_OPEN = 1000
-GOOD_BITE_CURRENT = 5
+JAW_CLOSED = 1500
+JAW_OPEN = 2400
+GOOD_BITE_CURRENT = 5 'aaaaaaaaamps
 'placeholder
 jaw_angle = JAW_OPEN
 
@@ -46,9 +46,9 @@ if not enabled then
 	goto polling
 end if
 
+jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
 print("\rCHOMPING! Jaw ",jaw_angle, " current ", motor_current)
 motor_current = getvalue(_MOTAMPS, 1)
-'jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
 if jaw_angle < JAW_CLOSED then
 	' if jaws close, and motor amps are below some threshold, retract
 	if motor_current < GOOD_BITE_CURRENT then
@@ -58,7 +58,7 @@ if jaw_angle < JAW_CLOSED then
 	end if
 else
 	' placeholder - simulating jaw closing
-	jaw_angle = jaw_angle - 50
+	'jaw_angle = jaw_angle - 50
 	' Motor must be commanded at least once per second
 	setcommand(_GO, 1, CHOMP_CMD)
 end if
