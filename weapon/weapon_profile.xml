@@ -31,10 +31,10 @@
         <Nodes>
           <Node Text="Command Priorities">
             <Nodes>
-              <Node Text="Priority 1" Value="1">
+              <Node Text="Priority 1" Value="0">
                 <Nodes />
               </Node>
-              <Node Text="Priority 2" Value="0">
+              <Node Text="Priority 2" Value="1">
                 <Nodes />
               </Node>
               <Node Text="Priority 3" Value="3">
@@ -448,9 +448,9 @@
               </Node>
             </Nodes>
           </Node>
-          <Node Text="PIn2" Value="">
+          <Node Text="PIn2" Value="Autochomp E/D">
             <Nodes>
-              <Node Text="Capture Type" Value="0">
+              <Node Text="Capture Type" Value="1">
                 <Nodes />
               </Node>
               <Node Text="Input Use" Value="16">
@@ -458,13 +458,13 @@
               </Node>
               <Node Text="Range" Value="">
                 <Nodes>
-                  <Node Text="Input Min" Value="922">
+                  <Node Text="Input Min" Value="967">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Center" Value="1521">
+                  <Node Text="Input Center" Value="968">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Max" Value="2124">
+                  <Node Text="Input Max" Value="2078">
                     <Nodes />
                   </Node>
                 </Nodes>
@@ -661,10 +661,10 @@
           </Node>
           <Node Text="Power Adjust">
             <Nodes>
-              <Node Text="Max Power Fwd (%)" Value="25">
+              <Node Text="Max Power Fwd (%)" Value="100">
                 <Nodes />
               </Node>
-              <Node Text="Max Power Rev (%)" Value="25">
+              <Node Text="Max Power Rev (%)" Value="100">
                 <Nodes />
               </Node>
             </Nodes>

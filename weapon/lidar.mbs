@@ -4,6 +4,9 @@ OFFSET = 80 ' in counts, rough empirical value based on reading when you cover t
 CHOMP_FILTER_COUNT = 50 ' how many successive readings below chomp thresh we need in order to chomp
 CHOMP_THRESH = 20 'in cm, threshold for chomping
 
+AUTOCHOMP_ED_PIN = 2
+AUTOCHOMP_ED_THRESH = 1500 ' In counts, E/D trigger level. the two switch positions are 900 and 2000+
+
 dim enabled as boolean
 enabled = true ' TODO - set this to false when you're done testing!!
 
@@ -85,12 +88,9 @@ end if
 wait(100)
 goto retracting
 
-AUTOCHOMP_ED_PIN = 2
-AUTOCHOMP_ED_THRESH = 100 ' In counts, what is our trigger level for autochomp enable/disable?
-
 check_enable:
 	autochomp_ed = getvalue(_PI, AUTOCHOMP_ED_PIN)
-	if autochomp_ed > AUTOCHOMP_ED_THRESH then
+	if autochomp_ed < AUTOCHOMP_ED_THRESH then ' safe is low
 		enabled = false
 		setcommand(_GO, 1, 0)
 	else
