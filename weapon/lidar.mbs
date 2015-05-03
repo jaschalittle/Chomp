@@ -7,8 +7,9 @@ CHOMP_THRESH = 20 'in cm, threshold for chomping
 AUTOCHOMP_ED_PIN = 2
 AUTOCHOMP_ED_THRESH = 100 ' In counts, what is our trigger level for autochomp enable/disable?
 
-chomp_count = 0
 poll:
+chomp_count = 0
+polling:
 unconverted = getvalue(_PI, LIDAR_INPUT_PIN) 'in counts, out of 4096
 ' LIDAR PWM scaling 1 meter per ms
 ' unconverted/4096 * (1000ms / LIDAR_RATE) = pulse width in ms, distance in m
@@ -25,33 +26,45 @@ else
 	chomp_count = 0
 end if
 wait(10)
-goto poll
+goto polling
 
 chomp:
+CHOMP_CMD = 25 ' intensity of chomping
 JAW_ANGLE_INPUT_PIN = 1
 JAW_CLOSED = 100
 JAW_OPEN = 1000
 GOOD_BITE_CURRENT = 5
-' set velocity? or maybe command is what you want?
-' setcommand(_MOTVEL, 1, vel)
+'placeholder
+jaw_angle = JAW_OPEN
 chomping:
 print("\rCHOMPING! Jaw ",jaw_angle, " current ", motor_current)
 motor_current = getvalue(_MOTAMPS, 1)
-jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
+'jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
 if jaw_angle < JAW_CLOSED then
 	' if jaws close, and motor amps are below some threshold, retract
 	if motor_current < GOOD_BITE_CURRENT then
 		' set velocity reversed
 		print("\rDidn't get anything!")
 		goto retracting
-	end if		
+	end if
+else
+	' placeholder - simulating jaw closing
+	jaw_angle = jaw_angle - 50
+	' Motor must be commanded at least once per second
+	setcommand(_GO, 1, CHOMP_CMD)
 end if
+wait(100)
 goto chomping
 
 retracting:
-jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
+'jaw_angle = getvalue(_AI, JAW_ANGLE_INPUT_PIN)
 print("\rRetracting! ", jaw_angle)
 if jaw_angle > JAW_OPEN then
 	goto poll
+else
+	'placeholder
+	jaw_angle = jaw_angle + 50
+	setcommand(_GO, 1, -CHOMP_CMD)
 end if
+wait(100)
 goto retracting
