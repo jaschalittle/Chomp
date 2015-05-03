@@ -31,10 +31,10 @@
         <Nodes>
           <Node Text="Command Priorities">
             <Nodes>
-              <Node Text="Priority 1" Value="0">
+              <Node Text="Priority 1" Value="1">
                 <Nodes />
               </Node>
-              <Node Text="Priority 2" Value="1">
+              <Node Text="Priority 2" Value="0">
                 <Nodes />
               </Node>
               <Node Text="Priority 3" Value="3">
@@ -234,7 +234,7 @@
       </Node>
       <Node Text="Analog Inputs">
         <Nodes>
-          <Node Text="AIn1" Value="JAW ANGLE">
+          <Node Text="AIn1" Value="Jaw Angle">
             <Nodes>
               <Node Text="Conversion Type" Value="1">
                 <Nodes />
@@ -413,23 +413,23 @@
       </Node>
       <Node Text="Pulse Inputs">
         <Nodes>
-          <Node Text="PIn1" Value="">
+          <Node Text="PIn1" Value="Manual Chomp">
             <Nodes>
               <Node Text="Capture Type" Value="1">
                 <Nodes />
               </Node>
-              <Node Text="Input Use" Value="17">
+              <Node Text="Input Use" Value="16">
                 <Nodes />
               </Node>
               <Node Text="Range" Value="">
                 <Nodes>
-                  <Node Text="Input Min" Value="1000">
+                  <Node Text="Input Min" Value="1115">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Center" Value="1500">
+                  <Node Text="Input Center" Value="1526">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Max" Value="2000">
+                  <Node Text="Input Max" Value="1963">
                     <Nodes />
                   </Node>
                 </Nodes>
@@ -453,18 +453,18 @@
               <Node Text="Capture Type" Value="0">
                 <Nodes />
               </Node>
-              <Node Text="Input Use" Value="17">
+              <Node Text="Input Use" Value="16">
                 <Nodes />
               </Node>
               <Node Text="Range" Value="">
                 <Nodes>
-                  <Node Text="Input Min" Value="1000">
+                  <Node Text="Input Min" Value="922">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Center" Value="1500">
+                  <Node Text="Input Center" Value="1521">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Max" Value="2000">
+                  <Node Text="Input Max" Value="2124">
                     <Nodes />
                   </Node>
                 </Nodes>
@@ -520,7 +520,7 @@
           </Node>
           <Node Text="PIn4" Value="">
             <Nodes>
-              <Node Text="Capture Type" Value="1">
+              <Node Text="Capture Type" Value="0">
                 <Nodes />
               </Node>
               <Node Text="Input Use" Value="16">
@@ -661,10 +661,10 @@
           </Node>
           <Node Text="Power Adjust">
             <Nodes>
-              <Node Text="Max Power Fwd (%)" Value="100">
+              <Node Text="Max Power Fwd (%)" Value="25">
                 <Nodes />
               </Node>
-              <Node Text="Max Power Rev (%)" Value="100">
+              <Node Text="Max Power Rev (%)" Value="25">
                 <Nodes />
               </Node>
             </Nodes>
