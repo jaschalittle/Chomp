@@ -95,8 +95,12 @@ check_enable:
 	global_ed = getvalue(_PI, GLOBAL_ED_PIN)
 	autochomp_ed = getvalue(_PI, AUTOCHOMP_ED_PIN)
 	if autochomp_ed < AUTOCHOMP_ED_THRESH or global_ed < GLOBAL_ED_THRESH then ' safe is low
+		if enabled then
+			' don't spam this command, otherwise it will interfere with manual chomp
+			print("\rcommanding zero")
+			setcommand(_GO, 1, 0)
+		end if			
 		enabled = false
-		setcommand(_GO, 1, 0)
 	else
 		enabled = true		
 	end if
