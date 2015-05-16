@@ -489,13 +489,13 @@
               </Node>
               <Node Text="Range" Value="">
                 <Nodes>
-                  <Node Text="Input Min" Value="980">
+                  <Node Text="Input Min" Value="1700">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Center" Value="980">
+                  <Node Text="Input Center" Value="1800">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Max" Value="2000">
+                  <Node Text="Input Max" Value="1900">
                     <Nodes />
                   </Node>
                 </Nodes>
@@ -506,10 +506,10 @@
               <Node Text="Input Deadband (%)" Value="5">
                 <Nodes />
               </Node>
-              <Node Text="Action on Min" Value="19">
+              <Node Text="Action on Min" Value="16">
                 <Nodes />
               </Node>
-              <Node Text="Action on Max" Value="16">
+              <Node Text="Action on Max" Value="19">
                 <Nodes />
               </Node>
             </Nodes>
