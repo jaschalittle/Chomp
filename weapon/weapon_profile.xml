@@ -661,10 +661,10 @@
           </Node>
           <Node Text="Power Adjust">
             <Nodes>
-              <Node Text="Max Power Fwd (%)" Value="100">
+              <Node Text="Max Power Fwd (%)" Value="50">
                 <Nodes />
               </Node>
-              <Node Text="Max Power Rev (%)" Value="100">
+              <Node Text="Max Power Rev (%)" Value="50">
                 <Nodes />
               </Node>
             </Nodes>
@@ -674,10 +674,10 @@
               <Node Text="Max Speed (RPM)" Value="1000">
                 <Nodes />
               </Node>
-              <Node Text="Acceleration (RPM/s)" Value="20000">
+              <Node Text="Acceleration (RPM/s)" Value="10000">
                 <Nodes />
               </Node>
-              <Node Text="Decceleration (RPM/s)" Value="20000">
+              <Node Text="Decceleration (RPM/s)" Value="40000">
                 <Nodes />
               </Node>
             </Nodes>
