@@ -261,10 +261,10 @@
               <Node Text="Input Deadband (%)" Value="5">
                 <Nodes />
               </Node>
-              <Node Text="Action on Min" Value="21">
+              <Node Text="Action on Min" Value="16">
                 <Nodes />
               </Node>
-              <Node Text="Action on Max" Value="20">
+              <Node Text="Action on Max" Value="16">
                 <Nodes />
               </Node>
             </Nodes>
@@ -661,10 +661,10 @@
           </Node>
           <Node Text="Power Adjust">
             <Nodes>
-              <Node Text="Max Power Fwd (%)" Value="50">
+              <Node Text="Max Power Fwd (%)" Value="100">
                 <Nodes />
               </Node>
-              <Node Text="Max Power Rev (%)" Value="50">
+              <Node Text="Max Power Rev (%)" Value="100">
                 <Nodes />
               </Node>
             </Nodes>
@@ -674,7 +674,7 @@
               <Node Text="Max Speed (RPM)" Value="1000">
                 <Nodes />
               </Node>
-              <Node Text="Acceleration (RPM/s)" Value="10000">
+              <Node Text="Acceleration (RPM/s)" Value="40000">
                 <Nodes />
               </Node>
               <Node Text="Decceleration (RPM/s)" Value="40000">
