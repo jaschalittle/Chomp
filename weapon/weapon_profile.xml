@@ -625,10 +625,10 @@
           </Node>
           <Node Text="Voltage Limits">
             <Nodes>
-              <Node Text="Over Voltage Limit (V)" Value="600">
+              <Node Text="Over Voltage Limit (V)" Value="400">
                 <Nodes />
               </Node>
-              <Node Text="Under Voltage Limit (V)" Value="420">
+              <Node Text="Under Voltage Limit (V)" Value="200">
                 <Nodes />
               </Node>
             </Nodes>
@@ -645,7 +645,7 @@
         <Nodes>
           <Node Text="Amps Limits">
             <Nodes>
-              <Node Text="Amps Limit (A)" Value="1600">
+              <Node Text="Amps Limit (A)" Value="500">
                 <Nodes />
               </Node>
               <Node Text="Amps Trigger (A)" Value="750">
