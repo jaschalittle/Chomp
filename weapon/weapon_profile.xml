@@ -485,7 +485,7 @@
           </Node>
           <Node Text="PIn3" Value="LIDAR">
             <Nodes>
-              <Node Text="Capture Type" Value="3">
+              <Node Text="Capture Type" Value="0">
                 <Nodes />
               </Node>
               <Node Text="Input Use" Value="16">
