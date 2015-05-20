@@ -244,13 +244,13 @@
               </Node>
               <Node Text="Range" Value="">
                 <Nodes>
-                  <Node Text="Input Min (mV)" Value="900">
+                  <Node Text="Input Min (mV)" Value="750">
                     <Nodes />
                   </Node>
                   <Node Text="Input Center (mV)" Value="2000">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Max (mV)" Value="4060">
+                  <Node Text="Input Max (mV)" Value="4400">
                     <Nodes />
                   </Node>
                 </Nodes>
@@ -261,10 +261,10 @@
               <Node Text="Input Deadband (%)" Value="5">
                 <Nodes />
               </Node>
-              <Node Text="Action on Min" Value="16">
+              <Node Text="Action on Min" Value="21">
                 <Nodes />
               </Node>
-              <Node Text="Action on Max" Value="16">
+              <Node Text="Action on Max" Value="20">
                 <Nodes />
               </Node>
             </Nodes>
@@ -645,7 +645,7 @@
         <Nodes>
           <Node Text="Amps Limits">
             <Nodes>
-              <Node Text="Amps Limit (A)" Value="500">
+              <Node Text="Amps Limit (A)" Value="600">
                 <Nodes />
               </Node>
               <Node Text="Amps Trigger (A)" Value="750">
