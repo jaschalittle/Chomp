@@ -27,7 +27,7 @@ void fire(){
   digitalWrite(27, LOW);
 }
 
-void loop() {
+void check_leddar(){
   int fire_threshold = 60;
   char detections = leddar.getDetections();
   if ( VERBOSE ){
@@ -52,5 +52,19 @@ void loop() {
     }
        
   }
-  //delay(500);
+}
+
+void readMLHPressure(){
+  int counts = analogRead(7);
+  float voltage = counts * (5.0 / 1023);
+  float pressure = (voltage - 0.5) * (500.0/4.0);
+  Xbee.write("Pressure: ");
+  Xbee.print(pressure);
+  Xbee.write(" (");
+  Xbee.print(voltage);
+  Xbee.write("V)\r\n");
+}
+void loop() {
+  readMLHPressure();
+  delay(500);
 }
