@@ -8,9 +8,6 @@
 HardwareSerial & Xbee = Serial2;
 HardwareSerial & LeddarSerial = Serial;
 
-volatile int pwm_value = 0;
-volatile int prev_time = 0;
-
 Leddar16 leddar(115200,1);
 bool VERBOSE = false;
 
@@ -18,19 +15,7 @@ void setup() {
   Xbee.begin(9600);
   LeddarSerial.begin(115200);
   leddar.init();
-  attachInterrupt(0, rising, RISING);
-}
-
-void rising() {
-  attachInterrupt(0, falling, FALLING);
-  prev_time = micros();
-}
- 
-void falling() {
-  attachInterrupt(0, rising, RISING);
-  pwm_value = micros()-prev_time;
-  Xbee.print(pwm_value);
-  Xbee.print("\r\n");
+  attachRCInterrupts();
 }
 
 void fire(){
