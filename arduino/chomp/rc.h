@@ -1,5 +1,5 @@
-#ifndef INTERRUPTS_H
-#define INTERRUPTS_H
+#ifndef RC_H
+#define RC_H
 
 enum RCinterrupts {
   WEAPONS_ENABLE = 0,
@@ -13,4 +13,4 @@ extern volatile int WEAPONS_ENABLE_pwm_value;
 
 void attachRCInterrupts();
 
-#endif // INTERRUPTS_H
+#endif // RC_H

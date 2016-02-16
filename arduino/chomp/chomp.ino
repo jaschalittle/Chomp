@@ -1,5 +1,5 @@
 #include <Leddar.h>
-#include "interrupts.h"
+#include "rc.h"
 #include "leddar_wrapper.h"
 #include "sensors.h"
 
