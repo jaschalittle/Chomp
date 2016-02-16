@@ -1,6 +1,7 @@
 #include <Leddar.h>
 #include "interrupts.h"
 #include "leddar_wrapper.h"
+#include "sensors.h"
 
 // Xbee configuration notes:
 // Followed tutorial here: https://eewiki.net/display/Wireless/XBee+Wireless+Communication+Setup
@@ -15,17 +16,6 @@ void setup() {
   Xbee.begin(9600);
   leddar_wrapper_init();
   attachRCInterrupts();
-}
-
-void readMLHPressure(){
-  int counts = analogRead(7);
-  float voltage = counts * (5.0 / 1023);
-  float pressure = (voltage - 0.5) * (500.0/4.0);
-  Xbee.write("Pressure: ");
-  Xbee.print(pressure);
-  Xbee.write(" (");
-  Xbee.print(voltage);
-  Xbee.write("V)\r\n");
 }
 
 int previous_leddar_state = FAR_ZONE;
