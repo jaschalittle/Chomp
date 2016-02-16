@@ -23,13 +23,3 @@ int poll_leddar(){
   }
   return FAR_ZONE;
 }
-
-void fire(){
-  pinMode(27, OUTPUT);
-  digitalWrite(27, HIGH);
-//  Xbee.write("FIRE!\t");
-//  Xbee.write(0x07);
-//  Xbee.flush();
-  delay(50);
-  digitalWrite(27, LOW);
-}

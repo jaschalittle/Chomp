@@ -1,10 +1,12 @@
 // Hook up all the RC interrupts. 
 #include "Arduino.h"
-#include "interrupts.h"
+#include "rc.h"
 
-// Externed in chomp.h
+// TODO - make all these init to a sane default value
 volatile int WEAPONS_ENABLE_pwm_value = 0;
 volatile int WEAPONS_ENABLE_prev_time = 0;
+
+volatile int FLAME_CTRL_pwm_value = 0;
 
 void WEAPONS_ENABLE_rising();
 void WEAPONS_ENABLE_falling();
