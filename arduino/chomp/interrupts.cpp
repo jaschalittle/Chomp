@@ -1,15 +1,13 @@
 // Hook up all the RC interrupts. 
+#include "Arduino.h"
+#include "interrupts.h"
 
-enum RCinterrupts {
-  WEAPONS_ENABLE = 0,
-  AUTO_HAMMER_ENABLE = 1,
-  HAMMER_CTRL = 2,
-  HAMMER_INTENSITY = 3,
-  FIRE_CTRL = 4,
-};
- 
+// Externed in chomp.h
 volatile int WEAPONS_ENABLE_pwm_value = 0;
 volatile int WEAPONS_ENABLE_prev_time = 0;
+
+void WEAPONS_ENABLE_rising();
+void WEAPONS_ENABLE_falling();
 
 // Forgive me, I know not what I do.
 #define CREATE_RISING_ISR( rc_interrupt )\
