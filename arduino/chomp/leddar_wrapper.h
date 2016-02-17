@@ -10,4 +10,8 @@ enum LeddarState {
 void leddar_wrapper_init();
 int poll_leddar();
 
+void request_detections();
+bool buffer_detections();
+void process_detections();
+
 #endif  // LEDDAR_WRAPPER_H
