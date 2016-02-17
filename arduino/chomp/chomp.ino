@@ -47,34 +47,35 @@ void flame_end(){
 
 int previous_leddar_state = FAR_ZONE;
 char previous_rc_bitfield = 0;
-unsigned long last_request_time = millis();
+unsigned long last_request_time = micros();
 void loop() {
-  if (millis() - last_request_time > 2000){
-    last_request_time = millis();
+  if (micros() - last_request_time > 1000000){
+    last_request_time = micros();
     request_detections();
     Xbee.print("Requesting\r\n");
   }
   bool complete = buffer_detections();
   if (complete){
-    process_detections();
+    unsigned int detection_count = parse_detections();
+//    Xbee.print(micros() - last_request_time);
+//    Xbee.print("\r\n");
+    last_request_time = micros();
+    int current_leddar_state = get_state(detection_count);
+    switch (current_leddar_state){
+      case FAR_ZONE:
+      case ARM_ZONE:
+        previous_leddar_state = current_leddar_state;
+        break;
+      case HIT_ZONE:
+        if (previous_leddar_state == ARM_ZONE) {
+          fire(/*hammer intensity*/);
+        } else {
+          previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
+        }
+        break;
+    }
     request_detections();
-    last_request_time = millis();
   }
-
-//  int current_leddar_state = poll_leddar();
-//  switch (current_leddar_state){
-//    case FAR_ZONE:
-//    case ARM_ZONE:
-//      previous_leddar_state = current_leddar_state;
-//      break;
-//    case HIT_ZONE:
-//      if (previous_leddar_state == ARM_ZONE) {
-//        fire(/*hammer intensity*/);
-//      } else {
-//        previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
-//      }
-//      break;
-//  }
 
   // React to RC state changes
   char current_rc_bitfield = process_rc_bools();
