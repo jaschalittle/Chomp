@@ -2,6 +2,7 @@
 #include "leddar_wrapper.h"
 #include "sensors.h"
 #include "xbee.h"
+#include "telem.h"
 
 void setup() {
   xbee_init();
@@ -49,10 +50,11 @@ int previous_leddar_state = FAR_ZONE;
 char previous_rc_bitfield = 0;
 unsigned long last_request_time = micros();
 void loop() {
+  unsigned long start_time = micros();
   if (micros() - last_request_time > 1000000){
     last_request_time = micros();
     request_detections();
-    Xbee.print("Requesting\r\n");
+    //Xbee.print("Requesting\r\n");
   }
   bool complete = buffer_detections();
   if (complete){
@@ -76,7 +78,7 @@ void loop() {
     }
     request_detections();
   }
-
+  
   // React to RC state changes
   char current_rc_bitfield = process_rc_bools();
   if ( previous_rc_bitfield != current_rc_bitfield ){
@@ -95,4 +97,12 @@ void loop() {
     }
   }
   previous_rc_bitfield = current_rc_bitfield;
+
+  unsigned long loop_speed = micros() - start_time;
+  // Read other sensors, to report out
+  float pressure = readMLHPressure();
+  
+  send_sensor_telem(loop_speed, pressure);
+  delay(50);
+  
 }
