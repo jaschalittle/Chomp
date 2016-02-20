@@ -46,6 +46,14 @@ void flame_end(){
   Xbee.write("sssssss");
 }
 
+void phidget_test(){
+  pinMode(14, OUTPUT);
+  digitalWrite(14, HIGH);
+  delay(1000);
+  digitalWrite(14, LOW);
+  delay(1000);
+}
+
 int previous_leddar_state = FAR_ZONE;
 char previous_rc_bitfield = 0;
 unsigned long last_request_time = micros();
@@ -101,8 +109,8 @@ void loop() {
   unsigned long loop_speed = micros() - start_time;
   // Read other sensors, to report out
   float pressure = readMLHPressure();
+  float angle = readAngle();
   
   send_sensor_telem(loop_speed, pressure);
   delay(50);
-  
 }
