@@ -1,0 +1,4 @@
+TELEMETRY CHOMP HS BIG_ENDIAN "Health and Status"
+    APPEND_ID_ITEM PKTID 8 UINT 1 "Packet ID which must be 1"
+    APPEND_ITEM LOOP_SPEED 32 UINT "Loop speed"
+    APPEND_ITEM PRESSURE 32 INT "Pressure"
