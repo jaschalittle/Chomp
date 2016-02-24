@@ -97,7 +97,11 @@ unsigned int parse_detections(){
   return detection_count;
 }
 
-int get_state(unsigned int detections){
+Detection* get_detections(){
+  return Detections;
+}
+
+LeddarState get_state(unsigned int detections){
   int arm_threshold = 100;
   int fire_threshold = 60;
   for (int i = 0; i < detections; i++){

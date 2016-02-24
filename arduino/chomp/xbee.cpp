@@ -3,6 +3,6 @@
 
 HardwareSerial & Xbee = Serial2;
 void xbee_init(){
-  Xbee.begin(9600);
+  Xbee.begin(115200);
 }
 

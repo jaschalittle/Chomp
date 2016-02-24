@@ -23,7 +23,8 @@ void leddar_wrapper_init();
 void request_detections();
 bool buffer_detections();
 unsigned int parse_detections();
-int get_state(unsigned int detections);
+LeddarState get_state(unsigned int detections);
+Detection* get_detections();
 
 
 // Table of CRC values for highorder byte

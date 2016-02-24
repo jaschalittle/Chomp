@@ -57,12 +57,13 @@ void phidget_test(){
 int previous_leddar_state = FAR_ZONE;
 char previous_rc_bitfield = 0;
 unsigned long last_request_time = micros();
+unsigned long last_telem_time = micros();
 void loop() {
   unsigned long start_time = micros();
   if (micros() - last_request_time > 1000000){
     last_request_time = micros();
     request_detections();
-    //Xbee.print("Requesting\r\n");
+//    Xbee.print("Requesting\r\n");
   }
   bool complete = buffer_detections();
   if (complete){
@@ -70,7 +71,7 @@ void loop() {
 //    Xbee.print(micros() - last_request_time);
 //    Xbee.print("\r\n");
     last_request_time = micros();
-    int current_leddar_state = get_state(detection_count);
+    LeddarState current_leddar_state = get_state(detection_count);
     switch (current_leddar_state){
       case FAR_ZONE:
       case ARM_ZONE:
@@ -84,9 +85,10 @@ void loop() {
         }
         break;
     }
+    send_leddar_telem(get_detections(), detection_count, current_leddar_state);
     request_detections();
   }
-  
+
   // React to RC state changes
   char current_rc_bitfield = process_rc_bools();
   if ( previous_rc_bitfield != current_rc_bitfield ){
@@ -110,7 +112,9 @@ void loop() {
   // Read other sensors, to report out
   float pressure = readMLHPressure();
   float angle = readAngle();
-  
-  send_sensor_telem(loop_speed, pressure);
-  delay(50);
+
+  if (last_telem_time - micros() > 50){
+    send_sensor_telem(loop_speed, pressure);
+    last_telem_time = micros();
+  }
 }
