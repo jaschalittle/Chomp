@@ -1,15 +1,22 @@
 #ifndef RC_H
 #define RC_H
 
+// Futaba Ch1 is ailerons, Ch2 is elevators
 enum RCinterrupts {
-  L_TREAD = digitalPinToInterrupt(2),
-  R_TREAD = digitalPinToInterrupt(3),
+  AILERON = digitalPinToInterrupt(2),
+  ELEVATOR = digitalPinToInterrupt(3),
+  THROTTLE = digitalPinToInterrupt(18),
+  // for timed input
+//  AILERON = digitalPinToInterrupt(2),
+//  ELEVATOR = digitalPinToInterrupt(3),
 };
 
-extern volatile int L_TREAD_pwm_val;
-
-extern volatile int R_TREAD_pwm_val;
-
 void attachRCInterrupts();
+
+float get_aileron();
+
+float get_elevator();
+
+float get_throttle();
 
 #endif // RC_H

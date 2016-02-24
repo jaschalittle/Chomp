@@ -1,13 +1,7 @@
 #ifndef PWM_H
 #define PWM_H
 
-// PWM output frequency in Hz
-static int PWM_FREQ = 50;
-
-// this may have wreaked havoc with pwm vals on Sunday, Feb 21?
-//extern volatile int L_TREAD_pwm_val;
-//
-//extern volatile int R_TREAD_pwm_val;
+const float pwm_neutral = 1520/20000.0;
 
 void pwm_duty_L(float duty);
 
