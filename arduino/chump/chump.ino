@@ -8,7 +8,7 @@ void setup() {
   leddar_wrapper_init();
   attachRCInterrupts();
   request_detections();
-  pwm_setup();
+  pwm_output_setup();
   Serial.begin(115200);
 }
 

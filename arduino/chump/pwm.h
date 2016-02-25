@@ -7,7 +7,7 @@ void pwm_duty_L(float duty);
 
 void pwm_duty_R(float duty);
 
-void pwm_setup();
+void pwm_output_setup();
 
 void targeting_disable();
 
