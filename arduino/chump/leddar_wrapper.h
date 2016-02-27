@@ -18,6 +18,15 @@ struct Detection
   Detection() : Segment(0), Distance(0xFFFF), Amplitude(0) { }
 };
 
+struct Object_call
+{
+  unsigned int Distance;
+  float Angle;
+
+  // Default constructor
+  Object_call() : Distance(0xFFFF), Angle(0.0) { }
+};
+
 void leddar_wrapper_init();
 
 void request_detections();
@@ -25,6 +34,7 @@ bool buffer_detections();
 unsigned int parse_detections();
 int get_state(unsigned int detections);
 Detection get_min_detection(unsigned int num_detections);
+Object_call call_nearest_obj(unsigned int num_detections);
 
 
 // Table of CRC values for highorder byte

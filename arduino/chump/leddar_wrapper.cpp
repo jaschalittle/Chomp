@@ -91,13 +91,13 @@ unsigned int parse_detections(){
 //    Xbee.print("/");
 //    Xbee.print(Detections[i].Distance);
 //    Xbee.print("\t");
-    Serial.print(Detections[i].Segment);
-    Serial.print("/");
-    Serial.print(Detections[i].Distance);
-    Serial.print("\t");
+//    Serial3.print(Detections[i].Segment);
+//    Serial3.print("/");
+//    Serial3.print(Detections[i].Distance);
+//    Serial3.print("\t");
   }
 //  Xbee.print("\r\n");
-  Serial.print("\n");
+//  Serial3.print("\n");
   return detection_count;
 }
 
@@ -122,11 +122,39 @@ int get_state(unsigned int detections){
 
 Detection get_min_detection (unsigned int num_detections) {
   Detection min_detection = Detections[0];
-  for ( unsigned int i = 1; i < num_detections; i++){
+  for (unsigned int i = 1; i < num_detections; i++){
     if (Detections[i].Distance < min_detection.Distance) {
       min_detection = Detections[i];
     }
   }
+//  Serial.print(min_detection.Distance);
   return min_detection;
+}
+
+Object_call call_nearest_obj (unsigned int num_detections) {
+  float min_distance = Detections[(num_detections - 1)].Distance;
+  Detection min_detection = Detections[(num_detections - 1)];
+  float right_edge = 16.0;
+  float left_edge = 0.0;
+
+  // loop is backwards because Leddar is mounted upside down!
+  for (int i = num_detections - 2; i >= 0; i--) {
+    int delta = Detections[i].Distance - min_distance;
+    if (delta < -90) {
+      left_edge = (float) (15 - Detections[i].Segment);
+      min_distance = Detections[i].Distance;
+      right_edge = (float) (16 - i);
+    } else if (delta > 90) {
+      right_edge = (float) (16 - Detections[i].Segment);
+    } else {
+      if (Detections[i].Segment == 15) {
+        left_edge = 0.0;
+      }
+    }
+  }
+  Object_call Nearest_obj;
+  Nearest_obj.Distance = min_distance;
+  Nearest_obj.Angle = (left_edge + right_edge) / 2 - 8;
+  return Nearest_obj;
 }
 
