@@ -101,22 +101,53 @@ Detection* get_detections(){
   return Detections;
 }
 
+#define CENTER_ZONE_MIN 4
+#define CENTER_ZONE_MAX 12
+
+#define FACE_OFFSET 20
+#define ARM_THRESHOLD 150
+#define FIRE_THRESHOLD 90
+#define CONTIG_THRESHOLD 2
 LeddarState get_state(unsigned int detections){
-  int arm_threshold = 100;
-  int fire_threshold = 60;
+
+  int last_detected_segment = 0;
+  int contiguous = 1;
   for (int i = 0; i < detections; i++){
-    if (Detections[i].Distance < fire_threshold){
-      Xbee.write("Hit!\r\n");
-      return HIT_ZONE;
+    if (Detections[i].Segment < CENTER_ZONE_MAX && Detections[i].Segment > CENTER_ZONE_MIN &&
+        Detections[i].Distance - FACE_OFFSET < FIRE_THRESHOLD){
+      //Xbee.write("Hit!\r\n");
+      if (Detections[i].Segment - last_detected_segment == 1){
+        contiguous += 1;
+      } else {
+        contiguous = 1;
+      }
+      last_detected_segment = Detections[i].Segment;
     }
   }
+  
+  if (contiguous >= CONTIG_THRESHOLD){
+    return HIT_ZONE;
+  }
+  
+  last_detected_segment = 0;
+  contiguous = 1;
   for (int i = 0; i < detections; i++){
-    if (Detections[i].Distance < arm_threshold){
-      Xbee.write("Arming!\r\n");
-      return ARM_ZONE;
+    if (Detections[i].Segment < CENTER_ZONE_MAX && Detections[i].Segment > CENTER_ZONE_MIN &&
+        Detections[i].Distance - FACE_OFFSET < ARM_THRESHOLD){
+      //Xbee.write("Hit!\r\n");
+      if (Detections[i].Segment - last_detected_segment == 1){
+        contiguous += 1;
+      } else {
+        contiguous = 1;
+      }
+      last_detected_segment = Detections[i].Segment;
     }
   }
-  Xbee.write("Nothing to see here\r\n");
+
+  if (contiguous >= CONTIG_THRESHOLD){
+    return ARM_ZONE;
+  }
+  //Xbee.write("Nothing to see here\r\n");
   return FAR_ZONE;
 }
 
