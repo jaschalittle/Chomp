@@ -9,6 +9,8 @@ void setup() {
   leddar_wrapper_init();
   attachRCInterrupts();
   request_detections();
+  pinMode(21, OUTPUT);
+  pinMode(22, OUTPUT);
 }
 
 bool enabled(){
@@ -54,6 +56,7 @@ void phidget_test(){
   delay(1000);
 }
 
+
 int previous_leddar_state = FAR_ZONE;
 char previous_rc_bitfield = 0;
 unsigned long last_request_time = micros();
@@ -74,13 +77,21 @@ void loop() {
     LeddarState current_leddar_state = get_state(detection_count);
     switch (current_leddar_state){
       case FAR_ZONE:
+        digitalWrite(21, LOW);
+        digitalWrite(22, LOW);
+        previous_leddar_state = current_leddar_state;
+        break;
       case ARM_ZONE:
+        digitalWrite(22, LOW);
+        digitalWrite(21, HIGH);
         previous_leddar_state = current_leddar_state;
         break;
       case HIT_ZONE:
         if (previous_leddar_state == ARM_ZONE) {
+          digitalWrite(22, HIGH);
           fire(/*hammer intensity*/);
         } else {
+          digitalWrite(21, HIGH);
           previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
         }
         break;
@@ -113,7 +124,7 @@ void loop() {
   float pressure = readMLHPressure();
   float angle = readAngle();
 
-  if (last_telem_time - micros() > 50){
+  if (micros() - last_telem_time > 15000){
     send_sensor_telem(loop_speed, pressure);
     last_telem_time = micros();
   }
