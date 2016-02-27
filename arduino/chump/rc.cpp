@@ -3,15 +3,19 @@
 #include "rc.h"
 
 // initialize PWM vals to neutral values
-volatile int L_TREAD_pwm_val = 1520;
-volatile int L_TREAD_prev_time = 0;
-volatile int R_TREAD_pwm_val = 1520;
-volatile int R_TREAD_prev_time = 0;
+static volatile int AILERON_pwm_val = 1520;
+static volatile int AILERON_prev_time = 0;
+static volatile int ELEVATOR_pwm_val = 1520;
+static volatile int ELEVATOR_prev_time = 0;
+static volatile int THROTTLE_pwm_val = 1520;
+static volatile int THROTTLE_prev_time = 0;
 
-void L_TREAD_rising();
-void L_TREAD_falling();
-void R_TREAD_rising();
-void R_TREAD_falling();
+void AILERON_rising();
+void AILERON_falling();
+void ELEVATOR_rising();
+void ELEVATOR_falling();
+void THROTTLE_rising();
+void THROTTLE_falling();
 
 // set up PWM input pins. these ought to reset timer if it ever gets to TOP, as this implies falling edge was not seen.
 // noise canceler takes up four system clock cycles, not affected by prescaler
@@ -38,13 +42,40 @@ void rc_interrupt ## _falling() {\
   rc_interrupt ## _pwm_val = micros() - rc_interrupt ## _prev_time;\
 }
 
-CREATE_FALLING_ISR(L_TREAD);
-CREATE_RISING_ISR(L_TREAD);
-CREATE_FALLING_ISR(R_TREAD);
-CREATE_RISING_ISR(R_TREAD);
+#define CREATE_RISING_TIMER_ISR( timer_capt_interrupt )\
+void rc_interrupt ## _rising() {\
+  attachInterrupt(timer_capt_interrupt, timer_capt_interrupt ## _falling, FALLING);\
+  rc_interrupt ## _prev_time = micros();\
+}
+
+#define CREATE_FALLING_TIMER_ISR( timer_capt_interrupt )\
+void timer_capt_interrupt ## _falling() {\
+  attachInterrupt(timer_capt_interrupt, timer_capt_interrupt ## _rising, RISING);\
+  timer_capt_interrupt ## _pwm_val = micros() - timer_capt_interrupt ## _prev_time;\
+}
+
+CREATE_FALLING_ISR(AILERON);
+CREATE_RISING_ISR(AILERON);
+CREATE_FALLING_ISR(ELEVATOR);
+CREATE_RISING_ISR(ELEVATOR);
+CREATE_FALLING_ISR(THROTTLE);
+CREATE_RISING_ISR(THROTTLE);
 
 // Set up all RC interrupts
 void attachRCInterrupts(){
-  attachInterrupt(L_TREAD, L_TREAD_rising, RISING);
-  attachInterrupt(R_TREAD, R_TREAD_rising, RISING);
+  attachInterrupt(AILERON, AILERON_rising, RISING);
+  attachInterrupt(ELEVATOR, ELEVATOR_rising, RISING);
+  attachInterrupt(THROTTLE, THROTTLE_rising, RISING);
+}
+
+float get_aileron() {
+  return AILERON_pwm_val / 20000.0;
+}
+
+float get_elevator() {
+  return ELEVATOR_pwm_val / 20000.0;
+}
+
+float get_throttle() {
+  return THROTTLE_pwm_val / 20000.0;
 }

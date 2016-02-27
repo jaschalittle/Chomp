@@ -91,13 +91,13 @@ unsigned int parse_detections(){
 //    Xbee.print("/");
 //    Xbee.print(Detections[i].Distance);
 //    Xbee.print("\t");
-//    Serial.print(Detections[i].Segment);
-//    Serial.print("/");
-//    Serial.print(Detections[i].Distance);
-//    Serial.print("\t");
+    Serial.print(Detections[i].Segment);
+    Serial.print("/");
+    Serial.print(Detections[i].Distance);
+    Serial.print("\t");
   }
 //  Xbee.print("\r\n");
-//  Serial.print("\n");
+  Serial.print("\n");
   return detection_count;
 }
 

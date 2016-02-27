@@ -8,16 +8,20 @@ void setup() {
   leddar_wrapper_init();
   attachRCInterrupts();
   request_detections();
-  pwm_setup();
+  pwm_output_setup();
   Serial.begin(115200);
 }
 
 
 char previous_rc_bitfield = 0;
+static float aileron_duty = pwm_neutral;
+static float elevator_duty = pwm_neutral;
+static float throttle_duty = pwm_neutral;
 unsigned long last_request_time = micros();
-// new loop for chump driving should use global pwm values set by interrupts to send out pwm to output pins, which will go to motors. 
+// new loop for chump driving should get pwm values set by interrupts to send out pwm to output pins, which will go to motor controllers. 
 // setup function needs to put these at appropriate neutral values. need some global enable too to make sure that radio contact 
-// is ensured! set another pin to self drive mode, and that mode can do something like spin left for 1s, then right for 1s, and so on
+// is ensured! set another pin to self drive mode, and that mode can do something like spin left for 1s, then right for 1s, and so on 
+// for demonstration
 void loop() {
 
   unsigned long start_time = micros();
@@ -25,9 +29,12 @@ void loop() {
     last_request_time = micros();
     request_detections();
   }
-  
-  float Lmix = 0.075 - (0.075 - L_TREAD_pwm_val / 20000.0) + (0.075 - R_TREAD_pwm_val / 20000.0);
-  float Rmix = 0.075 - (0.075 - L_TREAD_pwm_val / 20000.0) - (0.075 - R_TREAD_pwm_val / 20000.0);
+
+  aileron_duty = get_aileron();
+  elevator_duty = get_elevator();
+  throttle_duty = get_throttle();
+  float l_tread_mix = pwm_neutral - (pwm_neutral - aileron_duty) - (pwm_neutral - elevator_duty);
+  float r_tread_mix = pwm_neutral - (pwm_neutral - aileron_duty) + (pwm_neutral - elevator_duty);
   
   bool complete = buffer_detections();
   if (complete){
@@ -44,31 +51,31 @@ void loop() {
 //    Serial.print("\t");
 //    Serial.print("\t");
 //    Serial.print("\n");
-//    if (min_detection.Segment & 0b00001000) {
-//      Rmix += 0.005;
-//    } else { 
-//      Lmix += 0.005;
-//    }
-    Serial.print(Lmix);
-    Serial.print("\t");
-    Serial.print(Rmix);
-    Serial.print("\t");
-    Serial.print(L_TREAD_pwm_val);
-    Serial.print("\t");
-    Serial.print(R_TREAD_pwm_val);
-    Serial.print("\t");
-    Serial.print("\n");
+    if (min_detection.Segment & 0b00001000) {
+      r_tread_mix += 0.005;
+    } else { 
+      l_tread_mix += 0.005;
+    }
+//    Serial.print(l_tread_mix);
+//    Serial.print("\t");
+//    Serial.print(r_tread_mix);
+//    Serial.print("\t");
+//    Serial.print(l_tread_duty);
+//    Serial.print("\t");
+//    Serial.print(r_tread_duty);
+//    Serial.print("\t");
+//    Serial.print("\n");
   }
-//  Serial.print(Lmix);
-//  Serial.print("\t");
-//  Serial.print(Rmix);
-//  Serial.print("\t");
-//  Serial.print(L_TREAD_pwm_val);
-//  Serial.print("\t");
-//  Serial.print(R_TREAD_pwm_val);
-//  Serial.print("\t");
-//  Serial.print("\n");
-  pwm_duty_L(Lmix);
-  pwm_duty_R(Rmix);
-//  Ch1 (ailerons) is L, Ch2 (elevators) is R
+  Serial.print(l_tread_mix, 5);
+  Serial.print("\t");
+  Serial.print(r_tread_mix, 5);
+  Serial.print("\t");
+  Serial.print(aileron_duty, 5);
+  Serial.print("\t");
+  Serial.print(elevator_duty, 5);
+  Serial.print("\t");
+  Serial.print(throttle_duty, 5);
+  Serial.print("\n");
+  pwm_duty_L(l_tread_mix);
+  pwm_duty_R(r_tread_mix);
 }
