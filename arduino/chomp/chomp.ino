@@ -3,14 +3,21 @@
 #include "sensors.h"
 #include "xbee.h"
 #include "telem.h"
+#include "pins.h"
 
 void setup() {
-  xbee_init();
-  leddar_wrapper_init();
-  attachRCInterrupts();
-  request_detections();
+//  xbee_init();
+//  leddar_wrapper_init();
+//  attachRCInterrupts();
+//  request_detections();
   pinMode(21, OUTPUT);
   pinMode(22, OUTPUT);
+  valve_reset();
+  pinMode(ENABLE_VALVE_DO, OUTPUT);
+  pinMode(THROW_VALVE_DO, OUTPUT);
+  pinMode(VENT_VALVE_DO, OUTPUT);
+  pinMode(RETRACT_VALVE_DO, OUTPUT);
+  fire_test();
 }
 
 bool enabled(){
@@ -51,17 +58,56 @@ void flame_end(){
 void phidget_test(){
   pinMode(14, OUTPUT);
   digitalWrite(14, HIGH);
+  digitalWrite(21, HIGH);
   delay(1000);
   digitalWrite(14, LOW);
+  digitalWrite(21, LOW);
   delay(1000);
 }
 
+void valve_reset(){
+  digitalWrite(ENABLE_VALVE_DO, LOW);
+  digitalWrite(THROW_VALVE_DO, LOW);
+  digitalWrite(VENT_VALVE_DO, LOW);
+  digitalWrite(RETRACT_VALVE_DO, LOW);
+}
+
+void fire_test(){
+  digitalWrite(GREEN, HIGH);
+  digitalWrite(ENABLE_VALVE_DO, HIGH);
+  delay(1000);
+  
+  // Seal vent (which is normally closed)
+  digitalWrite(VENT_VALVE_DO, LOW);
+  delay(10);
+  // Open fire
+  digitalWrite(THROW_VALVE_DO, HIGH);
+  digitalWrite(RED, HIGH);
+  delay(100);
+  // Close fire
+  digitalWrite(THROW_VALVE_DO, LOW);
+  // Open vent
+  digitalWrite(VENT_VALVE_DO, HIGH);
+  digitalWrite(RED, LOW);
+  delay(500);
+  // Open retract
+  digitalWrite(RETRACT_VALVE_DO, HIGH);
+  delay(100);
+  // Close retract
+  digitalWrite(RETRACT_VALVE_DO, LOW);
+  
+  digitalWrite(GREEN, LOW);
+  digitalWrite(ENABLE_VALVE_DO, LOW);
+}
+
+void loop(){
+}
 
 int previous_leddar_state = FAR_ZONE;
 char previous_rc_bitfield = 0;
 unsigned long last_request_time = micros();
 unsigned long last_telem_time = micros();
-void loop() {
+void loop2() {
   unsigned long start_time = micros();
   if (micros() - last_request_time > 1000000){
     last_request_time = micros();
