@@ -59,7 +59,8 @@ void request_detections(){
 bool buffer_detections(){
   unsigned int crc = 0xFFFF;
   unsigned long startTime = millis();
-  
+
+  // returns number of bytes available for reading from serial receive buffer, which is 64 bytes
   unsigned int count = Serial2.available();
   if (count > 0){
     Serial2.readBytes(receivedData+len, count);
@@ -91,13 +92,13 @@ unsigned int parse_detections(){
 //    Xbee.print("/");
 //    Xbee.print(Detections[i].Distance);
 //    Xbee.print("\t");
-//    Serial3.print(Detections[i].Segment);
-//    Serial3.print("/");
-//    Serial3.print(Detections[i].Distance);
-//    Serial3.print("\t");
+//    Serial.print(Detections[i].Segment);
+//    Serial.print("/");
+//    Serial.print(Detections[i].Distance);
+//    Serial.print(" ");
   }
 //  Xbee.print("\r\n");
-//  Serial3.print("\n");
+//  Serial.println();
   return detection_count;
 }
 
@@ -132,29 +133,83 @@ Detection get_min_detection (unsigned int num_detections) {
 }
 
 Object_call call_nearest_obj (unsigned int num_detections) {
-  float min_distance = Detections[(num_detections - 1)].Distance;
+  unsigned int min_distance = Detections[(num_detections - 1)].Distance;
   Detection min_detection = Detections[(num_detections - 1)];
-  float right_edge = 16.0;
+  float right_edge = 0.0;
   float left_edge = 0.0;
+  Serial.print(Detections[(num_detections - 1)].Segment);
+  Serial.print("/");
+  Serial.print(Detections[(num_detections - 1)].Distance);
+  Serial.print("\t");
 
   // loop is backwards because Leddar is mounted upside down!
+  Object_call Objects[8];
+  unsigned int num_objects = 0;
   for (int i = num_detections - 2; i >= 0; i--) {
     int delta = Detections[i].Distance - min_distance;
-    if (delta < -90) {
-      left_edge = (float) (15 - Detections[i].Segment);
+    if (delta < -30) {
+      left_edge = 15 - (char) Detections[i].Segment;
+      Serial.print("LEFT\t");
+      Serial.print(Detections[i].Segment);
+      Serial.print("/");
+      Serial.print(Detections[i].Distance);
+      Serial.print("\t");
       min_distance = Detections[i].Distance;
-      right_edge = (float) (16 - i);
-    } else if (delta > 90) {
-      right_edge = (float) (16 - Detections[i].Segment);
+//      right_edge = (float) (16 - (int) Detections[i].Segment);
+//      Serial.print(Detections[i].Segment);
+//      Serial.print("/");
+//      Serial.print(Detections[i].Distance);
+//      Serial.print("\t");
+    } else if (delta > 30) {
+      if (left_edge > right_edge) {
+        Serial.print("RIGHT\t");
+        right_edge = 15 - (char) Detections[i].Segment;
+        Objects[num_objects].Distance = min_distance;
+        Objects[num_objects].Left_edge = left_edge;
+        Objects[num_objects].Right_edge = right_edge;
+        num_objects++;
+        min_distance = Detections[i].Distance;
+      } else {
+        min_distance = Detections[i].Distance;
+      }
+      Serial.print(Detections[i].Segment);
+      Serial.print("/");
+      Serial.print(Detections[i].Distance);
+      Serial.print("\t");
     } else {
-      if (Detections[i].Segment == 15) {
-        left_edge = 0.0;
+      if (Detections[i].Distance < min_distance) { min_distance = Detections[i].Distance; }
+      Serial.print(Detections[i].Segment);
+      Serial.print("/");
+      Serial.print(Detections[i].Distance);
+      Serial.print("\t");
+      if (Detections[i].Segment == 0) {
+        if (left_edge > right_edge) {
+          right_edge = 16.0;
+          Objects[num_objects].Distance = min_distance;
+          Objects[num_objects].Left_edge = left_edge;
+          Objects[num_objects].Right_edge = right_edge;
+          num_objects++;
+        }
       }
     }
   }
-  Object_call Nearest_obj;
-  Nearest_obj.Distance = min_distance;
-  Nearest_obj.Angle = (left_edge + right_edge) / 2 - 8;
+
+  Object_call Nearest_obj = Objects[0];
+  for (int i = 1; i < num_objects; i++) {
+    if (Objects[i].Distance < Nearest_obj.Distance) {
+      Nearest_obj = Objects[i];
+    }
+  }
+//  Nearest_obj.Angle = (left_edge + right_edge) / 2 - 8;
+//  Serial.print(Nearest_obj.Left_edge);
+//  Serial.print("\t");
+//  Serial.print(Nearest_obj.Right_edge);
+//  Serial.print("\t");
+  Serial.print("Nearest/");
+  Serial.print(Nearest_obj.Distance);
+  Serial.print("/");
+  Serial.print(((float) Nearest_obj.Left_edge + (float) Nearest_obj.Right_edge) / 2 - 8);
+  Serial.println();
   return Nearest_obj;
 }
 
