@@ -13,6 +13,15 @@ enum RCinterrupts {
 //  ELEVATOR = digitalPinToInterrupt(3),
 };
 
+bool buffer_rc_data();
+
+void parse_sbus();
+
+struct RCPacket {
+  char bitfield;
+  
+};
+
 // set up timers 3 and 4 for control inputs.
 
 void attachRCInterrupts();

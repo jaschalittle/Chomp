@@ -182,16 +182,23 @@ Object_call call_nearest_obj (unsigned int num_detections) {
       Serial.print("/");
       Serial.print(Detections[i].Distance);
       Serial.print("\t");
-      if (Detections[i].Segment == 0) {
-        if (left_edge > right_edge) {
-          right_edge = 16.0;
-          Objects[num_objects].Distance = min_distance;
-          Objects[num_objects].Left_edge = left_edge;
-          Objects[num_objects].Right_edge = right_edge;
-          num_objects++;
-        }
-      }
+//      if (Detections[i].Segment == 0) {
+//        if (left_edge > right_edge) {
+//          right_edge = 16.0;
+//          Objects[num_objects].Distance = min_distance;
+//          Objects[num_objects].Left_edge = left_edge;
+//          Objects[num_objects].Right_edge = right_edge;
+//          num_objects++;
+//        }
+//      }
     }
+  }
+  if (left_edge > right_edge) {
+    right_edge = 16.0;
+    Objects[num_objects].Distance = min_distance;
+    Objects[num_objects].Left_edge = left_edge;
+    Objects[num_objects].Right_edge = right_edge;
+    num_objects++;
   }
 
   Object_call Nearest_obj = Objects[0];
@@ -209,7 +216,8 @@ Object_call call_nearest_obj (unsigned int num_detections) {
   Serial.print(Nearest_obj.Distance);
   Serial.print("/");
   Serial.print(((float) Nearest_obj.Left_edge + (float) Nearest_obj.Right_edge) / 2 - 8);
-  Serial.println();
+  Serial.print("\t");
+//  Serial.println();
   return Nearest_obj;
 }
 

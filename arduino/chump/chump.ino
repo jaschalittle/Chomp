@@ -10,6 +10,9 @@ void setup() {
   request_detections();
   pwm_output_setup();
   Serial.begin(115200);
+  Serial3.begin(100000);
+  Serial3.setTimeout(10);
+//  Serial3.begin(57600);
 }
 
 char previous_rc_bitfield = 0;
@@ -25,13 +28,21 @@ float angle = 0.0;
 // setup function needs to put these at appropriate neutral values. need some global enable too to make sure that radio contact 
 // is ensured! set another pin to self drive mode, and that mode can do something like spin left for 1s, then right for 1s, and so on 
 // for demonstration
+unsigned long last_loop_begin = micros();
+
 void loop() {
+//  Serial.println(micros() - last_loop_begin);
+//  last_loop_begin = micros();
 
   unsigned long start_time = micros();
   if (micros() - last_request_time > 1000000) {
     last_request_time = micros();
     request_detections();
   }
+
+  aileron_duty = get_aileron();
+  elevator_duty = get_elevator();
+  throttle_duty = get_throttle();
   
   bool complete = buffer_detections();
   if (complete) {
@@ -39,7 +50,7 @@ void loop() {
     last_request_time = micros();
 //    int current_leddar_state = get_state(detection_count);
     request_detections();
-    Detection min_detection = get_min_detection(detection_count);
+//    Detection min_detection = get_min_detection(detection_count);
 //    if (min_detection.Segment < 7) {
 //      steer_bias = 0.01;
 //    } else if (min_detection.Segment > 8) { 
@@ -47,11 +58,16 @@ void loop() {
 //    } else {
 //      steer_bias = 0.01;
 //    }
-    angle = 8 - min_detection.Segment;
+//    angle = 8 - min_detection.Segment;
 
 //    Nearest_obj = call_nearest_obj(detection_count);
 //    angle = (Nearest_obj.Left_edge + Nearest_obj.Right_edge) / 2 - 8;
-    
+
+//    if (throttle_duty > 0.075) {
+//      Serial3.print(angle);
+//      Serial3.println(); 
+//    }
+//    Serial3.print("error/");
 //    Serial.print(Nearest_obj.Distance);
 //    Serial.print("\t");
 //    Serial.print(Nearest_obj.Angle, 4);
@@ -61,9 +77,12 @@ void loop() {
 //    Serial.println();
   }
 
-  aileron_duty = get_aileron();
-  elevator_duty = get_elevator();
-  throttle_duty = get_throttle();
+  bool rc_complete = buffer_rc_data();
+
+  if (rc_complete) {
+    parse_sbus();
+  }
+
   float l_tread_mix = pwm_neutral - (pwm_neutral - aileron_duty) - (pwm_neutral - elevator_duty);
   float r_tread_mix = pwm_neutral - (pwm_neutral - aileron_duty) + (pwm_neutral - elevator_duty);
 
