@@ -103,12 +103,12 @@ float get_throttle() {
 char get_rc_bitfield() {
   char bitfield = 0;
   
-//  if ( WEAPONS_ENABLE_pwm_value > WEAPONS_ENABLE_threshold ){
-//    bitfield |= WEAPONS_ENABLE_BIT;
-//  }
-//  if ( FLAME_CTRL_pwm_value > FLAME_CTRL_threshold){
-//    bitfield |= FLAME_CTRL_BIT;
-//  }
+  if ( sbusChannels[WEAPONS_ENABLE] > WEAPONS_ENABLE_THRESHOLD ){
+    bitfield |= WEAPONS_ENABLE_BIT;
+  }
+  //if ( FLAME_CTRL_pwm_value > FLAME_CTRL_threshold){
+  //  bitfield |= FLAME_CTRL_BIT;
+  //}
   return bitfield;
 }
 

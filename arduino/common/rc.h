@@ -14,7 +14,10 @@ enum RCinterrupts {
 };
 
 enum SBUSChannels {
-  
+  WEAPONS_ENABLE = 0,
+  AUTO_HAMMER_ENABLE = 1,
+  HAMMER_CTRL = 2,
+  FLAME_CTRL = 3
 };
 
 // Boolean values coming in over RC are stored in a bitfield for ease of comparison
