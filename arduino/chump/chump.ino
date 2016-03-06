@@ -76,7 +76,6 @@ void loop() {
 //    Serial.print("\t");
 //    Serial.println();
   }
-
   bool rc_complete = buffer_rc_data();
 
   if (rc_complete) {
