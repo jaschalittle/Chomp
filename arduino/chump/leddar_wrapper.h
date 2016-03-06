@@ -21,10 +21,11 @@ struct Detection
 struct Object_call
 {
   unsigned int Distance;
-  float Angle;
+  char Left_edge;
+  char Right_edge;
 
   // Default constructor
-  Object_call() : Distance(0xFFFF), Angle(0.0) { }
+  Object_call() : Distance(0xFFFF), Left_edge(0.0), Right_edge(16.0) { }
 };
 
 void leddar_wrapper_init();

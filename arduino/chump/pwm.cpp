@@ -7,27 +7,49 @@ static const int pwm_freq = 50;
 
 // pins to use for l and r treads on chump
 // need to think about this for chomp
-static const int l_tread_pin = 45;
-static const int r_tread_pin = 46;
-static char* const tccr_reg_A = (char*) &TCCR5A;
-static char* const tccr_reg_B = (char*) &TCCR5B;
-static short* const icr_reg = (short*) &ICR5;
-static short* const l_tread_ocr_reg = (short*) &OCR5B;
-static short* const r_tread_ocr_reg = (short*) &OCR5A;
-static char* const ddr_reg = (char*) &DDRL;
-static const int l_tread_ddr_reg_bit = 4;
-static const int r_tread_ddr_reg_bit = 3;
+//static const int l_tread_pin = 45;
+//static const int r_tread_pin = 46;
+//static char* const tccr_reg_A = (char*) &TCCR5A;
+//static char* const tccr_reg_B = (char*) &TCCR5B;
+//static short* const icr_reg = (short*) &ICR5;
+//static short* const l_tread_ocr_reg = (short*) &OCR5B;
+//static short* const r_tread_ocr_reg = (short*) &OCR5A;
+//static char* const ddr_reg = (char*) &DDRL;
+//static const int l_tread_ddr_reg_bit = 4;
+//static const int r_tread_ddr_reg_bit = 3;
 
 //static const int l_tread_pin = 11;
 //static const int r_tread_pin = 12;
-//static const volatile uint8_t& tccr_reg_A = TCCR1A;
-//static const volatile uint8_t& tccr_reg_B = TCCR1B;
-//static const volatile uint16_t& icr_reg = ICR1;
-//static const volatile uint16_t& l_tread_ocr_reg = OCR1A;
-//static const volatile uint16_t& r_tread_ocr_reg = OCR1B;
-//static const volatile uint8_t& ddr_reg = DDRB;
+//static char* const tccr_reg_A = (char*) &TCCR1A;
+//static char* const tccr_reg_B = (char*) &TCCR1B;
+//static short* const icr_reg = (short*) &ICR1;
+//static short* const l_tread_ocr_reg = (short*) &OCR1A;
+//static short* const r_tread_ocr_reg = (short*) &OCR1B;
+//static char* const ddr_reg = (char*) &DDRB;
 //static const int l_tread_ddr_reg_bit = 5;
 //static const int r_tread_ddr_reg_bit = 6;
+
+//static const int l_tread_pin = 2;
+//static const int r_tread_pin = 3;
+//static char* const tccr_reg_A = (char*) &TCCR3A;
+//static char* const tccr_reg_B = (char*) &TCCR3B;
+//static short* const icr_reg = (short*) &ICR3;
+//static short* const l_tread_ocr_reg = (short*) &OCR3B;
+//static short* const r_tread_ocr_reg = (short*) &OCR3C;
+//static char* const ddr_reg = (char*) &DDRE;
+//static const int l_tread_ddr_reg_bit = 4;
+//static const int r_tread_ddr_reg_bit = 5;
+
+static const int l_tread_pin = 6;
+static const int r_tread_pin = 7;
+static char* const tccr_reg_A = (char*) &TCCR4A;
+static char* const tccr_reg_B = (char*) &TCCR4B;
+static short* const icr_reg = (short*) &ICR4;
+static short* const l_tread_ocr_reg = (short*) &OCR4A;
+static short* const r_tread_ocr_reg = (short*) &OCR4B;
+static char* const ddr_reg = (char*) &DDRH;
+static const int l_tread_ddr_reg_bit = 3;
+static const int r_tread_ddr_reg_bit = 4;
 
 
 void pwm_duty_L( float duty ) {
