@@ -98,3 +98,17 @@ float get_throttle() {
   return (sbusChannels[2] - 236) / 1639;
 //  return THROTTLE_pwm_val / 20000.0;
 }
+
+#define WEAPONS_ENABLE_THRESHOLD 500
+char get_rc_bitfield() {
+  char bitfield = 0;
+  
+//  if ( WEAPONS_ENABLE_pwm_value > WEAPONS_ENABLE_threshold ){
+//    bitfield |= WEAPONS_ENABLE_BIT;
+//  }
+//  if ( FLAME_CTRL_pwm_value > FLAME_CTRL_threshold){
+//    bitfield |= FLAME_CTRL_BIT;
+//  }
+  return bitfield;
+}
+

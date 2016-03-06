@@ -13,14 +13,22 @@ enum RCinterrupts {
 //  ELEVATOR = digitalPinToInterrupt(3),
 };
 
+enum SBUSChannels {
+  
+};
+
+// Boolean values coming in over RC are stored in a bitfield for ease of comparison
+// to detect state changes.
+enum RCBitfield {
+  WEAPONS_ENABLE_BIT = 1,
+  AUTO_HAMMER_ENABLE_BIT = 2,
+  HAMMER_CTRL_BIT = 4,
+  FLAME_CTRL_BIT = 8,
+};
+
 bool buffer_rc_data();
 
 void parse_sbus();
-
-struct RCPacket {
-  char bitfield;
-  
-};
 
 // set up timers 3 and 4 for control inputs.
 
@@ -31,5 +39,7 @@ float get_aileron();
 float get_elevator();
 
 float get_throttle();
+
+char get_rc_bitfield();
 
 #endif // RC_H
