@@ -1,27 +1,35 @@
 #ifndef RC_H
 #define RC_H
 
+// Mega2560 digital interrupt pins:
+// 2 (int.0), 3 (int.1), 18 (int.5), 19 (int.4), 20 (int.3), 21 (int.2)
+// Futaba Ch1 is ailerons, Ch2 is elevators. Same on Taranis 'chump' model.
 enum RCinterrupts {
-  WEAPONS_ENABLE = 0,
-  AUTO_HAMMER_ENABLE = 1,
-  HAMMER_CTRL = 2,
-  HAMMER_INTENSITY = 3,
-  FLAME_CTRL = 4,
+  AILERON = digitalPinToInterrupt(2),
+  ELEVATOR = digitalPinToInterrupt(3),
+  THROTTLE = digitalPinToInterrupt(18),
+  // for timed input
+//  AILERON = digitalPinToInterrupt(2),
+//  ELEVATOR = digitalPinToInterrupt(3),
 };
 
-enum RCBitfield {
-  WEAPONS_ENABLE_BIT = 1,
-  AUTO_HAMMER_ENABLE_BIT = 2,
-  HAMMER_CTRL_BIT = 4,
-  FLAME_CTRL_BIT = 8,
+bool buffer_rc_data();
+
+void parse_sbus();
+
+struct RCPacket {
+  char bitfield;
+  
 };
 
-extern volatile int WEAPONS_ENABLE_pwm_value;
-const static int WEAPONS_ENABLE_threshold = 500;
-
-extern volatile int FLAME_CTRL_pwm_value;
-const static int FLAME_CTRL_threshold = 500;
+// set up timers 3 and 4 for control inputs.
 
 void attachRCInterrupts();
+
+float get_aileron();
+
+float get_elevator();
+
+float get_throttle();
 
 #endif // RC_H
