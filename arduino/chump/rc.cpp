@@ -61,9 +61,9 @@ bool buffer_rc_data() {
 
 uint16_t sbusChannels [17];
 void parse_sbus(){
-  // two ways to parse channels. masking with 0b0000011111111111 seems more legible than bit shifting twice.
-//  sbusChannels[0]  = (sbusData[2] >> 5) << 8 | sbusData[1]; // 8, 3
-  
+  // perverse little endian-ish packet structure-- low bits come in first byte, remaining high bits
+  // in next byte
+  // NB: chars are promoted to shorts implicitly before bit shifts
   sbusChannels[0]  = (sbusData[2]  << 8  | sbusData[1])                           & 0x07FF; // 8, 3
   sbusChannels[1]  = (sbusData[3]  << 5  | sbusData[2] >> 3)                      & 0x07FF; // 6, 5
   sbusChannels[2]  = (sbusData[5]  << 10 | sbusData[4] << 2 | sbusData[3] >> 6)   & 0x07FF; // 1, 8, 2
@@ -88,7 +88,6 @@ void parse_sbus(){
     Serial.print("\t");
   }
   Serial.println();
-//  return true;
 }
 
 float get_aileron() {
