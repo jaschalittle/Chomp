@@ -2,16 +2,13 @@
 #include "leddar_wrapper.h"
 #include "sensors.h"
 #include "xbee.h"
-#include "telem.h"
+#include "telem.h" 
 #include "pins.h"
 
 void setup() {
-//  xbee_init();
-//  leddar_wrapper_init();
-//  attachRCInterrupts();
-//  request_detections();
-  pinMode(21, OUTPUT);
-  pinMode(22, OUTPUT);
+  xbee_init();
+  leddar_wrapper_init();
+  attachRCInterrupts();
   valve_reset();
   pinMode(ENABLE_VALVE_DO, OUTPUT);
   pinMode(THROW_VALVE_DO, OUTPUT);
@@ -21,18 +18,7 @@ void setup() {
 }
 
 bool enabled(){
-  return WEAPONS_ENABLE_pwm_value > WEAPONS_ENABLE_threshold;
-}
-
-char process_rc_bools(){
-  char bitfield = 0;
-  if ( WEAPONS_ENABLE_pwm_value > WEAPONS_ENABLE_threshold ){
-    bitfield |= WEAPONS_ENABLE_BIT;
-  }
-  if ( FLAME_CTRL_pwm_value > FLAME_CTRL_threshold){
-    bitfield |= FLAME_CTRL_BIT;
-  }
-  return bitfield;
+  return false;//WEAPONS_ENABLE_pwm_value > WEAPONS_ENABLE_threshold;
 }
 
 void retract(){
@@ -147,7 +133,7 @@ void loop2() {
   }
 
   // React to RC state changes
-  char current_rc_bitfield = process_rc_bools();
+  char current_rc_bitfield = get_rc_bitfield();
   if ( previous_rc_bitfield != current_rc_bitfield ){
     char diff = previous_rc_bitfield ^ current_rc_bitfield;
     // Global enable -> disable
