@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "telem.h"
 #include "xbee.h"
-#include "leddar_wrapper.h"
+#include "leddar_io.h"
 
 void write_int(int n){
   // Big endian
@@ -40,6 +40,7 @@ void send_sensor_telem(unsigned long loop_speed, float pressure){
   Xbee.write(packet_id);
   write_ulong(loop_speed);
   write_int((int)pressure);
+  //Xbee.print("\r\n");
 }
 
 void send_leddar_telem(Detection* detections, unsigned int count, LeddarState state){
@@ -47,14 +48,21 @@ void send_leddar_telem(Detection* detections, unsigned int count, LeddarState st
   char packet_id = 2;
   Xbee.write(packet_id);
   write_int(state);
-  int j=0;
-  for (int i = 0; i < 16; i++){
-    if(detections[j].Segment > i){
-      write_int(-1);
-    }else{
-      write_int(detections[j].Distance);
-      j++;
-    }
-  }
+//  int j=0;
+//  for (int i = 0; i < 16; i++){
+////    Xbee.print(detections[i].Segment);
+////    Xbee.print("/");
+////    Xbee.print(detections[i].Distance);
+////    Xbee.print(" " );
+//    //while(detections[j].Segment < i) { j++; }
+//    if(detections[j].Segment > i){
+//      write_short(0);
+//    }else{
+//      write_short((short)detections[j].Distance);
+//      j++;
+//    }
+//    delay(5);
+//  }
+//  //Xbee.print("\r\n");
 }
 

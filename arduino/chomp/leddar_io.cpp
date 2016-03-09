@@ -1,5 +1,5 @@
 #include "Arduino.h"
-#include "leddar_wrapper.h"
+#include "leddar_io.h"
 #include "xbee.h"
 
 HardwareSerial & LeddarSerial = Serial;

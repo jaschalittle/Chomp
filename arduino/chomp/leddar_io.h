@@ -1,5 +1,5 @@
-#ifndef LEDDAR_WRAPPER_H
-#define LEDDAR_WRAPPER_H
+#ifndef LEDDAR_IO_H
+#define LEDDAR_IO_H
 
 enum LeddarState {
   FAR_ZONE,
@@ -73,4 +73,4 @@ static byte CRC_LO[] =
     0x40
 };
 
-#endif  // LEDDAR_WRAPPER_H
+#endif  // LEDDAR_IO_H
