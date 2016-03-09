@@ -1,12 +1,6 @@
 #ifndef LEDDAR_IO_H
 #define LEDDAR_IO_H
 
-enum LeddarState {
-  FAR_ZONE,
-  ARM_ZONE,
-  HIT_ZONE
-};
-
 // Represents a measurement
 struct Detection
 {
@@ -23,7 +17,7 @@ void leddar_wrapper_init();
 void request_detections();
 bool buffer_detections();
 unsigned int parse_detections();
-LeddarState get_state(unsigned int detections);
+
 Detection* get_detections();
 
 

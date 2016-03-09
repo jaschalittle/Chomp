@@ -1,5 +1,6 @@
 #include "rc.h"
 #include "leddar_io.h"
+#include "autofire.h"
 #include "sensors.h"
 #include "xbee.h"
 #include "telem.h" 
@@ -106,7 +107,7 @@ void loop2() {
 //    Xbee.print(micros() - last_request_time);
 //    Xbee.print("\r\n");
     last_request_time = micros();
-    LeddarState current_leddar_state = get_state(detection_count);
+    LeddarState current_leddar_state = get_state(detection_count, get_detections());
     switch (current_leddar_state){
       case FAR_ZONE:
         digitalWrite(21, LOW);

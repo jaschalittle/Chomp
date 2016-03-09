@@ -2,6 +2,7 @@
 #include "telem.h"
 #include "xbee.h"
 #include "leddar_io.h"
+#include "autofire.h"
 
 void write_int(int n){
   // Big endian
