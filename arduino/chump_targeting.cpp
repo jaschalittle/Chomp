@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "leddar_wrapper.h"
+#include "chump_targeting.h"
 
 Detection get_min_detection (unsigned int num_detections) {
   Detection min_detection = Detections[0];
