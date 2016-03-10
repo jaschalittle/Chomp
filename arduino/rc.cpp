@@ -2,6 +2,8 @@
 #include "Arduino.h"
 #include "rc.h"
 
+HardwareSerial& SbusSerial = Serial3;
+
 // initialize PWM vals to neutral values
 static volatile int AILERON_pwm_val = 1520;
 static volatile int AILERON_prev_time = 0;
@@ -45,15 +47,15 @@ void attachRCInterrupts(){
 }
 
 unsigned char sbusData[25] = {0};
-bool buffer_rc_data() {
+bool bufferSbusData() {
   // returns number of bytes available for reading from serial receive buffer, which is 64 bytes
-  unsigned int count = Serial3.available();
+  unsigned int count = SbusSerial.available();
   if (count == 25){
-    Serial3.readBytes(sbusData, count);
+    SbusSerial.readBytes(sbusData, count);
     return true;
   } else if (count > 25) {
     unsigned char trash[64];
-    Serial3.readBytes(trash, count);
+    SbusSerial.readBytes(trash, count);
     return false;
   }
   return false;
