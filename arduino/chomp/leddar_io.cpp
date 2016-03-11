@@ -38,9 +38,9 @@ void request_detections(){
   unsigned int i = 0;
   unsigned char sendData[4] = {0};
   //clear serial buffer
-  while (Serial.available())
+  while (LeddarSerial.available())
   {
-    Serial.read();
+    LeddarSerial.read();
   }
   len = 0;
   memset(receivedData, 0, 256);
@@ -51,18 +51,18 @@ void request_detections(){
   CRC16(sendData, 2, false);
   for (i = 0; i<4; i++)
   {
-    Serial.write(sendData[i]);
+    LeddarSerial.write(sendData[i]);
   }
-  Serial.flush();
+  LeddarSerial.flush();
 }
 
 bool buffer_detections(){
   unsigned int crc = 0xFFFF;
   unsigned long startTime = millis();
   
-  unsigned int count = Serial.available();
+  unsigned int count = LeddarSerial.available();
   if (count > 0){
-    Serial.readBytes(receivedData+len, count);
+    LeddarSerial.readBytes(receivedData+len, count);
     len += count;
   }
   if (len > 3){
