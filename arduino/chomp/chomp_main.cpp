@@ -90,10 +90,10 @@ void chomp_setup() {
   fire_test();
 }
 
-int previous_leddar_state = FAR_ZONE;
-char previous_rc_bitfield = 0;
-unsigned long last_request_time = micros();
-unsigned long last_telem_time = micros();
+static int previous_leddar_state = FAR_ZONE;
+static char previous_rc_bitfield = 0;
+static unsigned long last_request_time = micros();
+static unsigned long last_telem_time = micros();
 void chomp_loop() {
   unsigned long start_time = micros();
   if (micros() - last_request_time > 1000000){
