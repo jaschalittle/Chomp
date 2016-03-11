@@ -25,8 +25,9 @@ enum SBUSChannels {
 enum RCBitfield {
   WEAPONS_ENABLE_BIT = 1,
   AUTO_HAMMER_ENABLE_BIT = 2,
-  HAMMER_CTRL_BIT = 4,
-  FLAME_CTRL_BIT = 8,
+  HAMMER_FIRE_BIT = 4,
+  HAMMER_RETRACT_BIT = 8,
+  FLAME_CTRL_BIT = 16,
 };
 
 bool bufferSbusData();

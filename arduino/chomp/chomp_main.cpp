@@ -1,4 +1,5 @@
 #include "Arduino.h"
+#include "chomp_main.h"
 #include "rc.h"
 #include "leddar_io.h"
 #include "autofire.h"
@@ -7,40 +8,32 @@
 #include "telem.h" 
 #include "pins.h"
 
+HardwareSerial& Debug = Serial;
 
-
-bool enabled(){
-  return false;//WEAPONS_ENABLE_pwm_value > WEAPONS_ENABLE_threshold;
+bool weapons_enabled(char bitfield){
+  return bitfield & WEAPONS_ENABLE_BIT;
 }
 
-void retract(){
-  Xbee.write("oy");
-}
-void fire(){
-  if (enabled()){
-    Xbee.write("yo");
-    retract();
+void retract(char bitfield){
+  if (weapons_enabled(bitfield)){
+    Debug.write("Retract\r\n");
   }
 }
 
-void flame_start(){
-  if (enabled()){
-    Xbee.write("burrrrn");
+void fire(char bitfield){
+  if (weapons_enabled(bitfield)){
+    Debug.write("Fire!\r\n");
+  }
+}
+
+void flame_start(char bitfield){
+  if (weapons_enabled(bitfield)){
+    Debug.write("Flame!\r\n");
   }
 }
 
 void flame_end(){
-  Xbee.write("sssssss");
-}
-
-void phidget_test(){
-  pinMode(14, OUTPUT);
-  digitalWrite(14, HIGH);
-  digitalWrite(21, HIGH);
-  delay(1000);
-  digitalWrite(14, LOW);
-  digitalWrite(21, LOW);
-  delay(1000);
+  Debug.write("Flame off\r\n");
 }
 
 void valve_reset(){
@@ -79,15 +72,16 @@ void fire_test(){
 }
 
 void chomp_setup() {
-  xbee_init();
+  Debug.begin(115200);
+  Serial3.begin(100000);
   leddar_wrapper_init();
   attachRCInterrupts();
-  valve_reset();
-  pinMode(ENABLE_VALVE_DO, OUTPUT);
-  pinMode(THROW_VALVE_DO, OUTPUT);
-  pinMode(VENT_VALVE_DO, OUTPUT);
-  pinMode(RETRACT_VALVE_DO, OUTPUT);
-  fire_test();
+//  valve_reset();
+//  pinMode(ENABLE_VALVE_DO, OUTPUT);
+//  pinMode(THROW_VALVE_DO, OUTPUT);
+//  pinMode(VENT_VALVE_DO, OUTPUT);
+//  pinMode(RETRACT_VALVE_DO, OUTPUT);
+//  fire_test();
 }
 
 static int previous_leddar_state = FAR_ZONE;
@@ -99,13 +93,10 @@ void chomp_loop() {
   if (micros() - last_request_time > 1000000){
     last_request_time = micros();
     request_detections();
-//    Xbee.print("Requesting\r\n");
   }
   bool complete = buffer_detections();
   if (complete){
     unsigned int detection_count = parse_detections();
-//    Xbee.print(micros() - last_request_time);
-//    Xbee.print("\r\n");
     last_request_time = micros();
     LeddarState current_leddar_state = get_state(detection_count, get_detections());
     switch (current_leddar_state){
@@ -122,7 +113,7 @@ void chomp_loop() {
       case HIT_ZONE:
         if (previous_leddar_state == ARM_ZONE) {
           digitalWrite(22, HIGH);
-          fire(/*hammer intensity*/);
+          fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
         } else {
           digitalWrite(21, HIGH);
           previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
@@ -133,32 +124,41 @@ void chomp_loop() {
     request_detections();
   }
 
-  // React to RC state changes
-  char current_rc_bitfield = get_rc_bitfield();
-  if ( previous_rc_bitfield != current_rc_bitfield ){
-    char diff = previous_rc_bitfield ^ current_rc_bitfield;
-    // Global enable -> disable
-    if( (diff & WEAPONS_ENABLE_BIT) && !(current_rc_bitfield & WEAPONS_ENABLE_BIT)){
-      flame_end();
+  if (bufferSbusData()){
+    parse_sbus();
+    // React to RC state changes
+    char current_rc_bitfield = get_rc_bitfield();
+    if ( previous_rc_bitfield != current_rc_bitfield ){
+      char diff = previous_rc_bitfield ^ current_rc_bitfield;
+      // Global enable -> disable
+      if( (diff & WEAPONS_ENABLE_BIT) && !(current_rc_bitfield & WEAPONS_ENABLE_BIT)){
+        flame_end();
+      }
+      // Flame on -> off
+      if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
+        flame_end();
+      }
+      // Flame off -> on
+      if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
+        flame_start(current_rc_bitfield);
+      }
+      // Manual hammer fire
+      if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
+        fire(current_rc_bitfield); // checks enable internally
+      }
+      if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
+        retract(current_rc_bitfield); // checks enable internally
+      }
     }
-    // Flame on -> off
-    if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
-      flame_end();
-    }
-    // Flame off -> on
-    if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
-      flame_start();
-    }
+    previous_rc_bitfield = current_rc_bitfield;
   }
-  previous_rc_bitfield = current_rc_bitfield;
-
   unsigned long loop_speed = micros() - start_time;
   // Read other sensors, to report out
   float pressure = readMLHPressure();
   float angle = readAngle();
 
-  if (micros() - last_telem_time > 15000){
-    send_sensor_telem(loop_speed, pressure);
+  if (micros() - last_telem_time > 200000){
+//    send_sensor_telem(loop_speed, pressure);
     last_telem_time = micros();
   }
 }
