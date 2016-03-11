@@ -101,14 +101,14 @@ float get_throttle() {
 //  return THROTTLE_pwm_val / 20000.0;
 }
 
-// TODO get real thresholds
-#define WEAPONS_ENABLE_THRESHOLD 500
-#define HAMMER_CTRL_THRESHOLD 500
+
+#define WEAPONS_ENABLE_THRESHOLD 1000 // (190 down - 1800 up)
+#define AUTO_HAMMER_THRESHOLD 1000 // (190 down - 1800 up)
+#define HAMMER_CTRL_THRESHOLD 500 // 900 neutral, 170 to 1800 
 #define FLAME_CTRL_THRESHOLD 500
-#define AUTO_HAMMER_THRESHOLD 500
+
 char get_rc_bitfield() {
   char bitfield = 0;
-  
   if ( sbusChannels[WEAPONS_ENABLE] > WEAPONS_ENABLE_THRESHOLD ){
     bitfield |= WEAPONS_ENABLE_BIT;
   }

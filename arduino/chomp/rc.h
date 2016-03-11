@@ -29,7 +29,7 @@ enum RCBitfield {
   FLAME_CTRL_BIT = 8,
 };
 
-bool buffer_rc_data();
+bool bufferSbusData();
 
 void parse_sbus();
 
