@@ -2,7 +2,7 @@
 #include "leddar_io.h"
 #include "xbee.h"
 
-HardwareSerial & LeddarSerial = Serial;
+HardwareSerial & LeddarSerial = Serial2;
 
 void leddar_wrapper_init(){
   LeddarSerial.begin(115200);
