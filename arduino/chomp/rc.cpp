@@ -87,28 +87,28 @@ void parse_sbus(){
 }
 
 float get_aileron() {
-  return (sbusChannels[0] - 236) / 1639;
-//  return AILERON_pwm_val / 20000.0;
+  // return (sbusChannels[0] - 236) / 1639;
+  return AILERON_pwm_val / 20000.0;
 }
 
 float get_elevator() {
-  return (sbusChannels[1] - 236) / 1639;
-//  return ELEVATOR_pwm_val / 20000.0;
+  // return (sbusChannels[1] - 236) / 1639;
+  return ELEVATOR_pwm_val / 20000.0;
 }
 
 float get_throttle() {
-  return (sbusChannels[2] - 236) / 1639;
-//  return THROTTLE_pwm_val / 20000.0;
+  // return (sbusChannels[2] - 236) / 1639;
+  return THROTTLE_pwm_val / 20000.0;
 }
 
-
-#define WEAPONS_ENABLE_THRESHOLD 1000 // (190 down - 1800 up)
-#define AUTO_HAMMER_THRESHOLD 1000 // (190 down - 1800 up)
-#define HAMMER_CTRL_THRESHOLD 500 // 900 neutral, 170 to 1800 
+// TODO get real thresholds
+#define WEAPONS_ENABLE_THRESHOLD 500
+#define HAMMER_CTRL_THRESHOLD 500
 #define FLAME_CTRL_THRESHOLD 500
-
+#define AUTO_HAMMER_THRESHOLD 500
 char get_rc_bitfield() {
   char bitfield = 0;
+  
   if ( sbusChannels[WEAPONS_ENABLE] > WEAPONS_ENABLE_THRESHOLD ){
     bitfield |= WEAPONS_ENABLE_BIT;
   }
