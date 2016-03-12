@@ -11,7 +11,9 @@ struct Object
   Object() : Distance(0xFFFF), Left_edge(0.0), Right_edge(16.0) { }
 };
 
-Detection get_min_detection(unsigned int num_detections);
-Object call_nearest_obj(unsigned int num_detections);
+float PidSteer(unsigned int num_detections, Detection* detections);
+// float error_derivative(float errors*);
+// Detection GetMinDetection(unsigned int num_detections, Detection* detections);
+// Object CallNearestObj(unsigned int num_detections, Detection* detections);
 
 #endif  // CHUMP_TARGETING_H

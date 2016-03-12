@@ -5,19 +5,19 @@
 HardwareSerial& SbusSerial = Serial3;
 
 // initialize PWM vals to neutral values
-static volatile int AILERON_pwm_val = 1520;
-static volatile int AILERON_prev_time = 0;
-static volatile int ELEVATOR_pwm_val = 1520;
-static volatile int ELEVATOR_prev_time = 0;
-static volatile int THROTTLE_pwm_val = 1520;
-static volatile int THROTTLE_prev_time = 0;
+static volatile int LEFT_RC_pwm_val = 1520;
+static volatile int LEFT_RC_prev_time = 0;
+static volatile int RIGHT_RC_pwm_val = 1520;
+static volatile int RIGHT_RC_prev_time = 0;
+static volatile int TARGETING_ENABLE_pwm_val = 1520;
+static volatile int TARGETING_ENABLE_prev_time = 0;
 
-void AILERON_rising();
-void AILERON_falling();
-void ELEVATOR_rising();
-void ELEVATOR_falling();
-void THROTTLE_rising();
-void THROTTLE_falling();
+void LEFT_RC_rising();
+void LEFT_RC_falling();
+void RIGHT_RC_rising();
+void RIGHT_RC_falling();
+void TARGETING_ENABLE_rising();
+void TARGETING_ENABLE_falling();
 
 // Forgive me, I know not what I do.
 #define CREATE_RISING_ISR( rc_interrupt )\
@@ -32,18 +32,18 @@ void rc_interrupt ## _falling() {\
   rc_interrupt ## _pwm_val = micros() - rc_interrupt ## _prev_time;\
 }
 
-CREATE_FALLING_ISR(AILERON);
-CREATE_RISING_ISR(AILERON);
-CREATE_FALLING_ISR(ELEVATOR);
-CREATE_RISING_ISR(ELEVATOR);
-CREATE_FALLING_ISR(THROTTLE);
-CREATE_RISING_ISR(THROTTLE);
+CREATE_FALLING_ISR(LEFT_RC);
+CREATE_RISING_ISR(LEFT_RC);
+CREATE_FALLING_ISR(RIGHT_RC);
+CREATE_RISING_ISR(RIGHT_RC);
+CREATE_FALLING_ISR(TARGETING_ENABLE);
+CREATE_RISING_ISR(TARGETING_ENABLE);
 
 // Set up all RC interrupts
 void attachRCInterrupts(){
-  attachInterrupt(AILERON, AILERON_rising, RISING);
-  attachInterrupt(ELEVATOR, ELEVATOR_rising, RISING);
-  attachInterrupt(THROTTLE, THROTTLE_rising, RISING);
+  attachInterrupt(LEFT_RC, LEFT_RC_rising, RISING);
+  attachInterrupt(RIGHT_RC, RIGHT_RC_rising, RISING);
+  attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
 }
 
 unsigned char sbusData[25] = {0};
@@ -66,7 +66,7 @@ void parse_sbus(){
   if (sbusData[0] == 0x0F && sbusData[24] == 0x00) {
     // perverse little endian-ish packet structure-- low bits come in first byte, remaining high bits
     // in next byte
-    // NB: chars are promoted to shorts implicitly before bit shifts
+    // NB: chars are promoted to shorts implicitly before bit shift operations
     sbusChannels[0]  = (sbusData[2]  << 8  | sbusData[1])                           & 0x07FF; // 8, 3
     sbusChannels[1]  = (sbusData[3]  << 5  | sbusData[2] >> 3)                      & 0x07FF; // 6, 5
     sbusChannels[2]  = (sbusData[5]  << 10 | sbusData[4] << 2 | sbusData[3] >> 6)   & 0x07FF; // 1, 8, 2
@@ -86,19 +86,16 @@ void parse_sbus(){
   }
 }
 
-float get_aileron() {
-  // return (sbusChannels[0] - 236) / 1639;
-  return AILERON_pwm_val / 20000.0;
+float get_left_rc() {
+  return LEFT_RC_pwm_val / 20000.0;
 }
 
-float get_elevator() {
-  // return (sbusChannels[1] - 236) / 1639;
-  return ELEVATOR_pwm_val / 20000.0;
+float get_right_rc() {
+  return RIGHT_RC_pwm_val / 20000.0;
 }
 
-float get_throttle() {
-  // return (sbusChannels[2] - 236) / 1639;
-  return THROTTLE_pwm_val / 20000.0;
+float get_targeting_enable() {
+  return TARGETING_ENABLE_pwm_val / 20000.0;
 }
 
 

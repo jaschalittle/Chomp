@@ -3,14 +3,11 @@
 
 // Mega2560 digital interrupt pins:
 // 2 (int.0), 3 (int.1), 18 (int.5), 19 (int.4), 20 (int.3), 21 (int.2)
-// Futaba Ch1 is ailerons, Ch2 is elevators. Same on Taranis 'chump' model.
+// Futaba Ch1 is ailerons, Ch2 is elevators. Same on Taranis 'chump drive' model.
 enum RCinterrupts {
-  AILERON = digitalPinToInterrupt(2),
-  ELEVATOR = digitalPinToInterrupt(3),
-  THROTTLE = digitalPinToInterrupt(18),
-  // for timed input
-//  AILERON = digitalPinToInterrupt(2),
-//  ELEVATOR = digitalPinToInterrupt(3),
+  LEFT_RC = digitalPinToInterrupt(2),
+  RIGHT_RC = digitalPinToInterrupt(3),
+  TARGETING_ENABLE = digitalPinToInterrupt(18),
 };
 
 enum SBUSChannels {
@@ -34,15 +31,13 @@ bool bufferSbusData();
 
 void parse_sbus();
 
-// set up timers 3 and 4 for control inputs.
-
 void attachRCInterrupts();
 
-float get_aileron();
+float get_left_rc();
 
-float get_elevator();
+float get_right_rc();
 
-float get_throttle();
+float get_targeting_enable();
 
 char get_rc_bitfield();
 

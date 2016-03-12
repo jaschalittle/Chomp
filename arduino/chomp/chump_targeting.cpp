@@ -2,7 +2,30 @@
 #include "leddar_io.h"
 #include "chump_targeting.h"
 
-Detection get_min_detection (unsigned int num_detections, Detection* detections) {
+static int const error_history_length = 4;
+static float errors[error_history_length] = {};
+
+float ErrorDerivative (float errors[]) {
+  // central finite difference, sixth order accuracy. omit central point in input
+  // requires 
+  // float first_deriv = -(1.0/60) * errors[0] + (3.0/20) * errors[1] - (3.0/4) * errors[2] + (3.0/4) * errors[3] - (3.0/20) * errors[4] + (1.0/60) * errors[5];
+
+  // backward finite difference approximation, third order accuracy
+  float first_deriv = -(1.0/3) * errors[0] + (3.0/2) * errors[1] - 3 * errors[2] + (11.0/16) * errors[3];
+  // backward finite difference approximation, fourth order accuracy
+  // float first_deriv = (1.0/4) * errors[0] - (4.0/3) * errors[1] + 3 * errors[2] - 4 * errors[1] + (25.0/12) * errors[4];
+  return first_deriv;
+}
+
+float ErrorIntegral (float errors[]) {
+  float error_sum = 0.0;
+  for (uint8_t i = 0; i < error_history_length; i++) {
+    error_sum += errors[i];
+  }
+  return error_sum;
+}
+
+Detection GetMinDetection (unsigned int num_detections, Detection* detections) {
   Detection min_detection = detections[0];
   for (unsigned int i = 1; i < num_detections; i++){
     if (detections[i].Distance < min_detection.Distance) {
@@ -13,7 +36,7 @@ Detection get_min_detection (unsigned int num_detections, Detection* detections)
   return min_detection;
 }
 
-Object call_nearest_obj (unsigned int num_detections, Detection* detections) {
+Object CallNearestObj (unsigned int num_detections, Detection* detections) {
   unsigned int min_distance = detections[(num_detections - 1)].Distance;
   Detection min_detection = detections[(num_detections - 1)];
   float right_edge = 0.0;
@@ -100,4 +123,22 @@ Object call_nearest_obj (unsigned int num_detections, Detection* detections) {
   Serial.print("\t");
 //  Serial.println();
   return nearest_obj;
+}
+
+static float p_term = 0.005;
+static float i_term = 0.005;
+static float d_term = 0.005;
+float PidSteer (unsigned int num_detections, Detection* detections) {
+  Object nearest_obj = CallNearestObj(num_detections, detections);
+
+  // update error history with new value
+  for (uint8_t i = 0; i < error_history_length - 1; i++) {
+    errors[i] = errors[i + 1];
+  }
+  float angle = ((float) nearest_obj.Left_edge + (float) nearest_obj.Right_edge) / 2 - 8;
+  errors[error_history_length - 1] = angle;
+
+  float error_derivative = ErrorDerivative(errors);
+  float steer_bias = p_term * angle + d_term * error_derivative;
+  return steer_bias;
 }
