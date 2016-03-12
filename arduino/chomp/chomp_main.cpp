@@ -90,8 +90,8 @@ static int previous_leddar_state = FAR_ZONE;
 static char previous_rc_bitfield = 0;
 static unsigned long last_request_time = micros();
 static unsigned long last_telem_time = micros();
-static float left_rc_duty = pwm_neutral;
-static float right_rc_duty = pwm_neutral;
+static float left_rc_duty = PWM_NEUTRAL;
+static float right_rc_duty = PWM_NEUTRAL;
 void chomp_loop() {
   unsigned long start_time = micros();
   if (micros() - last_request_time > 1000000){
