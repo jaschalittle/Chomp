@@ -23,8 +23,8 @@ void chump_setup() {
 }
 
 static char previous_rc_bitfield = 0;
-static float left_rc_duty = pwm_neutral;
-static float right_rc_duty = pwm_neutral;
+static float left_rc_duty = PWM_NEUTRAL;
+static float right_rc_duty = PWM_NEUTRAL;
 static unsigned long last_request_time = micros();
 static float steer_bias = 0.0; // positive turns right, negative turns left
 Object Nearest_obj;
@@ -67,7 +67,7 @@ void chump_loop() {
 
   // right side value needs to be reversed for chump because of motor configuration. might differ on chomp.
   float l_tread_mix = left_rc_duty;
-  float r_tread_mix = pwm_neutral + (pwm_neutral - right_rc_duty);
+  float r_tread_mix = PWM_NEUTRAL + (PWM_NEUTRAL - right_rc_duty);
 
   bool targeting_enable = get_targeting_enable() > 0.09;
   if (targeting_enable) {

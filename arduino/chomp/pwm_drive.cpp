@@ -70,8 +70,8 @@ void pwm_duty_R( float duty ) {
 void pwm_output_setup() {
   
   // set output PWM duty to neutral before enabling output
-  pwm_duty_L(pwm_neutral);
-  pwm_duty_R(pwm_neutral);
+  pwm_duty_L(PWM_NEUTRAL);
+  pwm_duty_R(PWM_NEUTRAL);
   
   // set timer TOP (ICRn) to counter needed for PWM freq, prescaled 2 MHz / PWM freq in Hz
   int top = 2000000 / pwm_freq;

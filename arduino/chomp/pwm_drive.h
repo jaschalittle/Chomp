@@ -1,7 +1,7 @@
 #ifndef PWM_DRIVE_H
 #define PWM_DRIVE_H
 
-const float pwm_neutral = 1500/20000.0;
+const float PWM_NEUTRAL = 1500/20000.0;
 
 void pwm_duty_L(float duty);
 
