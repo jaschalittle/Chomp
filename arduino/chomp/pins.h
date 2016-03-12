@@ -1,8 +1,8 @@
 #ifndef PINS_H
 #define PINS_H
 
-#define GREEN 8
-#define RED 6
+#define GREEN 5
+#define RED 4
 
 // RC fast interrupt channels (note: these are not pin numbers, they are interrupt numbers!)
 #define WEAPON_ENABLE 5
