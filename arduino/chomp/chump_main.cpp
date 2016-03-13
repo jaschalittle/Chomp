@@ -10,16 +10,17 @@
 #include "telem.h"
 #include "pins.h"
 
-void chump_setup() {
-  xbee_init();
-  leddar_wrapper_init();
+static HardwareSerial& Debug = Serial;
+static HardwareSerial& Sbus = Serial3;
+
+void chumpSetup() {
+  leddarWrapperInit();
   attachRCInterrupts();
-  request_detections();
-  pwm_output_setup();
-  Serial.begin(115200);
-  Serial3.begin(100000);
-  Serial3.setTimeout(10);
-//  Serial3.begin(57600);
+  requestDetections();
+  pwmOutputSetup();
+  Debug.begin(115200);
+  Sbus.begin(100000);
+  Sbus.setTimeout(10);
 }
 
 static char previous_rc_bitfield = 0;
@@ -27,8 +28,8 @@ static float left_rc_duty = PWM_NEUTRAL;
 static float right_rc_duty = PWM_NEUTRAL;
 static unsigned long last_request_time = micros();
 static float steer_bias = 0.0; // positive turns right, negative turns left
-Object Nearest_obj;
-static float target_angle = 0.0;
+// Object Nearest_obj;
+// static float target_angle = 0.0;
 
 // new loop for chump driving should get pwm values set by interrupts to send out pwm to output pins, which will go to motor controllers. 
 // setup function needs to put these at appropriate neutral values. need some global enable too to make sure that radio contact 
@@ -36,47 +37,59 @@ static float target_angle = 0.0;
 // for demonstration
 unsigned long last_loop_begin = micros();
 
-void chump_loop() {
+void chumpLoop() {
 //  Serial.println(micros() - last_loop_begin);
 //  last_loop_begin = micros();
 
   unsigned long start_time = micros();
   if (micros() - last_request_time > 1000000) {
     last_request_time = micros();
-    request_detections();
+    requestDetections();
   }
   
   // check if there is new Leddar data
-  bool complete = buffer_detections();
+  bool complete = bufferDetections();
   if (complete) {
-    unsigned int detection_count = parse_detections();
+    unsigned int detection_count = parseDetections();
     last_request_time = micros();
-    int current_leddar_state = get_state(detection_count, get_detections());
-    request_detections();
-    steer_bias = PidSteer(detection_count, get_detections());
+    int current_leddar_state = getState(detection_count, getDetections());
+    requestDetections();
+    steer_bias = pidSteer(detection_count, getDetections());
   }
 
   // should this be renamed to weapons_rc for clarity?
   bool rc_complete = bufferSbusData();
   if (rc_complete) {
-    parse_sbus();
+    parseSbus();
   }
 
-  left_rc_duty = get_left_rc();
-  right_rc_duty = get_right_rc();
+  left_rc_duty = getLeftRc();
+  right_rc_duty = getRightRc();
 
   // right side value needs to be reversed for chump because of motor configuration. might differ on chomp.
   float l_tread_mix = left_rc_duty;
   float r_tread_mix = PWM_NEUTRAL + (PWM_NEUTRAL - right_rc_duty);
 
-  bool targeting_enable = get_targeting_enable() > 0.09;
-  if (targeting_enable) {
+  bool targetingEnable = getTargetingEnable() > 0.09;
+//   float tuning_offset = 0.005;
+  if (targetingEnable) {
     l_tread_mix += steer_bias;
     r_tread_mix += steer_bias;
+    Debug.print(steer_bias);
+    Debug.println();
+//     l_tread_mix += tuning_offset;
+//     r_tread_mix -= tuning_offset;
+//   } else {
+//     l_tread_mix -= tuning_offset;
+//     r_tread_mix += tuning_offset;
   }
 
-  pwm_duty_L(l_tread_mix);
-  pwm_duty_R(r_tread_mix);
+  pwmDutyL(l_tread_mix);
+  pwmDutyR(r_tread_mix);
+  Debug.print(l_tread_mix, 5);
+  Debug.print(" ");
+  Debug.print(r_tread_mix, 5);
+  Debug.println();
 }
 
 

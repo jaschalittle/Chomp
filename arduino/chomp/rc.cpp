@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include "rc.h"
 
-HardwareSerial& SbusSerial = Serial3;
+static HardwareSerial& Sbus = Serial3;
 
 // initialize PWM vals to neutral values
 static volatile int LEFT_RC_pwm_val = 1520;
@@ -49,20 +49,20 @@ void attachRCInterrupts(){
 unsigned char sbusData[25] = {0};
 bool bufferSbusData() {
   // returns number of bytes available for reading from serial receive buffer, which is 64 bytes
-  unsigned int count = SbusSerial.available();
+  unsigned int count = Sbus.available();
   if (count == 25){
-    SbusSerial.readBytes(sbusData, count);
+    Sbus.readBytes(sbusData, count);
     return true;
   } else if (count > 25) {
     unsigned char trash[64];
-    SbusSerial.readBytes(trash, count);
+    Sbus.readBytes(trash, count);
     return false;
   }
   return false;
 }
 
 uint16_t sbusChannels [17];
-void parse_sbus(){
+void parseSbus(){
   if (sbusData[0] == 0x0F && sbusData[24] == 0x00) {
     // perverse little endian-ish packet structure-- low bits come in first byte, remaining high bits
     // in next byte
@@ -86,15 +86,15 @@ void parse_sbus(){
   }
 }
 
-float get_left_rc() {
+float getLeftRc() {
   return LEFT_RC_pwm_val / 20000.0;
 }
 
-float get_right_rc() {
+float getRightRc() {
   return RIGHT_RC_pwm_val / 20000.0;
 }
 
-float get_targeting_enable() {
+float getTargetingEnable() {
   return TARGETING_ENABLE_pwm_val / 20000.0;
 }
 
@@ -105,7 +105,7 @@ float get_targeting_enable() {
 #define HAMMER_RETRACT_THRESHOLD 500
 #define FLAME_CTRL_THRESHOLD 500
 
-char get_rc_bitfield() {
+char getRcBitfield() {
   char bitfield = 0;
   if ( sbusChannels[WEAPONS_ENABLE] > WEAPONS_ENABLE_THRESHOLD ){
     bitfield |= WEAPONS_ENABLE_BIT;

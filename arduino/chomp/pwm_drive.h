@@ -3,14 +3,14 @@
 
 const float PWM_NEUTRAL = 1500/20000.0;
 
-void pwm_duty_L(float duty);
+void pwmDutyL(float duty);
 
-void pwm_duty_R(float duty);
+void pwmDutyR(float duty);
 
-void pwm_output_setup();
+void pwmOutputSetup();
 
-void targeting_disable();
+void targetingDisable();
 
-void targeting_enable();
+void targetingEnable();
 
 #endif // PWM_DRIVE_H

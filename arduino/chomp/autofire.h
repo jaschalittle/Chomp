@@ -10,6 +10,6 @@ enum LeddarState {
   HIT_ZONE
 };
 
-LeddarState get_state(unsigned int detection_count, Detection* detections);
+LeddarState getState(unsigned int detection_count, Detection* detections);
 
 #endif  // AUTOFIRE_H

@@ -9,7 +9,7 @@
 #define ARM_THRESHOLD 150
 #define FIRE_THRESHOLD 90
 #define CONTIG_THRESHOLD 2
-LeddarState get_state(unsigned int detection_count, Detection* detections){
+LeddarState getState(unsigned int detection_count, Detection* detections){
 
   int last_detected_segment = 0;
   int contiguous = 1;

@@ -2,7 +2,7 @@
 #include "sensors.h"
 #include "pins.h"
 
-float readMLHPressure(){
+float readMlhPressure(){
   int counts = analogRead(PRESSURE_AI);
   float voltage = counts * (5.0 / 1023);
   float pressure = (voltage - 0.5) * (500.0/4.0);

@@ -12,13 +12,13 @@ struct Detection
   Detection() : Segment(0), Distance(0xFFFF), Amplitude(0) { }
 };
 
-void leddar_wrapper_init();
+void leddarWrapperInit();
 
-void request_detections();
-bool buffer_detections();
-unsigned int parse_detections();
+void requestDetections();
+bool bufferDetections();
+unsigned int parseDetections();
 
-Detection* get_detections();
+Detection* getDetections();
 
 
 // Table of CRC values for highorder byte

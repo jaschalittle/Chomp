@@ -29,16 +29,16 @@ enum RCBitfield {
 
 bool bufferSbusData();
 
-void parse_sbus();
+void parseSbus();
 
 void attachRCInterrupts();
 
-float get_left_rc();
+float getLeftRc();
 
-float get_right_rc();
+float getRightRc();
 
-float get_targeting_enable();
+float getTargetingEnable();
 
-char get_rc_bitfield();
+char getRcBitfield();
 
 #endif // RC_H

@@ -8,16 +8,17 @@
 #include "telem.h" 
 #include "pins.h"
 
-HardwareSerial& Debug = Serial;
+static HardwareSerial& Debug = Serial;
+static HardwareSerial& Sbus = Serial3;
 
-bool weapons_enabled(char bitfield){
+bool weaponsEnabled(char bitfield){
   return bitfield & WEAPONS_ENABLE_BIT;
 }
 
-static bool hammerFired = 0;
+static bool hammer_fired = 0;
 void retract(char bitfield){
-  if (weapons_enabled(bitfield) && hammerFired){
-    hammerFired = 0;
+  if (weaponsEnabled(bitfield) && hammer_fired){
+    hammer_fired = 0;
     Debug.write("Retract\r\n");
     // Open vent
     digitalWrite(VENT_VALVE_DO, HIGH);
@@ -32,8 +33,8 @@ void retract(char bitfield){
 }
 
 void fire(char bitfield){
-  if (weapons_enabled(bitfield) && !hammerFired){
-    hammerFired = 1;
+  if (weaponsEnabled(bitfield) && !hammer_fired){
+    hammer_fired = 1;
     Debug.write("Fire!\r\n");
 
     // Seal vent (which is normally closed)
@@ -52,29 +53,29 @@ void fire(char bitfield){
   }
 }
 
-void flame_start(char bitfield){
-  if (weapons_enabled(bitfield)){
+void flameStart(char bitfield){
+  if (weaponsEnabled(bitfield)){
     Debug.write("Flame!\r\n");
   }
 }
 
-void flame_end(){
+void flameEnd(){
   Debug.write("Flame off\r\n");
 }
 
-void valve_reset(){
+void valveReset(){
   digitalWrite(ENABLE_VALVE_DO, LOW);
   digitalWrite(THROW_VALVE_DO, LOW);
   digitalWrite(VENT_VALVE_DO, LOW);
   digitalWrite(RETRACT_VALVE_DO, LOW);
 }
 
-void chomp_setup() {
+void chompSetup() {
   Debug.begin(115200);
-  Serial3.begin(100000);
-  leddar_wrapper_init();
+  Sbus.begin(100000);
+  leddarWrapperInit();
   attachRCInterrupts();
-  valve_reset();
+  valveReset();
   pinMode(ENABLE_VALVE_DO, OUTPUT);
   pinMode(THROW_VALVE_DO, OUTPUT);
   pinMode(VENT_VALVE_DO, OUTPUT);
@@ -90,17 +91,17 @@ static int previous_leddar_state = FAR_ZONE;
 static char previous_rc_bitfield = 0;
 static unsigned long last_request_time = micros();
 static unsigned long last_telem_time = micros();
-void chomp_loop() {
+void chompLoop() {
   unsigned long start_time = micros();
   if (micros() - last_request_time > 1000000){
     last_request_time = micros();
-    request_detections();
+    requestDetections();
   }
-  bool complete = buffer_detections();
+  bool complete = bufferDetections();
   if (complete){
-    unsigned int detection_count = parse_detections();
+    unsigned int detection_count = parseDetections();
     last_request_time = micros();
-    LeddarState current_leddar_state = get_state(detection_count, get_detections());
+    LeddarState current_leddar_state = getState(detection_count, getDetections());
     switch (current_leddar_state){
       case FAR_ZONE:
         digitalWrite(21, LOW);
@@ -123,27 +124,27 @@ void chomp_loop() {
         }
         break;
     }
-    send_leddar_telem(get_detections(), detection_count, current_leddar_state);
-    request_detections();
+    sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
+    requestDetections();
   }
 
   if (bufferSbusData()){
-    parse_sbus();
+    parseSbus();
     // React to RC state changes
-    char current_rc_bitfield = get_rc_bitfield();
+    char current_rc_bitfield = getRcBitfield();
     if ( previous_rc_bitfield != current_rc_bitfield ){
       char diff = previous_rc_bitfield ^ current_rc_bitfield;
       // Global enable -> disable
       if( (diff & WEAPONS_ENABLE_BIT) && !(current_rc_bitfield & WEAPONS_ENABLE_BIT)){
-        flame_end();
+        flameEnd();
       }
       // Flame on -> off
       if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
-        flame_end();
+        flameEnd();
       }
       // Flame off -> on
       if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
-        flame_start(current_rc_bitfield);
+        flameStart(current_rc_bitfield);
       }
       // Manual hammer fire
       if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
@@ -157,7 +158,7 @@ void chomp_loop() {
   }
   unsigned long loop_speed = micros() - start_time;
   // Read other sensors, to report out
-  float pressure = readMLHPressure();
+  float pressure = readMlhPressure();
   float angle = readAngle();
 
   if (micros() - last_telem_time > 200000){

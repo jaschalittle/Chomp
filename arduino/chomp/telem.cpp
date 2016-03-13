@@ -44,7 +44,7 @@ void send_sensor_telem(unsigned long loop_speed, float pressure){
   //Xbee.print("\r\n");
 }
 
-void send_leddar_telem(Detection* detections, unsigned int count, LeddarState state){
+void sendLeddarTelem(Detection* detections, unsigned int count, LeddarState state){
   write_short(terminator);
   char packet_id = 2;
   Xbee.write(packet_id);

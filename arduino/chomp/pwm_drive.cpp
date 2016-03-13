@@ -2,6 +2,9 @@
 #include "Arduino.h"
 #include "pwm_drive.h"
 
+// high PWM duty to left tread of chump is forward
+// low PWM duty to right tread of chump is backward
+
 // PWM output frequency in Hz
 static const int pwm_freq = 50;
 
@@ -52,7 +55,7 @@ static const int l_tread_ddr_reg_bit = 3;
 static const int r_tread_ddr_reg_bit = 4;
 
 
-void pwm_duty_L( float duty ) {
+void pwmDutyL( float duty ) {
   // turn off interrupts for atomic register operation
   noInterrupts();
   *l_tread_ocr_reg = 40000 * duty;
@@ -60,18 +63,18 @@ void pwm_duty_L( float duty ) {
 }
 
 // OC1B pin 12, OC5B pin 45
-void pwm_duty_R( float duty ) {
+void pwmDutyR( float duty ) {
   // turn off interrupts for atomic register operation
   noInterrupts();
   *r_tread_ocr_reg = 40000 * duty;
   interrupts();
 }
 
-void pwm_output_setup() {
+void pwmOutputSetup() {
   
   // set output PWM duty to neutral before enabling output
-  pwm_duty_L(PWM_NEUTRAL);
-  pwm_duty_R(PWM_NEUTRAL);
+  pwmDutyL(PWM_NEUTRAL);
+  pwmDutyR(PWM_NEUTRAL);
   
   // set timer TOP (ICRn) to counter needed for PWM freq, prescaled 2 MHz / PWM freq in Hz
   int top = 2000000 / pwm_freq;
@@ -87,13 +90,13 @@ void pwm_output_setup() {
   *ddr_reg = (1 << l_tread_ddr_reg_bit) | (1 << r_tread_ddr_reg_bit);
 }
 
-void targeting_disable() { 
+void targetingDisable() { 
   // set pin data direction to input so that Futabas on Roboteqs will take control
   // NEED TO SET LOW FIRST???
   *ddr_reg = (0 << l_tread_ddr_reg_bit) | (0 << r_tread_ddr_reg_bit);
 }
 
-void targeting_enable() {
+void targetingEnable() {
   // set pin data direction to output to take control from Futaba receivers on Roboteqs
   *ddr_reg = (1 << l_tread_ddr_reg_bit) | (1 << r_tread_ddr_reg_bit);
 }

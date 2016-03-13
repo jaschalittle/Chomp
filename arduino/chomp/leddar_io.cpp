@@ -4,7 +4,7 @@
 
 HardwareSerial & LeddarSerial = Serial2;
 
-void leddar_wrapper_init(){
+void leddarWrapperInit(){
   LeddarSerial.begin(115200);
 }
 
@@ -32,9 +32,10 @@ bool CRC16(byte *aBuffer, byte aLength, bool aCheck)
     return true;
   }
 }
+
 unsigned int len = 0;
 unsigned char receivedData[256] = {0};
-void request_detections(){
+void requestDetections(){
   unsigned int i = 0;
   unsigned char sendData[4] = {0};
   //clear serial buffer
@@ -56,7 +57,7 @@ void request_detections(){
   LeddarSerial.flush();
 }
 
-bool buffer_detections(){
+bool bufferDetections(){
   unsigned int crc = 0xFFFF;
   unsigned long startTime = millis();
   
@@ -76,7 +77,7 @@ bool buffer_detections(){
 }
 
 Detection Detections[50];
-unsigned int parse_detections(){
+unsigned int parseDetections(){
   if (!CRC16(receivedData, len-2, true)){
     return 0;
   }
@@ -97,7 +98,7 @@ unsigned int parse_detections(){
   return detection_count;
 }
 
-Detection* get_detections(){
+Detection* getDetections(){
   return Detections;
 }
 

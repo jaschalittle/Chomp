@@ -2,7 +2,7 @@
 #include "xbee.h"
 
 HardwareSerial & Xbee = Serial2;
-void xbee_init(){
+void xbeeInit(){
   Xbee.begin(57600);
 }
 
