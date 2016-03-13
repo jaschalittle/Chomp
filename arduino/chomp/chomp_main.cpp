@@ -82,7 +82,6 @@ void chompSetup() {
   digitalWrite(ENABLE_VALVE_DO, HIGH);
   digitalWrite(VENT_VALVE_DO, HIGH);
   delay(10);
-
 }
 
 static int previous_leddar_state = FAR_ZONE;
@@ -117,8 +116,8 @@ void chompLoop() {
       case HIT_ZONE:
         if (previous_leddar_state == ARM_ZONE) {
           digitalWrite(RED, HIGH);
-          pwm_duty_L(PWM_NEUTRAL);
-          pwm_duty_R(PWM_NEUTRAL);
+          pwmDutyL(PWM_NEUTRAL);
+          pwmDutyR(PWM_NEUTRAL);
           fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
         } else {
           digitalWrite(GREEN, HIGH);
@@ -158,12 +157,12 @@ void chompLoop() {
     }
     previous_rc_bitfield = current_rc_bitfield;
   }
-  left_rc_duty = get_left_rc();
-  right_rc_duty = get_right_rc();
+  left_rc_duty = getLeftRc();
+  right_rc_duty = getRightRc();
   float l_tread_mix = left_rc_duty;
   float r_tread_mix = PWM_NEUTRAL + (PWM_NEUTRAL - right_rc_duty);
-  pwm_duty_L(l_tread_mix);
-  pwm_duty_R(r_tread_mix);
+  pwmDutyL(l_tread_mix);
+  pwmDutyR(r_tread_mix);
   
   unsigned long loop_speed = micros() - start_time;
   // Read other sensors, to report out
