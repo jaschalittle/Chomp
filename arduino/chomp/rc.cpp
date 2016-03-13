@@ -1,6 +1,7 @@
 // Hook up all the RC interrupts. 
 #include "Arduino.h"
 #include "rc.h"
+#include "pins.h"
 
 
 // initialize PWM vals to neutral values

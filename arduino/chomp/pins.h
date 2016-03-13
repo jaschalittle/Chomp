@@ -20,10 +20,10 @@
 #define VENT_VALVE_DO 10
 #define RETRACT_VALVE_DO 9
 
-extern HardwareSerial& Debug = Serial;
-extern HardwareSerial& LeddarSerial = Serial2;
-extern HardwareSerial& Sbus = Serial3;
-// extern HardwareSerial& Xbee = Serial2;
+extern HardwareSerial& Debug;
+extern HardwareSerial& Xbee;
+extern HardwareSerial& LeddarSerial;
+extern HardwareSerial& Sbus;
 
 
 #endif

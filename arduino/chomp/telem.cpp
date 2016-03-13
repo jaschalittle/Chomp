@@ -3,6 +3,7 @@
 #include "xbee.h"
 #include "leddar_io.h"
 #include "autofire.h"
+#include "pins.h"
 
 void write_int(int n){
   // Big endian
