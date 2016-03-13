@@ -2,7 +2,6 @@
 #include "Arduino.h"
 #include "rc.h"
 
-static HardwareSerial& Sbus = Serial3;
 
 // initialize PWM vals to neutral values
 static volatile int LEFT_RC_pwm_val = 1520;

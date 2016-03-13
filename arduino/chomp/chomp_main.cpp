@@ -9,8 +9,6 @@
 #include "pins.h"
 #include "pwm_drive.h"
 
-static HardwareSerial& Debug = Serial;
-static HardwareSerial& Sbus = Serial3;
 
 bool weaponsEnabled(char bitfield){
   return bitfield & WEAPONS_ENABLE_BIT;

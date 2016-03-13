@@ -2,7 +2,6 @@
 #include "leddar_io.h"
 #include "chump_targeting.h"
 
-static HardwareSerial& Debug = Serial;
 
 static uint8_t const error_history_length = 4;
 static uint8_t error_history_index = 0;

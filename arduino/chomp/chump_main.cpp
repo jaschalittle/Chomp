@@ -10,8 +10,6 @@
 #include "telem.h"
 #include "pins.h"
 
-static HardwareSerial& Debug = Serial;
-static HardwareSerial& Sbus = Serial3;
 
 void chumpSetup() {
   leddarWrapperInit();
