@@ -7,7 +7,7 @@
 enum RCinterrupts {
   LEFT_RC = digitalPinToInterrupt(2),
   RIGHT_RC = digitalPinToInterrupt(3),
-  TARGETING_ENABLE = digitalPinToInterrupt(18),
+  TARGETING_ENABLE = digitalPinToInterrupt(20),
 };
 
 enum SBUSChannels {
