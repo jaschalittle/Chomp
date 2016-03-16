@@ -7,6 +7,8 @@
 
 // PWM output frequency in Hz
 static const int pwm_freq = 50;
+// extern const float PWM_NEUTRAL = 1500/20000.0;
+extern const float PWM_NEUTRAL = 0.0755;
 
 // pins to use for l and r treads on chump
 // need to think about this for chomp
