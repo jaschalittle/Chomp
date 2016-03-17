@@ -33,9 +33,9 @@ void parseSbus();
 
 void attachRCInterrupts();
 
-float getLeftRc();
+int16_t getLeftRc();
 
-float getRightRc();
+int16_t getRightRc();
 
 float getTargetingEnable();
 

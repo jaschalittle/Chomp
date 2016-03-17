@@ -141,10 +141,10 @@ Object callNearestObj (unsigned int num_detections, Detection* detections) {
   return nearest_obj;
 }
 
-static float p_term = 0.0005;
-static float i_term = 0.0005;
-static float d_term = 0.0005;
-float pidSteer (unsigned int num_detections, Detection* detections) {
+static float p_term = 100;
+static float i_term = 0;
+static float d_term = 0;
+int16_t pidSteer (unsigned int num_detections, Detection* detections) {
   Object nearest_obj = callNearestObj(num_detections, detections);
 
   float angle = ((float) nearest_obj.Left_edge + (float) nearest_obj.Right_edge) / 2 - 8;
@@ -153,8 +153,8 @@ float pidSteer (unsigned int num_detections, Detection* detections) {
   errors[error_history_index] = angle;
   error_history_index = (error_history_index + 1) % error_history_length;
 
-  float steer_bias = p_term * angle;
-//   float steer_bias = p_term * angle + d_term * errorDerivative();
+//   float steer_bias = p_term * angle;
+  uint16_t steer_bias = p_term * angle + d_term * errorDerivative();
 //   Debug.print(steer_bias);
 //   Debug.print(" ");
 //   Debug.print(angle);

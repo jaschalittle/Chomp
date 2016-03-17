@@ -7,7 +7,8 @@
 #include "xbee.h"
 #include "telem.h" 
 #include "pins.h"
-#include "pwm_drive.h"
+#include "drive.h"
+#include "SoftwareSerial.h"
 
 
 bool weaponsEnabled(char bitfield){
@@ -72,7 +73,6 @@ void chompSetup() {
   leddarWrapperInit();
   attachRCInterrupts();
   valveReset();
-  pwmOutputSetup();
   pinMode(GREEN, OUTPUT);
   pinMode(RED, OUTPUT);
   pinMode(ENABLE_VALVE_DO, OUTPUT);
@@ -88,8 +88,8 @@ static int previous_leddar_state = FAR_ZONE;
 static char previous_rc_bitfield = 0;
 static unsigned long last_request_time = micros();
 static unsigned long last_telem_time = micros();
-static float left_rc_duty = PWM_NEUTRAL;
-static float right_rc_duty = PWM_NEUTRAL;
+static int16_t left_drive_value = 0;
+static int16_t right_drive_value = 0;
 void chompLoop() {
   unsigned long start_time = micros();
   if (micros() - last_request_time > 1000000){
@@ -116,8 +116,8 @@ void chompLoop() {
       case HIT_ZONE:
         if (previous_leddar_state == ARM_ZONE) {
           digitalWrite(RED, HIGH);
-          pwmDutyL(PWM_NEUTRAL);
-          pwmDutyR(PWM_NEUTRAL);
+          driveL(0);
+          driveR(0);
           fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
         } else {
           digitalWrite(GREEN, HIGH);
@@ -157,12 +157,12 @@ void chompLoop() {
     }
     previous_rc_bitfield = current_rc_bitfield;
   }
-  left_rc_duty = getLeftRc();
-  right_rc_duty = getRightRc();
-  float l_tread_mix = left_rc_duty;
-  float r_tread_mix = PWM_NEUTRAL + (PWM_NEUTRAL - right_rc_duty);
-  pwmDutyL(l_tread_mix);
-  pwmDutyR(r_tread_mix);
+  left_drive_value = getLeftRc();
+  right_drive_value = getRightRc();
+  float l_tread_mix = left_drive_value;
+  float r_tread_mix = -right_drive_value;
+  driveL(l_tread_mix);
+  driveR(r_tread_mix);
   
   unsigned long loop_speed = micros() - start_time;
   // Read other sensors, to report out

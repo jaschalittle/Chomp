@@ -20,10 +20,15 @@
 #define VENT_VALVE_DO 10
 #define RETRACT_VALVE_DO 9
 
-extern HardwareSerial& Debug;
-extern HardwareSerial& Xbee;
-extern HardwareSerial& LeddarSerial;
-extern HardwareSerial& Sbus;
+// Forward declaration of SoftwareSerial class
+class SoftwareSerial;
+
+extern HardwareSerial& Debug;               // Serial, defined in chomp.ino
+extern HardwareSerial& Xbee;                // Serial1
+extern HardwareSerial& LeddarSerial;        // Serial2
+extern HardwareSerial& Sbus;                // Serial3
+extern SoftwareSerial& LeftWheelSerial;     // RX pin 22, TX pin 6
+extern SoftwareSerial& RightWheelSerial;    // RX pin 23, TX pin 7
 
 
 #endif

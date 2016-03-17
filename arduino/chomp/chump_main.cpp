@@ -6,9 +6,10 @@
 #include "chump_targeting.h"
 #include "sensors.h"
 #include "xbee.h"
-#include "pwm_drive.h"
+#include "drive.h"
 #include "telem.h"
 #include "pins.h"
+#include "SoftwareSerial.h"
 
 
 void printMiddleDistance(unsigned int num_detections, Detection* detections) {
@@ -41,18 +42,19 @@ void chumpSetup() {
   leddarWrapperInit();
   attachRCInterrupts();
   requestDetections();
-  pwmOutputSetup();
   Debug.begin(115200);
   Sbus.begin(100000);
   Sbus.setTimeout(10);
+  LeftWheelSerial.begin(115200);
+  RightWheelSerial.begin(115200);
 }
 
 static char previous_rc_bitfield = 0;
-static float left_rc_duty = PWM_NEUTRAL;
-static float right_rc_duty = PWM_NEUTRAL;
+static int16_t left_drive_value = 0;
+static int16_t right_drive_value = 0;
 bool targeting_enable = getTargetingEnable() > 0.09;
 static unsigned long last_request_time = micros();
-static float steer_bias = 0.0; // positive turns right, negative turns left
+static int16_t steer_bias = 0; // positive turns right, negative turns left
 // Object Nearest_obj;
 // static float target_angle = 0.0;
 
@@ -80,13 +82,13 @@ void chumpLoop() {
     int current_leddar_state = getState(detection_count, getDetections());
     requestDetections();
     // steer_bias = pidSteer(detection_count, getDetections());
-    if (targeting_enable && left_rc_duty <= 0.1) {
-        left_rc_duty += 0.000025;
-        right_rc_duty += 0.000025;
+    if (targeting_enable && left_drive_value <= 600) {
+        left_drive_value += 50;
+        right_drive_value += 50;
         printMiddleDistance(detection_count, getDetections());
-        Debug.print(left_rc_duty, 5);
+        Debug.print(left_drive_value);
         Debug.print("\t");
-        Debug.print(right_rc_duty, 5);
+        Debug.print(right_drive_value);
         Debug.println();
     }
   }
@@ -97,33 +99,28 @@ void chumpLoop() {
     parseSbus();
   }
 
-//   left_rc_duty = getLeftRc();
-//   right_rc_duty = getRightRc();
+//   left_drive_value = getLeftRc();
+//   right_drive_value = getRightRc();
 
   // right side value needs to be reversed for chump because of motor configuration. might differ on chomp.
   if (!targeting_enable) {
-    // left_rc_duty = PWM_NEUTRAL;
-    // right_rc_duty = PWM_NEUTRAL;
-    left_rc_duty = getLeftRc();
-    right_rc_duty = getRightRc();
+    // left_drive_value = 0;
+    // right_drive_value = 0;
+    left_drive_value = getLeftRc();
+    right_drive_value = getRightRc();
   }
 
   targeting_enable = getTargetingEnable() > 0.09;
 //   if (targetingEnable) {
-//     left_rc_duty += steer_bias;
-//     right_rc_duty += steer_bias;
+//     left_drive_value += steer_bias;
+//     right_drive_value += steer_bias;
 //     Debug.print(steer_bias);
 //     Debug.println();
 //   }
 
-  float l_tread_mix = left_rc_duty;
-  float r_tread_mix = PWM_NEUTRAL + (PWM_NEUTRAL - right_rc_duty);
+  float l_tread_mix = left_drive_value;
+  float r_tread_mix = -right_drive_value;
 
-  pwmDutyL(l_tread_mix);
-  pwmDutyR(r_tread_mix);
+  driveL(l_tread_mix);
+  driveR(r_tread_mix);
 }
-
-
-
-
-
