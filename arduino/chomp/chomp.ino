@@ -1,5 +1,5 @@
-#include "chump_main.h"
 #include "SoftwareSerial.h"
+#include "chomp_main.h"
 
 extern HardwareSerial& Debug = Serial;          // RX pin 0, TX pin 1
 extern HardwareSerial& Xbee = Serial1;          // RX pin 19, TX pin 18
@@ -12,10 +12,10 @@ extern SoftwareSerial& LeftWheelSerial = mySerial4;
 extern SoftwareSerial& RightWheelSerial = mySerial5;
 
 void setup(){
-  chumpSetup();
+  chompSetup();
 }
 
 void loop(){
-  chumpLoop();
+  chompLoop();
 }
 
