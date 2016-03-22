@@ -9,7 +9,7 @@ struct Detection
   unsigned int Amplitude;
   
   // Default constructor
-  Detection() : Segment(0), Distance(0xFFFF), Amplitude(0) { }
+  Detection() : Segment(0), Distance(10000), Amplitude(0) { }
 };
 
 void leddarWrapperInit();
