@@ -116,8 +116,7 @@ void chompLoop() {
       case HIT_ZONE:
         if (previous_leddar_state == ARM_ZONE) {
           digitalWrite(RED, HIGH);
-          driveL(0);
-          driveR(0);
+          drive(0, 0);
           fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
         } else {
           digitalWrite(GREEN, HIGH);
@@ -161,8 +160,7 @@ void chompLoop() {
   right_drive_value = getRightRc();
   float l_tread_mix = left_drive_value;
   float r_tread_mix = -right_drive_value;
-  driveL(l_tread_mix);
-  driveR(r_tread_mix);
+  drive(l_tread_mix, r_tread_mix);
   
   unsigned long loop_speed = micros() - start_time;
   // Read other sensors, to report out
