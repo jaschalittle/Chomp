@@ -1,8 +1,6 @@
 #ifndef DRIVE_H
 #define DRIVE_H
 
-void driveL(int16_t drive_value);
-
-void driveR(int16_t drive_value);
+void drive(int16_t l_drive_value, int16_t r_drive_value);
 
 #endif // DRIVE_H

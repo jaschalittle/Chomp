@@ -4,11 +4,12 @@
 #define GREEN 5
 #define RED 4
 
-// RC fast interrupt channels (note: these are not pin numbers, they are interrupt numbers!)
-#define WEAPON_ENABLE 5
-
-// RC pin bank channels
-
+// Drive RC input
+// Mega2560 digital interrupt pins:
+// 2 (int.0), 3 (int.1), 18 (int.5), 19 (int.4), 20 (int.3), 21 (int.2)
+#define FUTABA_CH1 2
+#define FUTABA_CH2 3
+#define FUTABA_CH5 20
 
 // Sensors
 #define PRESSURE_AI 7
@@ -20,15 +21,14 @@
 #define VENT_VALVE_DO 10
 #define RETRACT_VALVE_DO 9
 
-// Forward declaration of SoftwareSerial class
-class SoftwareSerial;
+// Drive control output (for CAN testing)
+// #define CHIP_SELECT_PIN 19
 
-extern HardwareSerial& Debug;               // Serial, defined in chomp.ino
-extern HardwareSerial& Xbee;                // Serial1
-extern HardwareSerial& LeddarSerial;        // Serial2
-extern HardwareSerial& Sbus;                // Serial3
-extern SoftwareSerial& LeftWheelSerial;     // RX pin 22, TX pin 6
-extern SoftwareSerial& RightWheelSerial;    // RX pin 23, TX pin 7
-
+// These are defined in chomp.ino
+extern HardwareSerial& Debug;
+extern HardwareSerial& Xbee;
+extern HardwareSerial& LeddarSerial;
+extern HardwareSerial& Sbus;
+extern HardwareSerial& DriveSerial;
 
 #endif

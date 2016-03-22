@@ -13,10 +13,10 @@ static volatile int TARGETING_ENABLE_pwm_val = 1520;
 static volatile int TARGETING_ENABLE_prev_time = 0;
 
 // values for converting RC PWM to Roboteq drive control (-1000 to 1000)
-static const int16_t pwm_min = 1000;
-static const int16_t pwm_max = 2000;
+static const int16_t pwm_min = 923;
+static const int16_t pwm_max = 2125;
 static const float deadband = 0.05;     // deadband is centered, so deadband/2 up and deadband/2 down
-static const int16_t pwm_neutral = 1520;
+static const int16_t pwm_neutral = 1524;
 static const int16_t pwm_range = (pwm_max - pwm_min) / 2;
 static const int16_t deadband_min = pwm_neutral - (pwm_max - pwm_min) * deadband / 2;
 static const int16_t deadband_max = pwm_neutral + (pwm_max - pwm_min) * deadband / 2;
@@ -98,8 +98,14 @@ void parseSbus(){
 int16_t getLeftRc() {
     int16_t drive_value = 0;
     if (LEFT_RC_pwm_val > deadband_max || LEFT_RC_pwm_val < deadband_min) {
-        drive_value = (LEFT_RC_pwm_val - pwm_neutral) / pwm_range;
+        drive_value = (float) (LEFT_RC_pwm_val - pwm_neutral) / pwm_range * 1000;
     }
+    // Debug.print(LEFT_RC_pwm_val);
+    // Debug.print("\t");
+    // Debug.print(drive_value);
+    // Debug.print("\t");
+    // Debug.print("\t");
+    // Debug.println();
     return drive_value;
     
     // return LEFT_RC_pwm_val / 20000.0;
@@ -108,7 +114,7 @@ int16_t getLeftRc() {
 int16_t getRightRc() {
     int16_t drive_value = 0;
     if (RIGHT_RC_pwm_val > deadband_max || RIGHT_RC_pwm_val < deadband_min) {
-        drive_value = (RIGHT_RC_pwm_val - pwm_neutral) / pwm_range;
+        drive_value = (float) (RIGHT_RC_pwm_val - pwm_neutral) / pwm_range * 1000;
     }
     return drive_value;
     
