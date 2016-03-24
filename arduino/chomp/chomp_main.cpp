@@ -15,6 +15,10 @@ bool weaponsEnabled(char bitfield){
   return bitfield & WEAPONS_ENABLE_BIT;
 }
 
+bool autofireEnabled(char bitfield){
+  return bitfield & AUTO_HAMMER_ENABLE_BIT;
+}
+
 static bool hammer_fired = 0;
 void retract(char bitfield){
   if (weaponsEnabled(bitfield) && hammer_fired){
@@ -68,6 +72,7 @@ void valveReset(){
 }
 
 void chompSetup() {
+  xbeeInit();
   Debug.begin(115200);
   Sbus.begin(100000);
   leddarWrapperInit();
@@ -118,6 +123,10 @@ void chompLoop() {
           digitalWrite(RED, HIGH);
           drive(0, 0);
           fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
+
+          if (autofireEnabled(previous_rc_bitfield)){
+            fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
+          }
         } else {
           digitalWrite(GREEN, HIGH);
           previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
@@ -164,11 +173,11 @@ void chompLoop() {
   
   unsigned long loop_speed = micros() - start_time;
   // Read other sensors, to report out
-//   float pressure = readMlhPressure();
-//   float angle = readAngle();
+   //float pressure = readMlhPressure();
+  float angle = readAngle();
 
   if (micros() - last_telem_time > 200000){
-//    send_sensor_telem(loop_speed, pressure);
+    //send_sensor_telem(loop_speed, pressure);
     last_telem_time = micros();
   }
 }

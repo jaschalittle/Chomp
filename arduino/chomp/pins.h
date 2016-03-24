@@ -11,9 +11,11 @@
 #define FUTABA_CH2 3
 #define FUTABA_CH5 20
 
+#define XBEE_CTS 8
+
 // Sensors
 #define PRESSURE_AI 7
-#define ANGLE_AI 15
+#define ANGLE_AI 3
 
 // Valve DOs
 #define ENABLE_VALVE_DO 12

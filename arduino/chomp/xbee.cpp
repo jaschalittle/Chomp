@@ -4,6 +4,7 @@
 
 
 void xbeeInit(){
-  Xbee.begin(57600);
+  Xbee.begin(115200);
+  pinMode(XBEE_CTS, INPUT);
 }
 

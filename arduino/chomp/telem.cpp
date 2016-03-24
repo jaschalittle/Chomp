@@ -5,51 +5,60 @@
 #include "autofire.h"
 #include "pins.h"
 
-void write_int(int n){
-  // Big endian
-  for (int i = 3; i >= 0; i--){
-    Xbee.write(0xFF & n >> (i*8)); 
+bool cts(){
+  return (digitalRead(XBEE_CTS) == LOW);
+}
+
+void write_int(char* packet, int n){
+  for (int i = 0; i < 4; i++){
+    packet[i] = 0xFF & n >> (i*8); 
   }
 }
 
-void write_ulong(unsigned long n){
-  // Big endian
-  for (int i = 3; i >= 0; i--){
-    Xbee.write(0xFF & n >> (i*8)); 
+void write_ulong(char* packet, unsigned long n){
+  for (int i = 0; i < 4; i++){
+    packet[i] = 0xFF & n >> (i*8); 
   }
 }
 
-void write_short(short n){
-  // Big endian
-  for (int i = 1; i >= 0; i--){
-    Xbee.write(0xFF & n >> (i*8)); 
+void write_short(char* packet, short n){
+  for (int i = 0; i < 2; i++){
+    packet[i] = 0xFF & n >> (i*8); 
   }
 }
 
-void write_float(float n){
+void write_float(char* packet, float n){
   // get access to the float as a byte-array:
   byte * data = (byte *) &n;
-  // Big endian
-  for (int i = 3; i >= 0; i--){
-    Xbee.write(data[i]); 
+   for (int i = 0; i < 4; i++){
+    packet[i] = data[i];
   }
 }
 
-short terminator = 0x5555;
+void write_terminator(char* packet){
+  packet[0] = 0x55;
+  packet[1] = 0x55;
+}
+
 void send_sensor_telem(unsigned long loop_speed, float pressure){
-  write_short(terminator);
-  char packet_id = 1;
-  Xbee.write(packet_id);
-  write_ulong(loop_speed);
-  write_int((int)pressure);
-  //Xbee.print("\r\n");
+  const unsigned int LEN = 11;
+  char packet[LEN];
+  write_terminator(packet);
+  packet[3] = 1; // packet id
+  
+  write_ulong(packet+3, loop_speed);
+  write_int(packet+7, (int)pressure);
+  if(cts()){
+    Xbee.write(packet, LEN);
+  }
+  
 }
 
 void sendLeddarTelem(Detection* detections, unsigned int count, LeddarState state){
-  write_short(terminator);
-  char packet_id = 2;
-  Xbee.write(packet_id);
-  write_int(state);
+//  write_short(terminator);
+//  char packet_id = 2;
+//  Xbee.write(packet_id);
+//  write_int(state);
 //  int j=0;
 //  for (int i = 0; i < 16; i++){
 ////    Xbee.print(detections[i].Segment);
