@@ -12,8 +12,8 @@ float readMlhPressure(){
 // 0 deg is 10% of input voltage, empirically observed to be 100 counts
 // 360 deg is 90% of input voltage, empirically observed to be 920 counts
 float readAngle(){
-  int counts = analogRead(ANGLE_AI);
-  float angle = (counts - 100.0) * (360.0 / 820.0);
+  short counts = analogRead(ANGLE_AI);
+  float angle = (counts - 110.0) * (180.0 / 419.0);
   return angle;
 }
 

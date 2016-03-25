@@ -14,8 +14,8 @@
 #define XBEE_CTS 8
 
 // Sensors
-#define PRESSURE_AI 7
-#define ANGLE_AI 3
+#define PRESSURE_AI A7
+#define ANGLE_AI A3
 
 // Valve DOs
 #define ENABLE_VALVE_DO 12
