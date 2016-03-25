@@ -23,10 +23,28 @@ bool autofireEnabled(char bitfield){
     return bitfield & AUTO_HAMMER_ENABLE_BIT;
 }
 
+float angularVelocity () {
+    // This function could filter low angle values and ignore them for summing. If we only rail to 0V, we could still get a velocity.
+    float angle_traversed = 0.0;
+    float last_angle = readAngle();
+    long read_time = micros();
+    // Take 50 readings. This should be 5-10 ms.
+    for (int i = 0; i < 50; i++) {
+        float new_angle = readAngle();
+        angle_traversed += abs(new_angle - last_angle);
+        last_angle = new_angle;
+    }
+    read_time = micros() - read_time / 1000;    // convert to milliseconds
+    float angular_velocity = angle_traversed / read_time * 1000; // degrees per second
+}
+
 void retract(char bitfield){
     float angle = readAngle();
+    float angular_velocity = angularVelocity();
+    // Do we want to check cylinder pressure here?
+    // Consider inferring hammer velocity here and requiring that it be below some threshold
     // Only retract if hammer is forward
-    if (weaponsEnabled(bitfield) && angle > 90.0) {
+    if (weaponsEnabled(bitfield) && angle > 90.0 && angular_velocity < 5.0) {
         // Debug.write("Retract\r\n");
         // Open vent
         digitalWrite(VENT_VALVE_DO, HIGH);
@@ -99,6 +117,8 @@ void fire(char bitfield){
             delay(10);
             // Open vent valve after 1 second even if target angle not achieved
             digitalWrite(VENT_VALVE_DO, HIGH);
+            
+            // Send buffered throw data over serial
             for (int i = 0; i < datapoints_collected; i++) {
                 Debug.print(angle_data[i], DEC);
                 Debug.print("\t");
@@ -188,7 +208,7 @@ void chompLoop() {
                 //   fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
 
                     if (autofireEnabled(previous_rc_bitfield)){
-                        // I think if serial connection to SBUS lost, such that no SBUS failsafe received, this will remain stale and could be unsafe
+                        // I think if serial connection to SBUS is lost, such that no SBUS failsafe received, this will remain stale and could be unsafe
                         fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
                     }
                 } else {
