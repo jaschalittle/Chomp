@@ -17,3 +17,17 @@ float readAngle(){
   return angle;
 }
 
+float angularVelocity () {
+    // This function could filter low angle values and ignore them for summing. If we only rail to 0V, we could still get a velocity.
+    float angle_traversed = 0.0;
+    float last_angle = readAngle();
+    long read_time = micros();
+    // Take 50 readings. This should be 5-10 ms.
+    for (int i = 0; i < 50; i++) {
+        float new_angle = readAngle();
+        angle_traversed += abs(new_angle - last_angle);
+        last_angle = new_angle;
+    }
+    read_time = micros() - read_time / 1000;    // convert to milliseconds
+    float angular_velocity = angle_traversed / read_time * 1000; // degrees per second
+}
