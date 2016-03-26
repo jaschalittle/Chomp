@@ -5,9 +5,9 @@
 #include "pins.h"
 
 // for collecting hammer swing data
-static const int datapoints = 1000;
-static int16_t angle_data[datapoints];
-static int16_t pressure_data[datapoints];
+static const int MAX_DATAPOINTS = 1000;
+static int16_t angle_data[MAX_DATAPOINTS];
+static int16_t pressure_data[MAX_DATAPOINTS];
 
 bool weaponsEnabled(char bitfield){
     return bitfield & WEAPONS_ENABLE_BIT;
@@ -82,9 +82,11 @@ void fire(char bitfield){
                     digitalWrite(VENT_VALVE_DO, HIGH);
                     vent_closed = false;
                 }
-                angle_data[datapoints_collected] = angle;
-                pressure_data[datapoints_collected] = pressure;
-                datapoints_collected++;
+                if (datapoints_collected < MAX_DATAPOINTS){
+                  angle_data[datapoints_collected] = angle;
+                  pressure_data[datapoints_collected] = pressure;
+                  datapoints_collected++;
+                }
                 // Ensure that loop step takes 1 ms or more (without this it takes quite a bit less)
                 read_time = micros() - read_time;
                 int delay_time = 1000 - read_time;
