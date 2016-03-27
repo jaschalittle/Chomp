@@ -13,8 +13,8 @@
 // SAFETY CODE ----------------------------------------------------
 void safeState(){
   valveReset();
-  // magnets off
-  // flamethrower off  
+  flameEnd();
+  // magnets off 
 }
 
 static volatile int WEAPONS_ENABLE_pwm_val = 1520;
