@@ -9,6 +9,7 @@
 #include "pins.h"
 #include "drive.h"
 #include "weapons.h"
+#include <avr/wdt.h>
 
 // SAFETY CODE ----------------------------------------------------
 void safeState(){
@@ -39,7 +40,11 @@ void weaponsEnableFalling(){
 // -----------------------------------------------------------------
 
 void chompSetup() {
+    // Come up safely
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
+    // wdt_enable(WDTO_4S);
+    safeState();
+    
     // xbeeInit();
     Debug.begin(115200);
     Sbus.begin(100000);
@@ -100,6 +105,7 @@ void chompLoop() {
     }
 
     if (bufferSbusData()){
+        wdt_reset();
         parseSbus();
         // React to RC state changes
         char current_rc_bitfield = getRcBitfield();
