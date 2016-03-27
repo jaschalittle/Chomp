@@ -27,7 +27,7 @@ void retract(char bitfield){
     if (weaponsEnabled(bitfield) && angle > 90.0 && angular_velocity < 5.0) {
         // Debug.write("Retract\r\n");
         // Open vent
-        digitalWrite(VENT_VALVE_DO, HIGH);
+        digitalWrite(VENT_VALVE_DO, LOW);
         delay(10);
         // Open retract valve
         digitalWrite(RETRACT_VALVE_DO, HIGH);
@@ -54,7 +54,7 @@ void fire(char bitfield){
             // In fighting form, should probably just turn on flamethrower here
             // Debug.write("Fire!\r\n");
             // Seal vent (which is normally closed)
-            digitalWrite(VENT_VALVE_DO, LOW);
+            digitalWrite(VENT_VALVE_DO, HIGH);
             bool vent_closed = true;
             delay(10);
             // Open throw valve
@@ -79,7 +79,7 @@ void fire(char bitfield){
                 }
                 if (vent_closed && angle > 160.0) {
                     vent_open_time = datapoints_collected;
-                    digitalWrite(VENT_VALVE_DO, HIGH);
+                    digitalWrite(VENT_VALVE_DO, LOW);
                     vent_closed = false;
                 }
                 angle_data[datapoints_collected] = angle;
@@ -96,7 +96,7 @@ void fire(char bitfield){
             digitalWrite(THROW_VALVE_DO, LOW);
             delay(10);
             // Open vent valve after 1 second even if target angle not achieved
-            digitalWrite(VENT_VALVE_DO, HIGH);
+            digitalWrite(VENT_VALVE_DO, LOW);
             
             // Send buffered throw data over serial
             for (int i = 0; i < datapoints_collected; i++) {
@@ -127,7 +127,7 @@ void valveSetup() {
     pinMode(RETRACT_VALVE_DO, OUTPUT);
     pinMode(ANGLE_AI, INPUT);
     digitalWrite(ENABLE_VALVE_DO, HIGH);
-    digitalWrite(VENT_VALVE_DO, HIGH);
+    digitalWrite(VENT_VALVE_DO, LOW);
 }
 
 void flameStart(char bitfield){
