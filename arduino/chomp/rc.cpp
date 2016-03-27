@@ -125,8 +125,6 @@ float getTargetingEnable() {
   return TARGETING_ENABLE_pwm_val / 20000.0;
 }
 
-
-#define WEAPONS_ENABLE_THRESHOLD 1000 // (190 down - 1800 up)
 #define AUTO_HAMMER_THRESHOLD 1000 // (190 down - 1800 up)
 #define HAMMER_FIRE_THRESHOLD 1500 // 900 neutral, 170 to 1800
 #define HAMMER_RETRACT_THRESHOLD 500
@@ -134,9 +132,6 @@ float getTargetingEnable() {
 
 char getRcBitfield() {
   char bitfield = 0;
-  if ( sbusChannels[WEAPONS_ENABLE] > WEAPONS_ENABLE_THRESHOLD ){
-    bitfield |= WEAPONS_ENABLE_BIT;
-  }
   if ( sbusChannels[AUTO_HAMMER_ENABLE] > AUTO_HAMMER_THRESHOLD){
     bitfield |= AUTO_HAMMER_ENABLE_BIT;
   }

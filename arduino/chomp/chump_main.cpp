@@ -126,13 +126,6 @@ void chumpLoop() {
         char current_rc_bitfield = getRcBitfield();
         char diff = previous_rc_bitfield ^ current_rc_bitfield;
         if (diff) {
-            
-            // Global enable -> disable
-            // if (diff & WEAPONS_ENABLE_BIT & previous_rc_bitfield) {
-            if( (diff & WEAPONS_ENABLE_BIT) && !(current_rc_bitfield & WEAPONS_ENABLE_BIT)){
-                // TODO: Do we want to shut enable valve here too?
-                // flameEnd();
-            }
             // Flame on -> off
             // if (diff & FLAME_CTRL_BIT & previous_rc_bitfield) {
             if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){

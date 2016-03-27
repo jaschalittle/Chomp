@@ -10,8 +10,36 @@
 #include "drive.h"
 #include "weapons.h"
 
+// SAFETY CODE ----------------------------------------------------
+void safeState(){
+  valveReset();
+  // magnets off
+  // flamethrower off  
+}
+
+static volatile int WEAPONS_ENABLE_pwm_val = 1520;
+static volatile int WEAPONS_ENABLE_prev_time = 0;
+#define WEAPONS_ENABLE_THRESHOLD 1000 // (190 down - 1800 up)
+void weaponsEnableFalling();
+void weaponsEnableRising(){
+  attachInterrupt(WEAPONS_ENABLE, weaponsEnableFalling, FALLING );
+  WEAPONS_ENABLE_prev_time = micros();
+}
+
+void weaponsEnableFalling(){
+  attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
+  WEAPONS_ENABLE_pwm_val = micros() - WEAPONS_ENABLE_prev_time;
+  if ( WEAPONS_ENABLE_pwm_val < WEAPONS_ENABLE_THRESHOLD){
+    safeState();
+    g_enabled = false;
+  } else {
+    g_enabled = true;
+  }
+}
+// -----------------------------------------------------------------
 
 void chompSetup() {
+    attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     // xbeeInit();
     Debug.begin(115200);
     Sbus.begin(100000);
@@ -78,29 +106,18 @@ void chompLoop() {
         char current_rc_bitfield = getRcBitfield();
         char diff = previous_rc_bitfield ^ current_rc_bitfield;
         if (diff) {
-            
-            // Global enable -> disable
-            // if (diff & WEAPONS_ENABLE_BIT & previous_rc_bitfield) {
-            if( (diff & WEAPONS_ENABLE_BIT) && !(current_rc_bitfield & WEAPONS_ENABLE_BIT)){
-                // TODO: Do we want to shut enable valve here too?
-                flameEnd();
-            }
             // Flame on -> off
-            // if (diff & FLAME_CTRL_BIT & previous_rc_bitfield) {
             if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
                 flameEnd();
             }
             // Flame off -> on
-            // if (diff & FLAME_CTRL_BIT & current_rc_bitfield) {
             if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
                 flameStart(current_rc_bitfield);
             }
             // Manual hammer fire
-            // if (diff & HAMMER_FIRE_BIT & current_rc_bitfield) {
             if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
                 fire(current_rc_bitfield); // checks enable internally
             }
-            // if (diff & HAMMER_RETRACT_BIT & current_rc_bitfield) {
             if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
                 retract(current_rc_bitfield); // checks enable internally
             }

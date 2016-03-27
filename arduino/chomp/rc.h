@@ -4,13 +4,14 @@
 #include "pins.h"
 
 enum RCinterrupts {
-    LEFT_RC = digitalPinToInterrupt(FUTABA_CH1),
-    RIGHT_RC = digitalPinToInterrupt(FUTABA_CH2),
-    TARGETING_ENABLE = digitalPinToInterrupt(FUTABA_CH5),
+    WEAPONS_ENABLE = digitalPinToInterrupt(WEAPONS_ENABLE_PIN),
+    LEFT_RC = digitalPinToInterrupt(FUTABA_CH1_PIN),
+    RIGHT_RC = digitalPinToInterrupt(FUTABA_CH2_PIN),
+    TARGETING_ENABLE = digitalPinToInterrupt(FUTABA_CH5_PIN),
 };
 
 enum SBUSChannels {
-    WEAPONS_ENABLE = 0,
+    NUL = 0,
     AUTO_HAMMER_ENABLE = 1,
     HAMMER_CTRL = 2,
     FLAME_CTRL = 3
@@ -19,11 +20,10 @@ enum SBUSChannels {
 // Boolean values coming in over RC are stored in a bitfield for ease of comparison
 // to detect state changes.
 enum RCBitfield {
-    WEAPONS_ENABLE_BIT = 1,
-    AUTO_HAMMER_ENABLE_BIT = 2,
-    HAMMER_FIRE_BIT = 4,
-    HAMMER_RETRACT_BIT = 8,
-    FLAME_CTRL_BIT = 16,
+    AUTO_HAMMER_ENABLE_BIT = 1,
+    HAMMER_FIRE_BIT = 2,
+    HAMMER_RETRACT_BIT = 4,
+    FLAME_CTRL_BIT = 8,
 };
 
 bool bufferSbusData();

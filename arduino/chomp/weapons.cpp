@@ -10,7 +10,7 @@ static int16_t angle_data[MAX_DATAPOINTS];
 static int16_t pressure_data[MAX_DATAPOINTS];
 
 bool weaponsEnabled(char bitfield){
-    return bitfield & WEAPONS_ENABLE_BIT;
+    return g_enabled;
 }
 
 bool autofireEnabled(char bitfield){
