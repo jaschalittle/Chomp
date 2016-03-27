@@ -1,8 +1,29 @@
 #ifndef PINS_H
 #define PINS_H
 
-#define GREEN 5
-#define RED 4
+// ----------------- ANALOG ----------------- 
+// Sensors
+#define PRESSURE_AI A7
+#define ANGLE_AI A3
+
+// ----------------- DIGITAL  ---------------
+
+// Weapons RC input
+#define WEAPONS_ENABLE_PIN 2
+
+#define ENABLE_VALVE_DO 4
+#define VENT_VALVE_DO 5
+
+#define IGNITER_DO 6
+#define PROPANE_DO 7
+
+#define RETRACT_VALVE_DO 8
+#define THROW_VALVE_DO 9
+
+#define MAG2_DO 10
+#define MAG1_DO 11
+
+#define XBEE_CTS 12
 
 // Drive RC input
 // Mega2560 digital interrupt pins:
@@ -11,24 +32,10 @@
 #define FUTABA_CH2_PIN 20
 #define FUTABA_CH5_PIN 21
 
-// Weapons RC input
-#define WEAPONS_ENABLE_PIN 2
-
-#define XBEE_CTS 8
-
-// Sensors
-#define PRESSURE_AI A7
-#define ANGLE_AI A3
-
-// Valve DOs
-#define ENABLE_VALVE_DO 12
-#define THROW_VALVE_DO 11
-#define VENT_VALVE_DO 10
-#define RETRACT_VALVE_DO 9
-
 // Drive control output (for CAN testing)
 // #define CHIP_SELECT_PIN 19
 
+// ----------------- SERIAL ------------------
 // These are defined in chomp.ino
 extern HardwareSerial& Debug;
 extern HardwareSerial& Xbee;
@@ -36,6 +43,7 @@ extern HardwareSerial& LeddarSerial;
 extern HardwareSerial& Sbus;
 extern HardwareSerial& DriveSerial;
 
+// ----------------- GLOBALS ----------------
 extern bool g_enabled;
 
 #endif

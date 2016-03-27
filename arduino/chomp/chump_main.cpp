@@ -78,18 +78,13 @@ void chumpLoop() {
         LeddarState current_leddar_state = getState(detection_count, getDetections());
         switch (current_leddar_state){
             case FAR_ZONE:
-                digitalWrite(RED, LOW);
-                digitalWrite(GREEN, LOW);
                 previous_leddar_state = current_leddar_state;
                 break;
             case ARM_ZONE:
-                digitalWrite(RED, LOW);
-                digitalWrite(GREEN, HIGH);
                 previous_leddar_state = current_leddar_state;
                 break;
             case HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
-                    digitalWrite(RED, HIGH);
                     drive(0, 0);
                 //   fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
 
@@ -98,7 +93,6 @@ void chumpLoop() {
                         fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
                     }
                 } else {
-                    digitalWrite(GREEN, HIGH);
                     previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
                 }
                 break;
