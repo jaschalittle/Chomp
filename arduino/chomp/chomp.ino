@@ -1,6 +1,6 @@
 #include "chomp_main.h"
 
-// extern HardwareSerial& Debug = Serial;
+extern HardwareSerial& Debug = Serial;
 extern HardwareSerial& Xbee = Serial;           // RX pin 0, TX pin 1
 extern HardwareSerial& DriveSerial = Serial1;   // RX pin 19, TX pin 18
 extern HardwareSerial& LeddarSerial = Serial2;  // RX pin 17, TX pin 16

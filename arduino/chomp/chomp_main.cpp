@@ -17,9 +17,9 @@ void safeState(){
   // magnets off 
 }
 
-static volatile int WEAPONS_ENABLE_pwm_val = 1520;
+static volatile int WEAPONS_ENABLE_pwm_val = 500; // disabled
 static volatile int WEAPONS_ENABLE_prev_time = 0;
-#define WEAPONS_ENABLE_THRESHOLD 1000 // (190 down - 1800 up)
+#define WEAPONS_ENABLE_THRESHOLD 1500
 void weaponsEnableFalling();
 void weaponsEnableRising(){
   attachInterrupt(WEAPONS_ENABLE, weaponsEnableFalling, FALLING );
@@ -48,7 +48,6 @@ void chompSetup() {
     valveSetup();
     pinMode(GREEN, OUTPUT);
     pinMode(RED, OUTPUT);
-    delay(10);
 }
 
 static int previous_leddar_state = FAR_ZONE;
