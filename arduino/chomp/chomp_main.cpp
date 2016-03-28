@@ -42,82 +42,17 @@ void weaponsEnableFalling(){
 
 void chompSetup() {
     // Come up safely
-    //attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
+    attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     // wdt_enable(WDTO_4S);
     safeState();
     
     // xbeeInit();
     Debug.begin(115200);
-//    Sbus.begin(100000);
+    Sbus.begin(100000);
 //    leddarWrapperInit();
-//    attachRCInterrupts();
-//    sensorSetup();
-//    valveSetup();
-}
-
-void electricalCheckouts(){
-  Debug.print("Clicking valves\r\n");
-  int pulse_time = 3000;
-  Debug.print("Enable\r\n");
-  delay(5000);
-  Debug.print("now\r\n");
-  safeDigitalWrite(ENABLE_VALVE_DO, HIGH);
-  delay(pulse_time);
-  safeDigitalWrite(ENABLE_VALVE_DO, LOW);
-  
-  Debug.print("Retract\r\n");
-  delay(5000);
-  Debug.print("now\r\n");
-  safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
-  delay(pulse_time);
-  safeDigitalWrite(RETRACT_VALVE_DO, LOW);
-
-  Debug.print("Vent\r\n");
-  delay(5000);
-  Debug.print("now\r\n");
-  safeDigitalWrite(VENT_VALVE_DO, HIGH);
-  delay(pulse_time);
-  safeDigitalWrite(VENT_VALVE_DO, LOW);
-
-  Debug.print("Throw\r\n");
-  delay(5000);
-  Debug.print("now\r\n");
-  safeDigitalWrite(THROW_VALVE_DO, HIGH);
-  delay(pulse_time);
-  safeDigitalWrite(THROW_VALVE_DO, LOW);
-
-  Debug.print("Clicking magnets\r\n");
-  Debug.print("Magnet 1\r\n");
-  delay(5000);
-  Debug.print("now\r\n");
-  safeDigitalWrite(MAG1_DO, HIGH);
-  delay(pulse_time);
-  safeDigitalWrite(MAG1_DO, LOW);
-
-  Debug.print("Magnet 2\r\n");
-  delay(5000);
-  Debug.print("now\r\n");
-  safeDigitalWrite(MAG2_DO, HIGH);
-  delay(pulse_time);
-  safeDigitalWrite(MAG2_DO, LOW);
-
-  Debug.print("Clicking flamethrower\r\n");
-  Debug.print("Igniter\r\n");
-  delay(5000);
-  Debug.print("now\r\n");
-  safeDigitalWrite(IGNITER_DO, HIGH);
-  delay(pulse_time);
-  safeDigitalWrite(IGNITER_DO, LOW);
-
-//  Debug.print("Propane valve\r\n");
-//  delay(5000);
-//  Debug.print("now\r\n");
-//  safeDigitalWrite(PROPANE_DO, HIGH);
-//  delay(1000);
-//  safeDigitalWrite(PROPANE_DO, LOW);
-  
-  Debug.print("All done\r\n");
-  safeState();
+    attachRCInterrupts();
+    sensorSetup();
+    valveSetup();
 }
 
 static int previous_leddar_state = FAR_ZONE;
@@ -203,4 +138,69 @@ void chompLoop() {
         // send_sensor_telem(loop_speed, pressure);
         // last_telem_time = micros();
     }
+}
+
+void electricalCheckouts(){
+  Debug.print("Clicking valves\r\n");
+  int pulse_time = 3000;
+  Debug.print("Enable\r\n");
+  delay(5000);
+  Debug.print("now\r\n");
+  safeDigitalWrite(ENABLE_VALVE_DO, HIGH);
+  delay(pulse_time);
+  safeDigitalWrite(ENABLE_VALVE_DO, LOW);
+  
+  Debug.print("Retract\r\n");
+  delay(5000);
+  Debug.print("now\r\n");
+  safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
+  delay(pulse_time);
+  safeDigitalWrite(RETRACT_VALVE_DO, LOW);
+
+  Debug.print("Vent\r\n");
+  delay(5000);
+  Debug.print("now\r\n");
+  safeDigitalWrite(VENT_VALVE_DO, HIGH);
+  delay(pulse_time);
+  safeDigitalWrite(VENT_VALVE_DO, LOW);
+
+  Debug.print("Throw\r\n");
+  delay(5000);
+  Debug.print("now\r\n");
+  safeDigitalWrite(THROW_VALVE_DO, HIGH);
+  delay(pulse_time);
+  safeDigitalWrite(THROW_VALVE_DO, LOW);
+
+  Debug.print("Clicking magnets\r\n");
+  Debug.print("Magnet 1\r\n");
+  delay(5000);
+  Debug.print("now\r\n");
+  safeDigitalWrite(MAG1_DO, HIGH);
+  delay(pulse_time);
+  safeDigitalWrite(MAG1_DO, LOW);
+
+  Debug.print("Magnet 2\r\n");
+  delay(5000);
+  Debug.print("now\r\n");
+  safeDigitalWrite(MAG2_DO, HIGH);
+  delay(pulse_time);
+  safeDigitalWrite(MAG2_DO, LOW);
+
+  Debug.print("Clicking flamethrower\r\n");
+  Debug.print("Igniter\r\n");
+  delay(5000);
+  Debug.print("now\r\n");
+  safeDigitalWrite(IGNITER_DO, HIGH);
+  delay(pulse_time);
+  safeDigitalWrite(IGNITER_DO, LOW);
+
+  Debug.print("Propane valve\r\n");
+  delay(5000);
+  Debug.print("now\r\n");
+  safeDigitalWrite(PROPANE_DO, HIGH);
+  delay(1000);
+  safeDigitalWrite(PROPANE_DO, LOW);
+  
+  Debug.print("All done\r\n");
+  safeState();
 }

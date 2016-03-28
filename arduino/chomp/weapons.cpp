@@ -158,6 +158,6 @@ void magnetSafe(){
     digitalWrite(MAG1_DO, LOW);
     digitalWrite(MAG2_DO, LOW);
     pinMode(MAG1_DO, OUTPUT);
-    pinMode(MAG1_DO, OUTPUT);
+    pinMode(MAG2_DO, OUTPUT);
 }
 

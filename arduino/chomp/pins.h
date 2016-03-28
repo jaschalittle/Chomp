@@ -44,6 +44,6 @@ extern HardwareSerial& Sbus;
 extern HardwareSerial& DriveSerial;
 
 // ----------------- GLOBALS ----------------
-extern bool g_enabled;
+extern volatile bool g_enabled;
 
 #endif
