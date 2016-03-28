@@ -9,12 +9,19 @@ void retract(char bitfield);
 
 void fire(char bitfield);
 
-void valveReset();
+void valveSafe();
 
 void valveSetup();
 
-void flameStart(char bitfield);
+void flameSafe();
+
+void flameSetup();
+
+void flameStart();
 
 void flameEnd();
+
+void magnetSafe();
+
 
 #endif // WEAPONS_H

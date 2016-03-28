@@ -115,7 +115,7 @@ void fire(char bitfield){
     }
 }
 
-void valveReset(){
+void valveSafe(){
     // Safing code deliberately does not use safeDigitalWrite since it should always go through.
     digitalWrite(ENABLE_VALVE_DO, LOW);
     digitalWrite(THROW_VALVE_DO, LOW);
@@ -128,18 +128,36 @@ void valveReset(){
 }
 
 void valveSetup() {
-    valveReset();
-    pinMode(ANGLE_AI, INPUT);
+    valveSafe();
     safeDigitalWrite(ENABLE_VALVE_DO, HIGH);
-    safeDigitalWrite(VENT_VALVE_DO, LOW);
 }
 
-void flameStart(char bitfield){
+void flameSafe(){
+    digitalWrite(IGNITER_DO, LOW);
+    digitalWrite(PROPANE_DO, LOW);
+    pinMode(IGNITER_DO, OUTPUT);
+    pinMode(PROPANE_DO, OUTPUT);
+}
+
+void flameSetup(){
+    flameSafe();
+    digitalWrite(IGNITER_DO, HIGH);
+}
+
+void flameStart(){
     if (weaponsEnabled()){
-        // Debug.write("Flame!\r\n");
+        safeDigitalWrite(PROPANE_DO, HIGH);
     }
 }
 
 void flameEnd(){
-    // Debug.write("Flame off\r\n");
+    safeDigitalWrite(PROPANE_DO, LOW);
 }
+
+void magnetSafe(){
+    digitalWrite(MAG1_DO, LOW);
+    digitalWrite(MAG2_DO, LOW);
+    pinMode(MAG1_DO, OUTPUT);
+    pinMode(MAG1_DO, OUTPUT);
+}
+

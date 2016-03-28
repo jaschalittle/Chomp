@@ -3,8 +3,8 @@
 
 // ----------------- ANALOG ----------------- 
 // Sensors
-#define PRESSURE_AI A3
-#define ANGLE_AI A15
+#define PRESSURE_AI A15
+#define ANGLE_AI A1
 
 // ----------------- DIGITAL  ---------------
 

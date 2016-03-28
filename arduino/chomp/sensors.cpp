@@ -2,6 +2,11 @@
 #include "sensors.h"
 #include "pins.h"
 
+void sensorSetup(){
+    pinMode(ANGLE_AI, INPUT);
+    pinMode(PRESSURE_AI, INPUT);
+}
+
 float readMlhPressure(){
   int counts = analogRead(PRESSURE_AI);
   float voltage = counts * (5.0 / 1023);
