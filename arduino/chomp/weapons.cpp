@@ -49,6 +49,17 @@ void retract(char bitfield){
 }
 
 void fire(char bitfield){
+    const unsigned long SWING_TIMEOUT = 1000000;
+
+    unsigned long fire_time;
+    unsigned long read_time;
+    unsigned int throw_close_time;
+    unsigned int vent_open_time;
+    float pressure;
+    unsigned int datapoints_collected;
+    bool vent_closed = false;
+    bool throw_open = false;
+    
     if (weaponsEnabled()){
         float angle = readAngle();
         if (angle < 10.0) {
@@ -56,19 +67,16 @@ void fire(char bitfield){
             // Debug.write("Fire!\r\n");
             // Seal vent (which is normally closed)
             safeDigitalWrite(VENT_VALVE_DO, HIGH);
-            bool vent_closed = true;
+            vent_closed = true;
             delay(10);
+            
             // Open throw valve
             safeDigitalWrite(THROW_VALVE_DO, HIGH);
-            bool throw_open = true;
-            long fire_time = micros();
-            long read_time;
-            int throw_close_time;
-            int vent_open_time;
-            float pressure;
-            int datapoints_collected = 0;
+            throw_open = true;
+            fire_time = micros();
+            datapoints_collected = 0;
             // Wait until hammer swing complete, up to 1 second
-            while ((micros() - fire_time) < 1000000 && angle < 190.0) {
+            while ((micros() - fire_time) < SWING_TIMEOUT && angle < 190.0) {
                 read_time = micros();
                 angle = readAngle();
                 pressure = readMlhPressure();
