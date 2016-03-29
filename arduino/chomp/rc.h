@@ -38,6 +38,6 @@ int16_t getRightRc();
 
 bool getTargetingEnable();
 
-char getRcBitfield();
+uint8_t getRcBitfield();
 
 #endif // RC_H
