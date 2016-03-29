@@ -12,11 +12,11 @@ bool CRC16(byte *aBuffer, byte aLength, bool aCheck)
 {
   byte lCRCHi = 0xFF; // high byte of CRC initialized
   byte lCRCLo = 0xFF; // low byte of CRC initialized
-  int i;
+  int16_t i;
   
   for (i = 0; i<aLength; ++i) 
   {
-    int lIndex = lCRCLo ^ aBuffer[i]; // calculate the CRC
+    int16_t lIndex = lCRCLo ^ aBuffer[i]; // calculate the CRC
     lCRCLo = lCRCHi ^ CRC_HI[lIndex];
     lCRCHi = CRC_LO[lIndex];
   }
@@ -33,11 +33,11 @@ bool CRC16(byte *aBuffer, byte aLength, bool aCheck)
   }
 }
 
-unsigned int len = 0;
-unsigned char receivedData[256] = {0};
+uint16_t len = 0;
+uint8_t receivedData[256] = {0};
 void requestDetections(){
-  unsigned int i = 0;
-  unsigned char sendData[4] = {0};
+  uint16_t i = 0;
+  uint8_t sendData[4] = {0};
   //clear serial buffer
   while (LeddarSerial.available())
   {
@@ -54,21 +54,22 @@ void requestDetections(){
   {
     LeddarSerial.write(sendData[i]);
   }
+  // this hangs if LeddarSerial not begun. could it hang in other scenarios?
   LeddarSerial.flush();
 }
 
 bool bufferDetections(){
-  unsigned int crc = 0xFFFF;
-  unsigned long startTime = millis();
+  uint16_t crc = 0xFFFF;
+  uint32_t startTime = millis();
   
-  unsigned int count = LeddarSerial.available();
+  uint16_t count = LeddarSerial.available();
   if (count > 0){
     LeddarSerial.readBytes(receivedData+len, count);
     len += count;
   }
   if (len > 3){
-    char detection_count = receivedData[2];
-    unsigned int target_len = detection_count * 5 + 11;
+    uint8_t detection_count = receivedData[2];
+    uint16_t target_len = detection_count * 5 + 11;
     if (target_len == len){
       return true; 
     }
@@ -77,15 +78,15 @@ bool bufferDetections(){
 }
 
 Detection Detections[50];
-unsigned int parseDetections(){
+uint8_t parseDetections(){
   if (!CRC16(receivedData, len-2, true)){
     return 0;
   }
-  unsigned int detection_count = receivedData[2];
+  uint16_t detection_count = receivedData[2];
   // Parse out detection info
-  for ( unsigned int i = 0; i < detection_count; i++){
-    unsigned int offset = i * 5 + 3;
-    Detections[i].Distance = ((unsigned int)receivedData[offset+1])*256 + receivedData[offset];
+  for ( uint16_t i = 0; i < detection_count; i++){
+    uint16_t offset = i * 5 + 3;
+    Detections[i].Distance = ((uint16_t)receivedData[offset+1])*256 + receivedData[offset];
     Detections[i].Amplitude = ((float)receivedData[offset+3])*4+ ((float)receivedData[offset+2])/64;
     Detections[i].Segment = receivedData[offset+4]/16;
 //    Xbee.print(Detections[i].Segment);

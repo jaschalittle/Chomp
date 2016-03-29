@@ -4,9 +4,9 @@
 // Represents a measurement
 struct Detection
 {
-  unsigned char Segment;
-  unsigned int Distance;
-  unsigned int Amplitude;
+  uint8_t Segment;
+  uint16_t Distance;
+  uint16_t Amplitude;
   
   // Default constructor
   Detection() : Segment(0), Distance(10000), Amplitude(0) { }
@@ -16,7 +16,7 @@ void leddarWrapperInit();
 
 void requestDetections();
 bool bufferDetections();
-unsigned int parseDetections();
+uint8_t parseDetections();
 
 Detection* getDetections();
 
