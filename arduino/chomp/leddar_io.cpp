@@ -12,11 +12,10 @@ bool CRC16(byte *aBuffer, byte aLength, bool aCheck)
 {
   byte lCRCHi = 0xFF; // high byte of CRC initialized
   byte lCRCLo = 0xFF; // low byte of CRC initialized
-  int16_t i;
   
-  for (i = 0; i<aLength; ++i) 
+  for (uint16_t i = 0; i<aLength; ++i) 
   {
-    int16_t lIndex = lCRCLo ^ aBuffer[i]; // calculate the CRC
+    uint16_t lIndex = lCRCLo ^ aBuffer[i]; // calculate the CRC
     lCRCLo = lCRCHi ^ CRC_HI[lIndex];
     lCRCHi = CRC_LO[lIndex];
   }
