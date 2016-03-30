@@ -96,7 +96,6 @@ void fire(char bitfield){
             }
         }
         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
-            // In fighting form, should probably just turn on flamethrower here
             // Debug.write("Fire!\r\n");
             // Seal vent (which is normally closed)
             safeDigitalWrite(VENT_VALVE_DO, HIGH);
@@ -108,6 +107,7 @@ void fire(char bitfield){
             safeDigitalWrite(THROW_VALVE_DO, HIGH);
             throw_open = true;
             fire_time = micros();
+            // In fighting form, should probably just turn on flamethrower here
             // Wait until hammer swing complete, up to 1 second
             while (swing_length < SWING_TIMEOUT && angle < THROW_COMPLETE_ANGLE) {
                 sensor_read_time = micros();
@@ -124,7 +124,7 @@ void fire(char bitfield){
                     safeDigitalWrite(VENT_VALVE_DO, LOW);
                     vent_closed = false;
                 }
-                // close throw, open vent if hammer stops after 50 ms acceleration time
+                // close throw, open vent if hammer velocity below threshold after 50 ms initial acceleration time
                 if (swing_length > ACCEL_TIME) {
                     velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
                     if (velocity_read_ok && abs(angular_velocity) < 10) {
