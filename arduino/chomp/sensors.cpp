@@ -7,32 +7,81 @@ void sensorSetup(){
     pinMode(PRESSURE_AI, INPUT);
 }
 
-float readMlhPressure(){
-  int counts = analogRead(PRESSURE_AI);
-  float voltage = counts * (5.0 / 1023);
-  float pressure = (voltage - 0.5) * (500.0/4.0);
-  return pressure;
+// static const uint32_t pressure_sensor_range = 920 - 102;
+bool readMlhPressure(int16_t* pressure){
+  uint16_t counts = analogRead(PRESSURE_AI);
+  if (counts > 101) {
+      *pressure = (int16_t) (counts - 102) * 11 / 18; // safe with 16 bit uints, accurate to 0.02%%
+      return true;
+  } else {
+      return false;
+  }
 }
 
 // 0 deg is 10% of input voltage, empirically observed to be 100 counts
 // 360 deg is 90% of input voltage, empirically observed to be 920 counts
-float readAngle(){
-  short counts = analogRead(ANGLE_AI);
-  float angle = (counts - 110.0) * (180.0 / 419.0);
-  return angle;
+bool readAngle(int16_t* angle){
+  uint16_t counts = analogRead(ANGLE_AI);
+  if (counts > 101) {
+      *angle = (int16_t) (counts - 102) * 11 / 25;  // safe with 16 bit uints, accurate to 0.02%%
+      return true;
+  } else {
+      return false;
+  }
 }
 
-float angularVelocity () {
+bool angularVelocity (int16_t* angular_velocity) {
     // This function could filter low angle values and ignore them for summing. If we only rail to 0V, we could still get a velocity.
-    float angle_traversed = 0.0;
-    float last_angle = readAngle();
-    long read_time = micros();
-    // Take 50 readings. This should be 5-10 ms.
-    for (int i = 0; i < 50; i++) {
-        float new_angle = readAngle();
-        angle_traversed += abs(new_angle - last_angle);
-        last_angle = new_angle;
+    int16_t angle_traversed = 0;
+    int16_t abs_angle_traversed = 0;
+    int16_t last_angle;
+    bool angle_read_ok = readAngle(&last_angle);
+    int16_t new_angle;
+    int16_t delta;
+    uint32_t read_time = micros();
+    // Take 50 readings. This should be 5-10 ms. 1 rps = 2.78 deg/s
+    uint8_t num_readings = 50;
+    for (uint8_t i = 0; i < num_readings; i++) {
+        if (readAngle(&new_angle)) {
+            delta = new_angle - last_angle;
+            abs_angle_traversed += abs(delta);
+            angle_traversed += delta;
+            last_angle = new_angle;
+        } else {
+            angle_read_ok = false;
+        }
     }
-    read_time = micros() - read_time / 1000;    // convert to milliseconds
-    float angular_velocity = angle_traversed / read_time * 1000; // degrees per second
+    // if angle read ever sketchy or if data too noisy, do not return angular velocity
+    if (angle_read_ok && abs(angle_traversed) - angle_traversed < num_readings * 2) {
+        read_time = (micros() - read_time) / 1000;    // convert to milliseconds
+        *angular_velocity = angle_traversed * 1000 / read_time;  // degrees per second
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool angularVelocityBuffered (int16_t* angular_velocity, const int16_t* angle_data, uint16_t datapoints_buffered) {
+    const uint16_t DATAPOINTS_TO_AVERAGE = 100;
+    // do not report velocity if too few datapoints have been buffered
+    if (datapoints_buffered < DATAPOINTS_TO_AVERAGE) {
+        return false;
+    }
+    int16_t angle_traversed = 0;
+    int16_t abs_angle_traversed = 0;
+    int16_t delta;
+    uint32_t read_time = micros();
+    for (uint16_t i = datapoints_buffered - DATAPOINTS_TO_AVERAGE + 1; i < datapoints_buffered; i++) {
+        delta = angle_data[i] - angle_data[i-1];
+        abs_angle_traversed += abs(delta);
+        angle_traversed += delta;
+    }
+    // if angle data too noisy, do not return angular velocity
+    if (abs(angle_traversed) - angle_traversed < DATAPOINTS_TO_AVERAGE * 2) {
+        read_time = (micros() - read_time) / 1000;    // convert to milliseconds
+        *angular_velocity = angle_traversed * 1000 / read_time;  // degrees per second
+        return true;
+    } else {
+        return false;
+    }
 }
