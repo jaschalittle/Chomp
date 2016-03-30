@@ -14,9 +14,9 @@
 
 // SAFETY CODE ----------------------------------------------------
 void safeState(){
-  valveSafe();
-  flameSafe();
-  magnetSafe();
+    valveSafe();
+    flameSafe();
+    magnetSafe();
 }
 
 static volatile int WEAPONS_ENABLE_pwm_val = 500; // disabled
@@ -24,45 +24,52 @@ static volatile int WEAPONS_ENABLE_prev_time = 0;
 #define WEAPONS_ENABLE_THRESHOLD 1500
 void weaponsEnableFalling();
 void weaponsEnableRising(){
-  attachInterrupt(WEAPONS_ENABLE, weaponsEnableFalling, FALLING );
-  WEAPONS_ENABLE_prev_time = micros();
+    attachInterrupt(WEAPONS_ENABLE, weaponsEnableFalling, FALLING );
+    WEAPONS_ENABLE_prev_time = micros();
 }
 
 void weaponsEnableFalling(){
-  attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
-  WEAPONS_ENABLE_pwm_val = micros() - WEAPONS_ENABLE_prev_time;
-  if ( WEAPONS_ENABLE_pwm_val < WEAPONS_ENABLE_THRESHOLD){
-    safeState();
-    g_enabled = false;
-  } else {
-    g_enabled = true;
-  }
+    attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
+    WEAPONS_ENABLE_pwm_val = micros() - WEAPONS_ENABLE_prev_time;
+    if ( WEAPONS_ENABLE_pwm_val < WEAPONS_ENABLE_THRESHOLD){
+        safeState();
+        g_enabled = false;
+    } else {
+        if (!g_enabled) {
+            g_enabled = true;
+            digitalWrite(ENABLE_VALVE_DO, HIGH);
+            // digitalWrite(IGNITER_DO, HIGH);
+        }  
+    }
 }
 // -----------------------------------------------------------------
 
 void chompSetup() {
     // Come up safely
-    attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
-    // wdt_enable(WDTO_4S);
     safeState();
-    
+    valveSetup();
+    attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
+    while (!g_enabled) {
+        delay(20);
+    }
+    // wdt_enable(WDTO_4S);
     // xbeeInit();
     Debug.begin(115200);
     Sbus.begin(100000);
-//    leddarWrapperInit();
+    leddarWrapperInit();
     attachRCInterrupts();
     sensorSetup();
-    valveSetup();
 }
 
-static int previous_leddar_state = FAR_ZONE;
-static char previous_rc_bitfield = 0;
-static unsigned long last_request_time = micros();
-static unsigned long last_telem_time = micros();
+static int16_t previous_leddar_state = FAR_ZONE;
+static int8_t previous_rc_bitfield = 0;
+static uint32_t last_request_time = micros();
+static uint32_t last_telem_time = micros();
 static int16_t left_drive_value = 0;
 static int16_t right_drive_value = 0;
+static bool targeting_enabled = false;
 void chompLoop() {
-    unsigned long start_time = micros();
+    uint32_t start_time = micros();
     if (micros() - last_request_time > 1000000){
         last_request_time = micros();
         requestDetections();
@@ -70,7 +77,7 @@ void chompLoop() {
     }
     bool complete = bufferDetections();
     if (complete){
-        unsigned int detection_count = parseDetections();
+        uint8_t detection_count = parseDetections();
         last_request_time = micros();
         LeddarState current_leddar_state = getState(detection_count, getDetections());
         switch (current_leddar_state){
@@ -125,14 +132,18 @@ void chompLoop() {
     }
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
+    targeting_enabled = getTargetingEnable();
     float l_tread_mix = left_drive_value;
     float r_tread_mix = -right_drive_value;
     drive(l_tread_mix, r_tread_mix);
 
     unsigned long loop_speed = micros() - start_time;
     // Read other sensors, to report out
-    //float pressure = readMlhPressure();
-    float angle = readAngle();
+    // uint16_t pressure;
+    // bool pressure_read_ok = readMlhPressure(&pressure);
+    // uint16_t angle;
+    // bool angle_read_ok = readAngle(&angle);
+    // Debug.println(angle);
 
     if (micros() - last_telem_time > 200000){
         // send_sensor_telem(loop_speed, pressure);
