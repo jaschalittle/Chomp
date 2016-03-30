@@ -20,8 +20,8 @@ void safeState(){
 }
 
 void enableState(){
-    safeDigitalWrite(ENABLE_VALVE_DO, HIGH);
-    safeDigitalWrite(IGNITER_DO, HIGH);
+   valveEnable();
+   flameEnable(); 
 }
 
 static volatile int WEAPONS_ENABLE_pwm_val = 500; // disabled

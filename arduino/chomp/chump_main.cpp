@@ -47,7 +47,7 @@ void chumpSetup() {
     Sbus.setTimeout(10);
     DriveSerial.begin(115200);
     // xbeeInit();
-    valveSetup();
+    valveEnable();
 }
 
 static int previous_leddar_state = FAR_ZONE;

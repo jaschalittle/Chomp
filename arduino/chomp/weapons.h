@@ -11,11 +11,11 @@ void fire(char bitfield);
 
 void valveSafe();
 
-void valveSetup();
+void valveEnable();
 
 void flameSafe();
 
-void flameSetup();
+void flameEnable();
 
 void flameStart();
 
