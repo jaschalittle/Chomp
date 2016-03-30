@@ -51,7 +51,6 @@ void weaponsEnableFalling(){
 void chompSetup() {
     // Come up safely
     safeState();
-    valveSetup();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     // wdt_enable(WDTO_4S);
     // xbeeInit();
