@@ -1,13 +1,13 @@
 #ifndef WEAPONS_H
 #define WEAPONS_H
 
-bool weaponsEnabled(char bitfield);
+bool weaponsEnabled();
 
 bool autofireEnabled(char bitfield);
 
-void retract(char bitfield);
+void retract();
 
-void fire(char bitfield);
+void fire();
 
 void valveSafe();
 

@@ -18,7 +18,7 @@ static const uint16_t RETRACT_BEGIN_ANGLE_MIN = 90;
 static const uint16_t RETRACT_BEGIN_VEL_MAX = 5;
 static const uint16_t RETRACT_COMPLETE_ANGLE = 10;
 
-void retract(char bitfield){
+void retract(){
     int16_t start_angle;
     bool angle_read_ok = readAngle(&start_angle);
     int16_t angle = start_angle;
@@ -66,7 +66,7 @@ static const uint16_t VENT_OPEN_ANGLE = 160;
 static const uint16_t THROW_COMPLETE_ANGLE = 190;
 static const uint16_t ACCEL_TIME = 50000;
 
-void fire(char bitfield){
+void fire(){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
