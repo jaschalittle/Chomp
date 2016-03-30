@@ -18,7 +18,7 @@ static const uint16_t RETRACT_BEGIN_ANGLE_MIN = 90;
 static const uint16_t RETRACT_BEGIN_VEL_MAX = 5;
 static const uint16_t RETRACT_COMPLETE_ANGLE = 10;
 
-void retract(char bitfield){
+void retract(){
     int16_t start_angle;
     bool angle_read_ok = readAngle(&start_angle);
     int16_t angle = start_angle;
@@ -67,7 +67,7 @@ static const uint16_t THROW_COMPLETE_ANGLE = 190;
 static const uint16_t ACCEL_TIME = 50000;
 static const uint16_t THROW_COMPLETE_VELOCITY = 0;
 
-void fire(char bitfield){
+void fire(){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -99,7 +99,7 @@ void fire(char bitfield){
         }
         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
             // Debug.write("Fire!\r\n");
-            // Seal vent (which is normally closed)
+            // Seal vent (which is normally open)
             safeDigitalWrite(VENT_VALVE_DO, HIGH);
             vent_closed = true;
             // can we actually determine vent close time?
@@ -200,6 +200,11 @@ void valveSafe(){
     pinMode(RETRACT_VALVE_DO, OUTPUT);
 }
 
+void valveEnable(){
+    // Assumes safe() has already been called beforehand, to set pin modes.
+    safeDigitalWrite(ENABLE_VALVE_DO, HIGH);
+}
+
 void flameSafe(){
     digitalWrite(IGNITER_DO, LOW);
     digitalWrite(PROPANE_DO, LOW);
@@ -207,6 +212,10 @@ void flameSafe(){
     pinMode(PROPANE_DO, OUTPUT);
 }
 
+void flameEnable(){
+    // Assumes safe() has already been called beforehand, to set pin modes.
+    safeDigitalWrite(IGNITER_DO, HIGH);
+}
 void magnetSafe(){
     digitalWrite(MAG1_DO, LOW);
     digitalWrite(MAG2_DO, LOW);

@@ -20,8 +20,8 @@ void safeState(){
 }
 
 void enableState(){
-    safeDigitalWrite(ENABLE_VALVE_DO, HIGH);
-    safeDigitalWrite(IGNITER_DO, HIGH);
+   valveEnable();
+   flameEnable(); 
 }
 
 static volatile int WEAPONS_ENABLE_pwm_val = 500; // disabled
@@ -51,7 +51,6 @@ void weaponsEnableFalling(){
 void chompSetup() {
     // Come up safely
     safeState();
-    valveSetup();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     // wdt_enable(WDTO_4S);
     // xbeeInit();
@@ -91,11 +90,8 @@ void chompLoop() {
             case HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
                     drive(0, 0);
-                //   fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
-
                     if (autofireEnabled(previous_rc_bitfield)){
-                        // I think if serial connection to SBUS is lost, such that no SBUS failsafe received, this will remain stale and could be unsafe
-                        fire(previous_rc_bitfield /*hammer intensity*/); // TODO - think about whether using previous bitfield is safe here
+                        fire();
                     }
                 } else {
                     previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
@@ -123,10 +119,10 @@ void chompLoop() {
             }
             // Manual hammer fire
             if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-                fire(current_rc_bitfield); // checks enable internally
+                fire();
             }
             if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
-                retract(current_rc_bitfield); // checks enable internally
+                retract();
             }
         }
         previous_rc_bitfield = current_rc_bitfield;

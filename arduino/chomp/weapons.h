@@ -1,21 +1,21 @@
 #ifndef WEAPONS_H
 #define WEAPONS_H
 
-bool weaponsEnabled(char bitfield);
+bool weaponsEnabled();
 
 bool autofireEnabled(char bitfield);
 
-void retract(char bitfield);
+void retract();
 
-void fire(char bitfield);
+void fire();
 
 void valveSafe();
 
-void valveSetup();
+void valveEnable();
 
 void flameSafe();
 
-void flameSetup();
+void flameEnable();
 
 void flameStart();
 
