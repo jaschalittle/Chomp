@@ -9,6 +9,16 @@ void retract();
 
 void fire();
 
+void fire_test();
+
+void flameStart();
+
+void flameEnd();
+
+void magOn();
+
+void magOff();
+
 void valveSafe();
 
 void valveEnable();
@@ -16,10 +26,6 @@ void valveEnable();
 void flameSafe();
 
 void flameEnable();
-
-void flameStart();
-
-void flameEnd();
 
 void magnetSafe();
 
