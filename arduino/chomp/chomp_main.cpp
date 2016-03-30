@@ -19,6 +19,11 @@ void safeState(){
     magnetSafe();
 }
 
+void enableState(){
+    safeDigitalWrite(ENABLE_VALVE_DO, HIGH);
+    safeDigitalWrite(IGNITER_DO, HIGH);
+}
+
 static volatile int WEAPONS_ENABLE_pwm_val = 500; // disabled
 static volatile int WEAPONS_ENABLE_prev_time = 0;
 #define WEAPONS_ENABLE_THRESHOLD 1500
@@ -37,8 +42,7 @@ void weaponsEnableFalling(){
     } else {
         if (!g_enabled) {
             g_enabled = true;
-            digitalWrite(ENABLE_VALVE_DO, HIGH);
-            // digitalWrite(IGNITER_DO, HIGH);
+            enableState();
         }  
     }
 }
@@ -49,9 +53,6 @@ void chompSetup() {
     safeState();
     valveSetup();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
-    while (!g_enabled) {
-        delay(20);
-    }
     // wdt_enable(WDTO_4S);
     // xbeeInit();
     Debug.begin(115200);

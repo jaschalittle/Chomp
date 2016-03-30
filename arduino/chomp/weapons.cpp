@@ -170,6 +170,17 @@ void fire(char bitfield){
     }
 }
 
+void flameStart(){
+    if (weaponsEnabled()){
+        safeDigitalWrite(PROPANE_DO, HIGH);
+    }
+}
+
+void flameEnd(){
+    // seems like this shouldn't require enable, even though change to disable should close valve itself
+    digitalWrite(PROPANE_DO, LOW);
+}
+
 void valveSafe(){
     // Safing code deliberately does not use safeDigitalWrite since it should always go through.
     digitalWrite(ENABLE_VALVE_DO, LOW);
@@ -182,32 +193,11 @@ void valveSafe(){
     pinMode(RETRACT_VALVE_DO, OUTPUT);
 }
 
-void valveSetup() {
-    valveSafe();
-}
-
 void flameSafe(){
     digitalWrite(IGNITER_DO, LOW);
     digitalWrite(PROPANE_DO, LOW);
     pinMode(IGNITER_DO, OUTPUT);
     pinMode(PROPANE_DO, OUTPUT);
-}
-
-void flameSetup(){
-    flameSafe();
-    // turning on igniter is now handled by enable-- can we take this out?
-    // digitalWrite(IGNITER_DO, HIGH);
-}
-
-void flameStart(){
-    if (weaponsEnabled()){
-        safeDigitalWrite(PROPANE_DO, HIGH);
-    }
-}
-
-void flameEnd(){
-    // seems like this shouldn't require enable, even though change to disable should close valve itself
-    digitalWrite(PROPANE_DO, LOW);
 }
 
 void magnetSafe(){
