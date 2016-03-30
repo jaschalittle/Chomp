@@ -57,7 +57,7 @@ static int16_t angle_data[MAX_DATAPOINTS];
 static int16_t pressure_data[MAX_DATAPOINTS];
 
 // I wanted to multiply to minimize potential for errors, and also seemed like these constants could be outside?
-static const uint32_t SWING_TIMEOUT = 5000 * 1000;  // microseconds
+static const uint32_t SWING_TIMEOUT = 5000000;  // microseconds
 static const uint32_t DATA_COLLECT_TIMESTEP = 5000;  // timestep for data logging, in microseconds
 static const uint16_t THROW_BEGIN_ANGLE_MIN = 5;
 static const uint16_t THROW_BEGIN_ANGLE_MAX = 30;
@@ -65,14 +65,16 @@ static const uint16_t THROW_CLOSE_ANGLE = 90;
 static const uint16_t VENT_OPEN_ANGLE = 160;
 static const uint16_t THROW_COMPLETE_ANGLE = 190;
 static const uint16_t ACCEL_TIME = 50000;
+static const uint16_t THROW_COMPLETE_VELOCITY = 0;
 
 void fire(char bitfield){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
-    uint16_t throw_close_timestep;
-    uint16_t vent_open_timestep;
+    uint16_t throw_close_timestep = 0;
+    uint16_t vent_open_timestep = 0;
     uint16_t datapoints_collected = 0;
+    uint16_t timestep = 0;
     bool vent_closed = false;
     bool throw_open = false;
     uint32_t delay_time;
@@ -115,32 +117,32 @@ void fire(char bitfield){
                 pressure_read_ok = readMlhPressure(&pressure);
                 // Keep throw valve open until 5 degrees
                 if (throw_open && angle > THROW_CLOSE_ANGLE) {
-                    throw_close_timestep = datapoints_collected;
+                    throw_close_timestep = timestep;
                     safeDigitalWrite(THROW_VALVE_DO, LOW);
                     throw_open = false;
                 }
                 if (vent_closed && angle > VENT_OPEN_ANGLE) {
-                    vent_open_timestep = datapoints_collected;
+                    vent_open_timestep = timestep;
                     safeDigitalWrite(VENT_VALVE_DO, LOW);
                     vent_closed = false;
                 }
                 // close throw, open vent if hammer velocity below threshold after 50 ms initial acceleration time
                 if (swing_length > ACCEL_TIME) {
                     velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
-                    if (velocity_read_ok && abs(angular_velocity) < 10) {
-                        throw_close_timestep = datapoints_collected;
+                    if (velocity_read_ok && abs(angular_velocity) < THROW_COMPLETE_VELOCITY) {
+                        if (throw_open) {throw_close_timestep = timestep;}
                         safeDigitalWrite(THROW_VALVE_DO, LOW);
                         throw_open = false;
                         delay(10);
-                        vent_open_timestep = datapoints_collected;
+                        if (vent_closed) {vent_open_timestep = timestep;}
                         safeDigitalWrite(VENT_VALVE_DO, LOW);
                         vent_closed = false;
                     }
                 }
                 if (datapoints_collected < MAX_DATAPOINTS){
-                  angle_data[datapoints_collected] = angle;
-                  pressure_data[datapoints_collected] = pressure;
-                  datapoints_collected++;
+                    angle_data[datapoints_collected] = angle;
+                    pressure_data[datapoints_collected] = pressure;
+                    datapoints_collected++;
                 }
                 // Ensure that loop step takes 1 ms or more (without this it takes quite a bit less)
                 sensor_read_time = micros() - sensor_read_time;
@@ -148,12 +150,15 @@ void fire(char bitfield){
                 if (delay_time > 0) {
                     delayMicroseconds(delay_time);
                 }
+                timestep++;
                 swing_length = micros() - fire_time;
             }
             // Close throw valve after 1 second even if target angle not achieved
+            throw_close_timestep = timestep;
             safeDigitalWrite(THROW_VALVE_DO, LOW);
             delay(10);
             // Open vent valve after 1 second even if target angle not achieved
+            vent_open_timestep = timestep;
             safeDigitalWrite(VENT_VALVE_DO, LOW);
             
             // Send buffered throw data over serial
@@ -162,6 +167,8 @@ void fire(char bitfield){
                 Debug.print("\t");
                 Debug.println(pressure_data[i]);
             }
+            Debug.print("timestep\t");
+            Debug.println(DATA_COLLECT_TIMESTEP);
             Debug.print("throw_close_timestep\t");
             Debug.println(throw_close_timestep);
             Debug.print("vent_open_timestep\t");
