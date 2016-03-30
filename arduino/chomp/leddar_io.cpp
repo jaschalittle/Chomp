@@ -8,10 +8,10 @@ void leddarWrapperInit(){
   LeddarSerial.begin(115200);
 }
 
-bool CRC16(byte *aBuffer, byte aLength, bool aCheck) 
+bool CRC16(uint8_t *aBuffer, uint8_t aLength, bool aCheck) 
 {
-  byte lCRCHi = 0xFF; // high byte of CRC initialized
-  byte lCRCLo = 0xFF; // low byte of CRC initialized
+  uint8_t lCRCHi = 0xFF; // high byte of CRC initialized
+  uint8_t lCRCLo = 0xFF; // low byte of CRC initialized
   
   for (uint16_t i = 0; i<aLength; ++i) 
   {
