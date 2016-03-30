@@ -10,24 +10,23 @@ void sensorSetup(){
 // static const uint32_t pressure_sensor_range = 920 - 102;
 bool readMlhPressure(int16_t* pressure){
   uint16_t counts = analogRead(PRESSURE_AI);
-  if (counts > 101) {
-      *pressure = (int16_t) (counts - 102) * 11 / 18; // safe with 16 bit uints, accurate to 0.02%%
-      return true;
-  } else {
-      return false;
-  }
+  if (counts < 102) { *pressure = 0; return true; }
+  if (counts > 920) { *pressure = 500; return true; }
+  
+  *pressure = (int16_t) (counts - 102) * 11 / 18; // safe with 16 bit uints, accurate to 0.02%%
+  return true;
 }
 
 // 0 deg is 10% of input voltage, empirically observed to be 100 counts
 // 360 deg is 90% of input voltage, empirically observed to be 920 counts
 bool readAngle(int16_t* angle){
   uint16_t counts = analogRead(ANGLE_AI);
-  if (counts > 101) {
-      *angle = (int16_t) (counts - 102) * 11 / 25;  // safe with 16 bit uints, accurate to 0.02%%
-      return true;
-  } else {
-      return false;
-  }
+  if ( counts < 50 ) { return false; } // Failure mode in shock, rails to 0;
+  if ( counts < 102 ) { *angle = 0; return true; }
+  if ( counts > 920 ) { *angle = 360; return true; }
+
+  *angle = (int16_t) (counts - 102) * 11 / 25;  // safe with 16 bit uints, accurate to 0.02%%
+  return true;
 }
 
 bool angularVelocity (int16_t* angular_velocity) {
