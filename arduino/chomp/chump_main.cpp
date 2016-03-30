@@ -56,7 +56,7 @@ static unsigned long last_request_time = micros();
 static unsigned long last_telem_time = micros();
 static int16_t left_drive_value = 0;
 static int16_t right_drive_value = 0;
-bool targeting_enabled = getTargetingEnable() > 0.09;
+static bool targeting_enabled = false;
 static int16_t steer_bias = 0; // positive turns right, negative turns left
 unsigned long last_loop_begin = micros();
 
@@ -143,11 +143,11 @@ void chumpLoop() {
         previous_rc_bitfield = current_rc_bitfield;
     }
 
-    left_drive_value = getLeftRc();
-    right_drive_value = getRightRc();
+    // left_drive_value = getLeftRc();
+    // right_drive_value = getRightRc();
     drive(left_drive_value - steer_bias, right_drive_value - steer_bias);
 
-    targeting_enabled = getTargetingEnable() > 0.09;
+    targeting_enabled = getTargetingEnable();
     if (targeting_enabled) {
         drive(left_drive_value - steer_bias, right_drive_value - steer_bias);
         // Debug.print(steer_bias);
