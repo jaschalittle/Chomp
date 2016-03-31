@@ -5,11 +5,11 @@
 
 
 // initialize PWM vals to neutral values
-static volatile uint16_t LEFT_RC_pwm_val = 1520;
+static volatile int32_t LEFT_RC_pwm_val = 1520;
 static volatile uint32_t LEFT_RC_prev_time = 0;
-static volatile uint16_t RIGHT_RC_pwm_val = 1520;
+static volatile int32_t RIGHT_RC_pwm_val = 1520;
 static volatile uint32_t RIGHT_RC_prev_time = 0;
-static volatile uint16_t TARGETING_ENABLE_pwm_val = 1520;
+static volatile int32_t TARGETING_ENABLE_pwm_val = 1520;
 static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
 
 // values for converting RC PWM to Roboteq drive control (-1000 to 1000)
@@ -113,7 +113,7 @@ int16_t getRightRc() {
     if (RIGHT_RC_pwm_val > deadband_max || RIGHT_RC_pwm_val < deadband_min) {
         drive_value = (RIGHT_RC_pwm_val - pwm_neutral) * 1000 / pwm_range;
     }
-    // Debug.print(RIGHT_RC_pwm_val);
+    // Debug.println(RIGHT_RC_pwm_val);
     // Debug.print("\t");
     return drive_value;
 }
