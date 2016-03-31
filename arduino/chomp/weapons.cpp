@@ -13,7 +13,7 @@ bool autofireEnabled(char bitfield){
     return bitfield & AUTO_HAMMER_ENABLE_BIT;
 }
 
-static const uint32_t RETRACT_TIMEOUT = 300 * 1000;  // microseconds
+static const uint32_t RETRACT_TIMEOUT = 300 * 1000L;  // microseconds
 static const uint16_t RETRACT_BEGIN_ANGLE_MIN = 90;
 static const uint16_t RETRACT_BEGIN_VEL_MAX = 5;
 static const uint16_t RETRACT_COMPLETE_ANGLE = 10;
@@ -58,8 +58,8 @@ static int16_t pressure_data[MAX_DATAPOINTS];
 // static int16_t velocities[MAX_DATAPOINTS];
 
 // I wanted to multiply to minimize potential for errors, and also seemed like these constants could be outside?
-static const uint32_t SWING_TIMEOUT = 1000000;  // microseconds
-static const uint32_t DATA_COLLECT_TIMESTEP = 1000;  // timestep for data logging, in microseconds
+static const uint32_t SWING_TIMEOUT = 1000 * 1000L;  // microseconds
+static const uint32_t DATA_COLLECT_TIMESTEP = 1000L;  // timestep for data logging, in microseconds
 static const uint16_t THROW_BEGIN_ANGLE_MIN = 5;
 static const uint16_t THROW_BEGIN_ANGLE_MAX = 30;
 static const uint16_t THROW_CLOSE_ANGLE = 90;
@@ -227,7 +227,7 @@ void fire_test(){
             fire_time = micros();
             // In fighting form, should probably just turn on flamethrower here
             // Wait until hammer swing complete, up to 1 second
-            while (swing_length < 9000000) {
+            while (swing_length < 9000000L) {
                 sensor_read_time = micros();
                 angle_read_ok = readAngle(&angle);
                 pressure_read_ok = readMlhPressure(&pressure);
