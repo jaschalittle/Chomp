@@ -5,21 +5,21 @@
 
 
 // initialize PWM vals to neutral values
-static volatile int32_t LEFT_RC_pwm_val = 1520;
+static volatile uint16_t LEFT_RC_pwm_val = 1520;
 static volatile uint32_t LEFT_RC_prev_time = 0;
-static volatile int32_t RIGHT_RC_pwm_val = 1520;
+static volatile uint16_t RIGHT_RC_pwm_val = 1520;
 static volatile uint32_t RIGHT_RC_prev_time = 0;
-static volatile int32_t TARGETING_ENABLE_pwm_val = 1520;
+static volatile uint16_t TARGETING_ENABLE_pwm_val = 1520;
 static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
 
 // values for converting RC PWM to Roboteq drive control (-1000 to 1000)
-static const int32_t pwm_min = 923;
-static const int32_t pwm_max = 2125;
+static const int16_t pwm_min = 923;
+static const int16_t pwm_max = 2125;
 static const float deadband = 0.05;
-static const int32_t pwm_neutral = 1524;
-static const int32_t pwm_range = (pwm_max - pwm_min) / 2;
-static const int32_t deadband_min = pwm_neutral - pwm_range * deadband;
-static const int32_t deadband_max = pwm_neutral + pwm_range * deadband;
+static const int16_t pwm_neutral = 1524;
+static const int16_t pwm_range = (pwm_max - pwm_min) / 2;
+static const int16_t deadband_min = pwm_neutral - pwm_range * deadband;
+static const int16_t deadband_max = pwm_neutral + pwm_range * deadband;
 
 void LEFT_RC_rising();
 void LEFT_RC_falling();
@@ -50,9 +50,12 @@ CREATE_RISING_ISR(TARGETING_ENABLE);
 
 // Set up all RC interrupts
 void attachRCInterrupts(){
-  attachInterrupt(LEFT_RC, LEFT_RC_rising, RISING);
-  attachInterrupt(RIGHT_RC, RIGHT_RC_rising, RISING);
-  attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
+    pinMode(FUTABA_CH1_PIN, INPUT_PULLUP);
+    pinMode(FUTABA_CH2_PIN, INPUT_PULLUP);
+    pinMode(FUTABA_CH5_PIN, INPUT_PULLUP);
+    attachInterrupt(LEFT_RC, LEFT_RC_rising, RISING);
+    attachInterrupt(RIGHT_RC, RIGHT_RC_rising, RISING);
+    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
 }
 
 uint8_t sbusData[25] = {0};
@@ -100,6 +103,8 @@ int16_t getLeftRc() {
     if (LEFT_RC_pwm_val > deadband_max || LEFT_RC_pwm_val < deadband_min) {
         drive_value = (LEFT_RC_pwm_val - pwm_neutral) * 1000 / pwm_range;
     }
+    // Debug.print(LEFT_RC_pwm_val);
+    // Debug.print("\t");
     return drive_value;
 }
 
@@ -108,6 +113,8 @@ int16_t getRightRc() {
     if (RIGHT_RC_pwm_val > deadband_max || RIGHT_RC_pwm_val < deadband_min) {
         drive_value = (RIGHT_RC_pwm_val - pwm_neutral) * 1000 / pwm_range;
     }
+    // Debug.print(RIGHT_RC_pwm_val);
+    // Debug.print("\t");
     return drive_value;
 }
 
