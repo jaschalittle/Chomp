@@ -19,30 +19,54 @@ bool readMlhPressure(int16_t* pressure){
 
 // 0 deg is 10% of input voltage, empirically observed to be 100 counts
 // 360 deg is 90% of input voltage, empirically observed to be 920 counts
-bool readAngle(int16_t* angle){
-  uint16_t counts = analogRead(ANGLE_AI);
-  if ( counts < 50 ) { return false; } // Failure mode in shock, rails to 0;
-  if ( counts < 102 ) { *angle = 0; return true; }
-  if ( counts > 920 ) { *angle = 360; return true; }
+bool readAngle(uint16_t* angle){
+    uint16_t counts = analogRead(ANGLE_AI);
+    if ( counts < 50 ) { return false; } // Failure mode in shock, rails to 0;
+    if ( counts < 102 ) { *angle = 0; return true; }
+    if ( counts > 920 ) { *angle = 360; return true; }
 
-  *angle = (int16_t) (counts - 102) * 11 / 25;  // safe with 16 bit uints, accurate to 0.02%%
-  return true;
+    *angle = (int16_t) (counts - 102) * 11 / 25;  // safe with 16 bit uints, accurate to 0.02%%
+    return true;
 }
+
+// bool relativeAngleReference(uint16_t* counts_reference) {
+//     uint16_t counts = analogRead(ANGLE_AI);
+//     if ( counts < 50 ) { return false; } // Failure mode in shock, rails to 0;
+//     if ( counts < 102 ) { counts = 102; return true; }
+//     if ( counts > 920 ) { counts = 920; return true; }
+
+//     *counts_reference = counts - 102;  // safe with 16 bit uints, accurate to 0.02%%
+//     return true;
+// }
+
+// bool relativeAngle(int16_t* angle, uint16_t counts_reference) {
+//     uint16_t counts = analogRead(ANGLE_AI);
+//     if ( counts < 50 ) { return false; } // Failure mode in shock, rails to 0;
+//     if ( counts < 102 ) { counts = 102; }
+//     if ( counts > 920 ) { counts = 920; }
+//     counts -= 102;
+//     uint16_t diff = counts_reference - counts;
+//     Debug.print(counts_reference);
+//     Debug.print("\t");
+//     Debug.println(counts);
+//     *angle = diff * 11 / 25;  // safe with 16 bit uints, accurate to 0.02%%
+//     return true;
+// }
 
 bool angularVelocity (int16_t* angular_velocity) {
     // This function could filter low angle values and ignore them for summing. If we only rail to 0V, we could still get a velocity.
     int16_t angle_traversed = 0;
     int16_t abs_angle_traversed = 0;
-    int16_t last_angle;
+    uint16_t last_angle;
     bool angle_read_ok = readAngle(&last_angle);
-    int16_t new_angle;
+    uint16_t new_angle;
     int16_t delta;
     uint32_t read_time = micros();
     // Take 50 readings. This should be 5-10 ms. 1 rps = 2.78 deg/s
     uint8_t num_readings = 50;
     for (uint8_t i = 0; i < num_readings; i++) {
         if (readAngle(&new_angle)) {
-            delta = new_angle - last_angle;
+            delta = (int16_t) new_angle - last_angle;
             abs_angle_traversed += abs(delta);
             angle_traversed += delta;
             last_angle = new_angle;
@@ -60,8 +84,8 @@ bool angularVelocity (int16_t* angular_velocity) {
     }
 }
 
-bool angularVelocityBuffered (int16_t* angular_velocity, const int16_t* angle_data, uint16_t datapoints_buffered) {
-    const uint16_t DATAPOINTS_TO_AVERAGE = 100;
+bool angularVelocityBuffered (int16_t* angular_velocity, const uint16_t* angle_data, uint16_t datapoints_buffered) {
+    const uint16_t DATAPOINTS_TO_AVERAGE = 10;
     // do not report velocity if too few datapoints have been buffered
     if (datapoints_buffered < DATAPOINTS_TO_AVERAGE) {
         return false;
@@ -71,7 +95,7 @@ bool angularVelocityBuffered (int16_t* angular_velocity, const int16_t* angle_da
     int16_t delta;
     uint32_t read_time = micros();
     for (uint16_t i = datapoints_buffered - DATAPOINTS_TO_AVERAGE + 1; i < datapoints_buffered; i++) {
-        delta = angle_data[i] - angle_data[i-1];
+        delta = (int16_t) angle_data[i] - angle_data[i-1];
         abs_angle_traversed += abs(delta);
         angle_traversed += delta;
     }
