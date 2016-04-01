@@ -1,4 +1,5 @@
 from __future__ import division
+import itertools
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 import numpy as np
@@ -17,7 +18,15 @@ def polyfit_derivative(data, num_points):
         poly_derivatives.append(first_derivative * 1000)
     return poly_derivatives
 
-def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, timestep = 1000):
+def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, filetag, timestep = 1000):
+    # write data to log
+    with open("{}_swing{}.txt".format(filetag, swing_num), 'w') as fh:
+        for angle, pressure in itertools.izip(angles, pressures):
+            print >>fh, "{}\t{}".format(angle, pressure)
+        print >>fh, "timestep\t{}".format(timestep)
+        print >>fh, "throw_close_time\t{}".format(throw_close_time)
+        print >>fh, "vent_open_time\t{}".format(vent_open_time)
+
     # set up x and y for plotting
     angles = pd.Series(angles)
     pressures = pd.Series(pressures)
@@ -85,8 +94,7 @@ def stream_data(serial_device, baudrate):
         elif line[0] == "vent_open_timestep":
             vent_open_time = int(line[1])
             swing_num += 1
-            print "SWIIIING"
-            plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, timestep=timestep)
+            plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, filetag, timestep=timestep)
             angles = list()
             pressures = list()
         else:
