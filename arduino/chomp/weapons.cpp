@@ -13,47 +13,70 @@ bool autofireEnabled(char bitfield){
     return bitfield & AUTO_HAMMER_ENABLE_BIT;
 }
 
-static const uint32_t RETRACT_TIMEOUT = 300 * 1000L;  // microseconds
+static const uint32_t RETRACT_TIMEOUT = 350 * 1000L;  // microseconds
 static const uint16_t RETRACT_BEGIN_ANGLE_MIN = 90;
 static const uint16_t RETRACT_BEGIN_VEL_MAX = 5;
 static const uint16_t RETRACT_COMPLETE_ANGLE = 10;
+static const int16_t RETRACT_ANGLE_AMOUNT = 30;
 
 void retract(){
-    int16_t start_angle;
+    uint16_t start_angle;
     bool angle_read_ok = readAngle(&start_angle);
-    int16_t angle = start_angle;
+    // if angle data isn't coming back, abort
+    while (!angle_read_ok) {
+        uint8_t start_attempts = 1;
+        if (start_attempts < 5) {
+            angle_read_ok = readAngle(&start_angle);
+            start_attempts++;
+        } else {
+            return;
+        }
+    }
+    uint16_t angle = start_angle;
     int16_t angular_velocity = 0;
+    safeDigitalWrite(VENT_VALVE_DO, LOW);
     bool velocity_read_ok = angularVelocity(&angular_velocity);
     uint32_t retract_time;
+    uint32_t angle_complete_time = 0;
+    int16_t angle_traversed = 0;
     // Do we want to check cylinder pressure here?
     // Consider inferring hammer velocity here and requiring that it be below some threshold
     // Only retract if hammer is forward
-    if (weaponsEnabled() && angle > RETRACT_BEGIN_ANGLE_MIN && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
+    // if (weaponsEnabled() && angle > RETRACT_BEGIN_ANGLE_MIN && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
+    if (weaponsEnabled() && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
         // Debug.write("Retract\r\n");
-        // Open vent
-        safeDigitalWrite(VENT_VALVE_DO, LOW);
-        delay(10);
         // Open retract valve
         safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
         retract_time = micros();
-        angle_read_ok = readAngle(&angle);
-        // Keep valve open lesser of 40 degrees from start and 500 ms
-        while (micros() - retract_time < RETRACT_TIMEOUT && angle > (start_angle - 40)) {
+        // Keep valve open lesser of RETRACT_ANGLE_AMOUNT degrees from start and 500 ms
+        while (micros() - retract_time < RETRACT_TIMEOUT && angle_traversed < RETRACT_ANGLE_AMOUNT) {
             angle_read_ok = readAngle(&angle);
+            if (angle_complete_time == 0 && angle_traversed >= 20) { angle_complete_time = micros() - retract_time; }
+            angle_traversed = (int16_t) start_angle - angle;
+            if (start_angle < 90 && angle > 270) { angle_traversed = start_angle + (360 - angle) ;} else { angle_traversed = (int16_t) start_angle - angle; }
         }
+        if (angle_complete_time == 0) { angle_complete_time = micros() - retract_time; }
+        retract_time = micros() - retract_time;
         // Close retract valve
         safeDigitalWrite(RETRACT_VALVE_DO, LOW);
-        retract_time = micros();
+        // retract_time = micros() - retract_time;
         // Wait until sooner of angle < 10 deg off floor or 300 ms
-        while (micros() - retract_time < RETRACT_TIMEOUT && angle > RETRACT_COMPLETE_ANGLE) {
-            angle_read_ok = readAngle(&angle);
-        }
+        // while (micros() - retract_time < RETRACT_TIMEOUT && angle > RETRACT_COMPLETE_ANGLE) {
+        //     angle_read_ok = readAngle(&angle);
+        // }
+        Debug.print(start_angle);
+        Debug.print("\t");
+        Debug.print(angle);
+        Debug.print("\t");
+        Debug.print(angle_traversed);
+        Debug.print("\t");
+        Debug.println(angle_complete_time);
     }
 }
 
 // for collecting hammer swing data
 static const uint16_t MAX_DATAPOINTS = 1000;
-static int16_t angle_data[MAX_DATAPOINTS];
+static uint16_t angle_data[MAX_DATAPOINTS];
 static int16_t pressure_data[MAX_DATAPOINTS];
 // static int16_t velocities[MAX_DATAPOINTS];
 
@@ -79,8 +102,8 @@ void fire(){
     bool vent_closed = false;
     bool throw_open = false;
     uint32_t delay_time;
-    int16_t angle;
-    int16_t start_angle;
+    uint16_t angle;
+    uint16_t start_angle;
     bool angle_read_ok;
     int16_t pressure;
     bool pressure_read_ok;
@@ -192,8 +215,8 @@ void fire_test(){
     bool vent_closed = false;
     bool throw_open = false;
     uint32_t delay_time;
-    int16_t angle;
-    int16_t start_angle;
+    uint16_t angle;
+    uint16_t start_angle;
     bool angle_read_ok;
     int16_t pressure;
     bool pressure_read_ok;
