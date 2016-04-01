@@ -27,12 +27,12 @@ void xbeeBufferData(char* data, unsigned int len){
    if ( len >= space()){
     return;
    }
-   unsigned char firstCopyLen = min(len, BUFSIZE - head);
+   uint8_t firstCopyLen = min(len, BUFSIZE - head);
    memcpy(buf + head, data, firstCopyLen);
    head = (head + firstCopyLen) % BUFSIZE;
    // We only wrote up til the end of the ring
    if ( len > firstCopyLen){
-     unsigned char secondCopyLen = len - firstCopyLen;
+     uint8_t secondCopyLen = len - firstCopyLen;
      memcpy(buf + head, data+firstCopyLen, secondCopyLen);
      head = (head + secondCopyLen) % BUFSIZE;
    }
@@ -40,7 +40,7 @@ void xbeeBufferData(char* data, unsigned int len){
 
 void xbeePushData(){
     if (true){//(digitalRead(XBEE_CTS) == LOW){
-      unsigned char len = 0;
+      uint8_t len = 0;
       if (head < tail){
         len = min(BUFSIZE - tail, 16);
       } else {
