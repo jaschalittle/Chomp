@@ -2,10 +2,12 @@
 #include "autofire.h"
 #include "leddar_io.h"
 
-#define CENTER_ZONE_ARM_MIN 4
-#define CENTER_ZONE_ARM_MAX 12
+// Inclusive range
+#define CENTER_ZONE_ARM_MIN 0
+#define CENTER_ZONE_ARM_MAX 15
 
-#define CENTER_ZONE_FIRE_MIN 6
+// Exclusive range: 6, 7, 8, 9
+#define CENTER_ZONE_FIRE_MIN 5
 #define CENTER_ZONE_FIRE_MAX 10
 
 #define FACE_OFFSET 20
@@ -19,10 +21,6 @@ LeddarState getState(unsigned int detection_count, Detection* detections){
   for (int i = 0; i < detection_count; i++){
     if (detections[i].Segment < CENTER_ZONE_FIRE_MAX && detections[i].Segment > CENTER_ZONE_FIRE_MIN &&
         detections[i].Distance - FACE_OFFSET < FIRE_THRESHOLD){
-//      Serial.print(detections[i].Segment);
-//      Serial.write("/");
-//      Serial.print(detections[i].Distance);
-//      Serial.write(" ");
       if (detections[i].Segment - last_detected_segment == 1){
         contiguous += 1;
       } else {
@@ -31,7 +29,6 @@ LeddarState getState(unsigned int detection_count, Detection* detections){
       last_detected_segment = detections[i].Segment;
     }
   }
-//  Serial.write("\r\n");
   if (contiguous >= CONTIG_THRESHOLD){
     return HIT_ZONE;
   }
@@ -39,9 +36,8 @@ LeddarState getState(unsigned int detection_count, Detection* detections){
   last_detected_segment = 0;
   contiguous = 1;
   for (int i = 0; i < detection_count; i++){
-    if (detections[i].Segment < CENTER_ZONE_ARM_MAX && detections[i].Segment > CENTER_ZONE_ARM_MIN &&
+    if (detections[i].Segment <= CENTER_ZONE_ARM_MAX && detections[i].Segment >= CENTER_ZONE_ARM_MIN &&
         detections[i].Distance - FACE_OFFSET < ARM_THRESHOLD){
-      //Xbee.write("Hit!\r\n");
       if (detections[i].Segment - last_detected_segment == 1){
         contiguous += 1;
       } else {
@@ -54,7 +50,6 @@ LeddarState getState(unsigned int detection_count, Detection* detections){
   if (contiguous >= CONTIG_THRESHOLD){
     return ARM_ZONE;
   }
-  //Xbee.write("Nothing to see here\r\n");
   return FAR_ZONE;
 }
 
