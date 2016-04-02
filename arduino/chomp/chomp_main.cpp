@@ -10,6 +10,7 @@
 #include "drive.h"
 #include "weapons.h"
 #include "utils.h"
+#include "chump_targeting.h"
 #include <avr/wdt.h>
 
 // SAFETY CODE ----------------------------------------------------
@@ -56,9 +57,11 @@ void chompSetup() {
     // xbeeInit();
     Debug.begin(115200);
     Sbus.begin(100000);
+    DriveSerial.begin(115200);
     leddarWrapperInit();
     attachRCInterrupts();
     sensorSetup();
+    pinMode(A3, OUTPUT);  // laser pointer
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
@@ -68,9 +71,13 @@ static uint32_t last_telem_time = micros();
 static int16_t left_drive_value = 0;
 static int16_t right_drive_value = 0;
 static bool targeting_enabled = false;
+static int16_t steer_bias = 0; // positive turns right, negative turns left
+int16_t target_x_after_leadtime;
+int16_t target_y_after_leadtime;
+
 void chompLoop() {
     uint32_t start_time = micros();
-    if (micros() - last_request_time > 1000000){
+    if (micros() - last_request_time > 1000000L){
         last_request_time = micros();
         requestDetections();
         // Debug.write("Request\r\n");
@@ -100,6 +107,8 @@ void chompLoop() {
         }
         // sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
         requestDetections();
+        // steer_bias = pidSteer(detection_count, getDetections(), 600);   // 600 cm ~ 20 ft
+        complementaryFilter(left_drive_value, right_drive_value, detection_count, getDetections(), 200, &target_x_after_leadtime, &target_y_after_leadtime);
     }
 
     if (bufferSbusData()){
@@ -119,10 +128,13 @@ void chompLoop() {
             }
             // Manual hammer fire
             if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-                fire_test();
+                // fire();
+                delay(200);
+                digitalWrite(A3, HIGH);
             }
             if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
-                retract();
+                // retract();
+                digitalWrite(A3, LOW);
             }
             if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
                 magOn();
@@ -136,11 +148,25 @@ void chompLoop() {
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
     targeting_enabled = getTargetingEnable();
-    float l_tread_mix = left_drive_value;
-    float r_tread_mix = -right_drive_value;
-    drive(l_tread_mix, r_tread_mix);
+    // if (targeting_enabled) {
+    //     drive(left_drive_value - steer_bias, right_drive_value - steer_bias);
+    // }
+    // Debug.print(left_drive_value);
+    // Debug.print("\t");
+    // Debug.print(right_drive_value);
+    // Debug.print("\t");
+    if (targeting_enabled) {
+        // Debug.println("on");
+        drive(left_drive_value, right_drive_value);
+        digitalWrite(A3, HIGH); // laser pointer
+    } else {
+        digitalWrite(A3, LOW);
+        // Debug.println("off");
+    }
+    
+    // drive(left_drive_value, right_drive_value);
 
-    unsigned long loop_speed = micros() - start_time;
+    uint32_t loop_speed = micros() - start_time;
     // Read other sensors, to report out
     // uint16_t pressure;
     // bool pressure_read_ok = readMlhPressure(&pressure);
@@ -148,7 +174,7 @@ void chompLoop() {
     // bool angle_read_ok = readAngle(&angle);
     // Debug.println(angle);
 
-    if (micros() - last_telem_time > 200000){
+    if (micros() - last_telem_time > 200000L){
         // send_sensor_telem(loop_speed, pressure);
         // last_telem_time = micros();
     }
