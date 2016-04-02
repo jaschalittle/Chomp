@@ -13,11 +13,11 @@ bool autofireEnabled(char bitfield){
     return bitfield & AUTO_HAMMER_ENABLE_BIT;
 }
 
-static const uint32_t RETRACT_TIMEOUT = 350 * 1000L;  // microseconds
+static const uint32_t RETRACT_TIMEOUT = 2000 * 1000L;  // microseconds
 static const uint16_t RETRACT_BEGIN_ANGLE_MIN = 90;
 static const uint16_t RETRACT_BEGIN_VEL_MAX = 5;
 static const uint16_t RETRACT_COMPLETE_ANGLE = 10;
-static const int16_t RETRACT_ANGLE_AMOUNT = 30;
+static const int16_t RETRACT_ANGLE_AMOUNT = 90;
 
 void retract(){
     uint16_t start_angle;
@@ -35,21 +35,22 @@ void retract(){
     uint16_t angle = start_angle;
     int16_t angular_velocity = 0;
     safeDigitalWrite(VENT_VALVE_DO, LOW);
-    bool velocity_read_ok = angularVelocity(&angular_velocity);
     uint32_t retract_time;
     uint32_t angle_complete_time = 0;
     int16_t angle_traversed = 0;
     // Do we want to check cylinder pressure here?
     // Consider inferring hammer velocity here and requiring that it be below some threshold
     // Only retract if hammer is forward
-    // if (weaponsEnabled() && angle > RETRACT_BEGIN_ANGLE_MIN && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
-    if (weaponsEnabled() && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
+    bool velocity_read_ok = angularVelocity(&angular_velocity);
+    if (weaponsEnabled() && angle > RETRACT_BEGIN_ANGLE_MIN && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
+    // if (weaponsEnabled() && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
         // Debug.write("Retract\r\n");
         // Open retract valve
         safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
         retract_time = micros();
         // Keep valve open lesser of RETRACT_ANGLE_AMOUNT degrees from start and 500 ms
-        while (micros() - retract_time < RETRACT_TIMEOUT && angle_traversed < RETRACT_ANGLE_AMOUNT) {
+        // while (micros() - retract_time < RETRACT_TIMEOUT && angle_traversed < RETRACT_ANGLE_AMOUNT) {
+        while (micros() - retract_time < RETRACT_TIMEOUT) {
             angle_read_ok = readAngle(&angle);
             if (angle_complete_time == 0 && angle_traversed >= 20) { angle_complete_time = micros() - retract_time; }
             angle_traversed = (int16_t) start_angle - angle;
@@ -84,10 +85,10 @@ static int16_t pressure_data[MAX_DATAPOINTS];
 static const uint32_t SWING_TIMEOUT = 1000 * 1000L;  // microseconds
 static const uint32_t DATA_COLLECT_TIMESTEP = 1000L;  // timestep for data logging, in microseconds
 static const uint16_t THROW_BEGIN_ANGLE_MIN = 5;
-static const uint16_t THROW_BEGIN_ANGLE_MAX = 30;
-static const uint16_t THROW_CLOSE_ANGLE = 90;
-static const uint16_t VENT_OPEN_ANGLE = 180;
-static const uint16_t THROW_COMPLETE_ANGLE = 190;
+static const uint16_t THROW_BEGIN_ANGLE_MAX = 35;
+static const uint16_t THROW_CLOSE_ANGLE = 41;
+static const uint16_t VENT_OPEN_ANGLE = 200;
+static const uint16_t THROW_COMPLETE_ANGLE = 230;
 static const uint16_t ACCEL_TIME = 50000;
 static const uint16_t THROW_COMPLETE_VELOCITY = 0;
 
