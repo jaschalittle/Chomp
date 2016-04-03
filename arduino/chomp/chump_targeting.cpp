@@ -172,9 +172,9 @@ static int16_t est_target_y_vel;
 float complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_detections, Detection* detections, uint16_t leadtime, 
                           int16_t* target_x_after_leadtime, int16_t* target_y_after_leadtime) {
 	Object obs_object = callNearestObj(num_detections, detections);
-  float obs_target_angle = ((float) obs_object.Left_edge + (float) obs_object.Right_edge) / 2.0 - 8.0 * PI / 64 ;
-  uint16_t obs_target_distance = obs_object.Distance;
-  int16_t obs_target_x = obs_target_distance * sin(obs_target_angle);
+    float obs_target_angle = (((float) obs_object.Left_edge + (float) obs_object.Right_edge) / 2.0 - 8.0) * PI / 64 ;
+    uint16_t obs_target_distance = obs_object.Distance;
+    int16_t obs_target_x = obs_target_distance * sin(obs_target_angle);
 	int16_t obs_target_y = obs_target_distance * cos(obs_target_angle);
   if (!filter_initialized) {
 		filter_initialized = true;
@@ -204,15 +204,15 @@ float complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_d
 		int16_t new_x_vel = est_target_x_vel + x_error / delta_t;
 		int16_t new_y_vel = est_target_y_vel + y_error / delta_t;
 		if (abs(new_x_vel) > max_vel) {
-			new_x_vel = max_vel * ((new_x_vel > 0) - (new_x_vel < 0));
+			new_x_vel = new_x_vel > 0 ? max_vel : max_vel * -1;
 		}
 		if (abs(new_y_vel) > max_vel) {
-			new_y_vel = max_vel * ((new_y_vel > 0) - (new_y_vel < 0));
+			new_y_vel = new_y_vel > 0 ? max_vel : max_vel * -1;
 		}
         // 
 		// first term is using model to calc new velocity, second is distrusting model and trusting object call from leddar data
-		est_target_x_vel = a * (est_target_y_vel) + a_comp * (new_x_vel);  
-		est_target_y_vel = a * (est_target_y_vel) + a_comp * (new_y_vel);
+		est_target_x_vel = a * est_target_y_vel + a_comp * new_x_vel;  
+		est_target_y_vel = a * est_target_y_vel + a_comp * new_y_vel;
 		
 		// prediction = x_angleC + newRate * leadtime;
 
