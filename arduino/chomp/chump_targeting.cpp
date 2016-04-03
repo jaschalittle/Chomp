@@ -176,13 +176,13 @@ float complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_d
     uint16_t obs_target_distance = obs_object.Distance;
     int16_t obs_target_x = obs_target_distance * sin(obs_target_angle);
 	int16_t obs_target_y = obs_target_distance * cos(obs_target_angle);
-    if (!filter_initialized) {
+  if (!filter_initialized) {
 		filter_initialized = true;
 		est_target_x_vel = 0;  
 		est_target_y_vel = 0;
-        // this initializes to object call. could maybe try initializing to something "neutral" if this seems problematic
-        pred_target_x = obs_target_x;
-        pred_target_y = obs_target_y;
+    // this initializes to object call. could maybe try initializing to something "neutral" if this seems problematic
+    pred_target_x = obs_target_x;
+    pred_target_y = obs_target_y;
 		last_pred_time = micros();
 		return obs_target_angle;
 	} else {
@@ -235,9 +235,9 @@ float complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_d
 		// then, update x and y predictions given new velocity estimates
 		*target_x_after_leadtime += pred_target_x + new_x_vel * leadtime - our_new_x;
 		*target_y_after_leadtime += pred_target_y + new_y_vel * leadtime - our_new_y;
-        // *target_angle_after_leadtime = atan2(target_x_after_leadtime, target_y_after_leadtime);
-        
-        last_pred_time = micros();
+    // *target_angle_after_leadtime = atan2(target_x_after_leadtime, target_y_after_leadtime);
+    
+    last_pred_time = micros();
 
 		Debug.print(obs_target_x);
 		Debug.print("\t");
@@ -251,7 +251,7 @@ float complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_d
 		Debug.print("\t");
 		Debug.println(*target_y_after_leadtime);
 
-        float predicted_target_angle = atan2(pred_target_x, pred_target_y);
+    float predicted_target_angle = atan2(pred_target_x, pred_target_y);
 		return predicted_target_angle;
 	}	
 }
