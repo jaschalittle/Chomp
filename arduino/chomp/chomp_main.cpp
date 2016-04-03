@@ -74,16 +74,18 @@ static bool targeting_enabled = false;
 static int16_t steer_bias = 0; // positive turns right, negative turns left
 int16_t target_x_after_leadtime;
 int16_t target_y_after_leadtime;
+static uint8_t loop_type;
 
 void chompLoop() {
+    loop_type = 1;
     uint32_t start_time = micros();
     if (micros() - last_request_time > 1000000L){
         last_request_time = micros();
         requestDetections();
         // Debug.write("Request\r\n");
     }
-    bool complete = bufferDetections();
-    if (complete){
+    if (bufferDetections()){
+        loop_type |= 2;
         uint8_t detection_count = parseDetections();
         last_request_time = micros();
         LeddarState current_leddar_state = getState(detection_count, getDetections());
@@ -112,6 +114,7 @@ void chompLoop() {
     }
 
     if (bufferSbusData()){
+        loop_type |= 4;
         wdt_reset();
         parseSbus();
         // React to RC state changes
@@ -167,6 +170,9 @@ void chompLoop() {
     // drive(left_drive_value, right_drive_value);
 
     uint32_t loop_speed = micros() - start_time;
+    // Debug.print(loop_type);
+    // Debug.print("\t");
+    // Debug.println(loop_speed);
     // Read other sensors, to report out
     // uint16_t pressure;
     // bool pressure_read_ok = readMlhPressure(&pressure);
