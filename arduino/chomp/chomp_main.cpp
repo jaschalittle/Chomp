@@ -57,11 +57,11 @@ void chompSetup() {
     // xbeeInit();
     Debug.begin(115200);
     Sbus.begin(100000);
-    DriveSerial.begin(115200);
+    driveSetup();
     leddarWrapperInit();
-    attachRCInterrupts();
     sensorSetup();
     pinMode(A3, OUTPUT);  // laser pointer
+    attachRCInterrupts();
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
@@ -75,11 +75,12 @@ static int16_t steer_bias = 0; // positive turns right, negative turns left
 int16_t target_x_after_leadtime;
 int16_t target_y_after_leadtime;
 static uint8_t loop_type;
+uint32_t last_drive_command = micros();
 
 void chompLoop() {
     loop_type = 1;
     uint32_t start_time = micros();
-    if (micros() - last_request_time > 1000000L){
+    if (micros() - last_request_time > 1000000UL){
         last_request_time = micros();
         requestDetections();
         // Debug.write("Request\r\n");
@@ -98,7 +99,7 @@ void chompLoop() {
                 break;
             case HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
-                    drive(0, 0);
+                    // drive(0, 0);
                     if (autofireEnabled(previous_rc_bitfield)){
                         fire();
                     }
@@ -109,8 +110,8 @@ void chompLoop() {
         }
         // sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
         requestDetections();
-        // steer_bias = pidSteer(detection_count, getDetections(), 600);   // 600 cm ~ 20 ft
-        complementaryFilter(left_drive_value, right_drive_value, detection_count, getDetections(), 200, &target_x_after_leadtime, &target_y_after_leadtime);
+        steer_bias = pidSteer(detection_count, getDetections(), 600);   // 600 cm ~ 20 ft
+        // complementaryFilter(left_drive_value, right_drive_value, detection_count, getDetections(), 200, &target_x_after_leadtime, &target_y_after_leadtime);
     }
 
     if (bufferSbusData()){
@@ -148,27 +149,23 @@ void chompLoop() {
         }
         previous_rc_bitfield = current_rc_bitfield;
     }
+    
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
-    targeting_enabled = getTargetingEnable();
-    // if (targeting_enabled) {
-    //     drive(left_drive_value - steer_bias, right_drive_value - steer_bias);
-    // }
-    // Debug.print(left_drive_value);
-    // Debug.print("\t");
-    // Debug.print(right_drive_value);
-    // Debug.print("\t");
-    if (targeting_enabled) {
-        // Debug.println("on");
-        drive(left_drive_value, right_drive_value);
-        digitalWrite(A3, HIGH); // laser pointer
+    
+    if (getTargetingEnable()) {
+        if (!targeting_enabled) {
+            targeting_enabled = true;
+        }
+        // don't spam motor controllers -- only send drive command every 10 ms
+        if (micros() - last_drive_command > 10000UL) {
+            drive(left_drive_value, right_drive_value);
+            last_drive_command = micros();
+        }
     } else {
-        digitalWrite(A3, LOW);
-        // Debug.println("off");
+        targeting_enabled = false;
     }
     
-    // drive(left_drive_value, right_drive_value);
-
     uint32_t loop_speed = micros() - start_time;
     // Debug.print(loop_type);
     // Debug.print("\t");
