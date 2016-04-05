@@ -135,12 +135,12 @@ static float leddar_delta_ts[DELTA_HISTORY_LENGTH];
 static uint8_t leddar_delta_t_index = 0;
 
 void complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_detections, Detection* detections, uint16_t leadtime, 
-                          int16_t* target_x_after_leadtime, int16_t* target_y_after_leadtime, int16_t* steer_bias) {
-	Object obs_object = callNearestObj(num_detections, detections);
+                         int16_t* target_x_after_leadtime, int16_t* target_y_after_leadtime, int16_t* steer_bias) {
+    Object obs_object = callNearestObj(num_detections, detections);
     float obs_target_angle = (((float) obs_object.Left_edge + (float) obs_object.Right_edge) / 2.0 - 8.0) * PI / 64 ;
     uint16_t obs_target_distance = obs_object.Distance;
     int16_t obs_target_x = obs_target_distance * sin(obs_target_angle);
-	int16_t obs_target_y = obs_target_distance * cos(obs_target_angle);
+    int16_t obs_target_y = obs_target_distance * cos(obs_target_angle);
     
     // when filter starts up, initialize with nearest object and velocity estimates of 0
     if (!filter_initialized) {
@@ -153,18 +153,18 @@ void complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_de
         last_pred_time = micros();
         
         *target_x_after_leadtime = obs_target_x;
-		*target_y_after_leadtime = obs_target_y;
+        *target_y_after_leadtime = obs_target_y;
         *steer_bias = P_COEFF * obs_target_angle * 64 / PI;
         
         return;
-	} else {
+    } else {
         float delta_t = (micros() - last_pred_time) / 1000;
         
         int16_t pred_target_x = last_target_x + est_target_x_vel * delta_t;
         int16_t pred_target_y = last_target_y + est_target_y_vel * delta_t;
-		
+
         // calculate error between Leddar reading and prediction
-		int16_t x_error = obs_target_x - pred_target_x;
+        int16_t x_error = obs_target_x - pred_target_x;
         int16_t y_error = obs_target_y - pred_target_y;
         int16_t xy_error = sqrt(pow(x_error, 2) + pow(y_error, 2));
         
@@ -189,7 +189,7 @@ void complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_de
         y_deltas[y_delta_index] = obs_target_y - last_target_y;
         y_delta_index = (y_delta_index + 1) % DELTA_HISTORY_LENGTH;
         int16_t x_delta_sum = 0;
-		int16_t y_delta_sum = 0;
+        int16_t y_delta_sum = 0;
         for (uint8_t i = 0; i < DELTA_HISTORY_LENGTH; i++) {
             x_delta_sum += x_deltas[i];
             y_delta_sum += y_deltas[i];
@@ -203,23 +203,23 @@ void complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_de
         }
         avg_delta_t /= DELTA_HISTORY_LENGTH;
         float new_x_vel = (float) x_delta_sum / DELTA_HISTORY_LENGTH / avg_delta_t;
-		float new_y_vel = (float) y_delta_sum / DELTA_HISTORY_LENGTH / avg_delta_t;
-		
-		// calc expected next position. need to get angle from us turning in here. or put in IMU read/processing
-		// int16_t our_x_vel, our_y_vel, our_vel;
-		// int16_t drive_bias = drive_right - drive_left;
-		// our_vel = (drive_right - drive_left) / 2;  // neg RC on left is forward, pos RC on right is forward
-		// if (abs(drive_bias) < 10) {
-		// 	our_x_vel = 0;
-		// 	our_y_vel = our_vel;
-		// } else {
-		// 	int16_t turn_radius = -drive_left * chomp_width / (drive_bias);
-		// 	int16_t angle = turn_radius / our_vel;
-		// 	our_x_vel = turn_radius - cos(angle) * turn_radius;
-		// 	our_y_vel = sin(angle) * turn_radius;
-		// }
-		// int16_t our_new_x = our_x_vel * leadtime;
-		// int16_t our_new_y = our_y_vel * leadtime;
+        float new_y_vel = (float) y_delta_sum / DELTA_HISTORY_LENGTH / avg_delta_t;
+
+        // calc expected next position. need to get angle from us turning in here. or put in IMU read/processing
+        // int16_t our_x_vel, our_y_vel, our_vel;
+        // int16_t drive_bias = drive_right - drive_left;
+        // our_vel = (drive_right - drive_left) / 2;  // neg RC on left is forward, pos RC on right is forward
+        // if (abs(drive_bias) < 10) {
+        // 	our_x_vel = 0;
+        // 	our_y_vel = our_vel;
+        // } else {
+        // 	int16_t turn_radius = -drive_left * chomp_width / (drive_bias);
+        // 	int16_t angle = turn_radius / our_vel;
+        // 	our_x_vel = turn_radius - cos(angle) * turn_radius;
+        // 	our_y_vel = sin(angle) * turn_radius;
+        // }
+        // int16_t our_new_x = our_x_vel * leadtime;
+        // int16_t our_new_y = our_y_vel * leadtime;
         
         // IMU pseudocode
         // gyro reading at time i can be used to predict angle at time i+1
@@ -227,17 +227,17 @@ void complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_de
         
         // until above code block or IMU set up, this will only work if we are stationary
         int16_t our_new_x = 0;
-		int16_t our_new_y = 0;
+        int16_t our_new_y = 0;
         
         // add prediction of our next pos when we get it running
         last_target_x = obs_target_x;
         last_target_y = obs_target_y;
-		
-		// predict x and y after leadtime
-		*target_x_after_leadtime = last_target_x + est_target_x_vel * leadtime - our_new_x;
-		*target_y_after_leadtime = last_target_y + est_target_y_vel * leadtime - our_new_y;
+        
+        // predict x and y after leadtime
+        *target_x_after_leadtime = last_target_x + est_target_x_vel * leadtime - our_new_x;
+        *target_y_after_leadtime = last_target_y + est_target_y_vel * leadtime - our_new_y;
         *steer_bias = P_COEFF * atan2(*target_x_after_leadtime, *target_y_after_leadtime) * 64 / PI;
-    
+
         last_pred_time = micros();
         
         Debug.print(obs_target_x);
