@@ -131,7 +131,8 @@ static int16_t x_deltas[DELTA_HISTORY_LENGTH];
 static uint8_t x_delta_index = 0;
 static int16_t y_deltas[DELTA_HISTORY_LENGTH];
 static uint8_t y_delta_index = 0;
-static float avg_delta_t = 1.0 / LEDDAR_FREQ * 1000;  // 1 second / Leddar freq Hz * 1000 = cycle time in ms
+static float leddar_delta_ts[DELTA_HISTORY_LENGTH];
+static uint8_t leddar_delta_t_index = 0;
 
 void complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_detections, Detection* detections, uint16_t leadtime, 
                           int16_t* target_x_after_leadtime, int16_t* target_y_after_leadtime, int16_t* steer_bias) {
@@ -157,11 +158,10 @@ void complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_de
         
         return;
 	} else {
-		float delta_t = (micros() - last_pred_time) / 1000;  // delta_t in ms
-        avg_delta_t = avg_delta_t * 0.9 + delta_t * 0.1;
+        float delta_t = (micros() - last_pred_time) / 1000;
         
-        int16_t pred_target_x = last_target_x + est_target_x_vel * avg_delta_t;
-        int16_t pred_target_y = last_target_y + est_target_y_vel * avg_delta_t;
+        int16_t pred_target_x = last_target_x + est_target_x_vel * delta_t;
+        int16_t pred_target_y = last_target_y + est_target_y_vel * delta_t;
 		
         // calculate error between Leddar reading and prediction
 		int16_t x_error = obs_target_x - pred_target_x;
@@ -194,8 +194,16 @@ void complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_de
             x_delta_sum += x_deltas[i];
             y_delta_sum += y_deltas[i];
         }
-        float new_x_vel = (float) x_delta_sum / DELTA_HISTORY_LENGTH / delta_t;
-		float new_y_vel = (float) y_delta_sum / DELTA_HISTORY_LENGTH / delta_t;
+        
+        leddar_delta_ts[leddar_delta_t_index] = delta_t;
+        leddar_delta_t_index = (leddar_delta_t_index + 1) % DELTA_HISTORY_LENGTH;
+        float avg_delta_t = 0;
+        for (uint8_t i; i < DELTA_HISTORY_LENGTH; i++) {
+            avg_delta_t += leddar_delta_ts[i];
+        }
+        avg_delta_t /= DELTA_HISTORY_LENGTH;
+        float new_x_vel = (float) x_delta_sum / DELTA_HISTORY_LENGTH / avg_delta_t;
+		float new_y_vel = (float) y_delta_sum / DELTA_HISTORY_LENGTH / avg_delta_t;
 		
 		// calc expected next position. need to get angle from us turning in here. or put in IMU read/processing
 		// int16_t our_x_vel, our_y_vel, our_vel;
@@ -212,6 +220,10 @@ void complementaryFilter(int16_t drive_left, int16_t drive_right, uint8_t num_de
 		// }
 		// int16_t our_new_x = our_x_vel * leadtime;
 		// int16_t our_new_y = our_y_vel * leadtime;
+        
+        // IMU pseudocode
+        // gyro reading at time i can be used to predict angle at time i+1
+        // accel reading can be integrated to give velocity to predict x, y at time i+1. but how will we anchor it?
         
         // until above code block or IMU set up, this will only work if we are stationary
         int16_t our_new_x = 0;
