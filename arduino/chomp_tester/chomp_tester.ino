@@ -1,6 +1,7 @@
 #include <Servo.h>
+#include <SoftwareSerial.h>
 Servo myservo;
-HardwareSerial &Sbus = Serial;
+SoftwareSerial Sbus = SoftwareSerial(9,8);
 HardwareSerial &Debug = Serial;
 
 // Copied from pins.h in chomp
@@ -54,56 +55,66 @@ void send_sbus(uint16_t* sbus_channels){
   sbus_data[24] = 0x00;
   sbus_data[1] = sbus_channels[0];
   sbus_data[2] = sbus_channels[0] >> 8 | sbus_channels[1] << 3;
-  sbus_data[3] = sbus_channels[1] >> 5;
-  
+  sbus_data[3] = sbus_channels[1] >> 5 | sbus_channels[2] << 6;
+  sbus_data[4] = sbus_channels[2] >> 2;
+  sbus_data[5] = sbus_channels[2] >> 10 | sbus_channels[3] << 1;
+  sbus_data[6] = sbus_channels[3] >> 7 | sbus_channels[4] << 4;
+  sbus_data[7] = sbus_channels[4] >> 4 | sbus_channels[5] << 7;
+  Sbus.write(sbus_data, 25);  
 }
+
+void zero_sbus(){
+  uint16_t sbus_channels[6] = {0, 0, 0, 0, 0};
+  send_sbus(sbus_channels);
+}
+
 // -------------- Tests ------------------------
 
 
-bool test_enable_disable(){
+void test_enable_disable(){
+  Debug.println("Testing enable disable");
   pinMode(ENABLE_VALVE_DO, INPUT);
   pinMode(IGNITER_DO, INPUT);
   enable();
   int enable_valve = digitalRead(ENABLE_VALVE_DO);
   int igniter = digitalRead(IGNITER_DO);
-  bool test1 = enable_valve == HIGH && igniter == HIGH;
+  expect(enable_valve == HIGH && igniter == HIGH);
   disable();
   enable_valve = digitalRead(ENABLE_VALVE_DO);
   igniter = digitalRead(IGNITER_DO);
-  bool test2 = enable_valve == LOW && igniter == LOW;
+  expect(enable_valve == LOW && igniter == LOW);
   enable();
   enable_valve = digitalRead(ENABLE_VALVE_DO);
   igniter = digitalRead(IGNITER_DO);
-  bool test3 = enable_valve == HIGH && igniter == HIGH;
-  return test1 && test2 && test3;
+  expect(enable_valve == HIGH && igniter == HIGH);
+  disable();
 }
+
 
 void test_flamethrower(){
-  
+  Debug.println("Testing flamethrower");
+  pinMode(PROPANE_DO, INPUT);
+  enable();
+  zero_sbus();
+  uint16_t sbus_channels_flame[6] = {0, 0, 0, 1000, 0};
+  for (int i = 0; i < 10; i++){
+    send_sbus(sbus_channels_flame);
+  }
+  delay(100);
+  int propane  = digitalRead(PROPANE_DO);
+  expect(propane == HIGH);
+  disable();
 }
 
-// Program without sbus line in
-// Plug in sbus line
-// Open Putty to Debug line
-// Restart board
-// Wait for light to turn on
-// Receive report
 void setup() {
   // Start sbus
   Sbus.begin(100000);
+  Debug.begin(115200);
   // Simulates enable/disable RC pulse
-  myservo.attach(3);
+  myservo.attach(WEAPONS_ENABLE_PIN);
 
-  bool enable_disable_result = test_enable_disable();
-  
-  // Signal readiness to print report, give user time to unplug sbus
-  pinMode(13, OUTPUT);
-  digitalWrite(13, HIGH);
-  delay(15*1000);
-  digitalWrite(13, LOW);
-  Debug.print("=========== TEST REPORT ===========\r\n");
-  Debug.print("Testing enable disable\r\n");
-  expect(enable_disable_result);
+  test_enable_disable();
+  test_flamethrower();
 }
 
 void loop() {
