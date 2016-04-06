@@ -76,18 +76,18 @@ void retract(){
 }
 
 // for collecting hammer swing data
-static const uint16_t MAX_DATAPOINTS = 1000;
+static const uint16_t MAX_DATAPOINTS = 500;
 static uint16_t angle_data[MAX_DATAPOINTS];
 static int16_t pressure_data[MAX_DATAPOINTS];
 // static int16_t velocities[MAX_DATAPOINTS];
 
 // I wanted to multiply to minimize potential for errors, and also seemed like these constants could be outside?
 static const uint32_t SWING_TIMEOUT = 1000 * 1000L;  // microseconds
-static const uint32_t DATA_COLLECT_TIMESTEP = 1000L;  // timestep for data logging, in microseconds
+static const uint32_t DATA_COLLECT_TIMESTEP = 2000L;  // timestep for data logging, in microseconds
 static const uint16_t THROW_BEGIN_ANGLE_MIN = 5;
 static const uint16_t THROW_BEGIN_ANGLE_MAX = 35;
-static const uint16_t THROW_CLOSE_ANGLE = 41;
-static const uint16_t VENT_OPEN_ANGLE = 200;
+static const uint16_t THROW_CLOSE_ANGLE_DIFF = 5;
+static const uint16_t VENT_OPEN_ANGLE = 175;
 static const uint16_t THROW_COMPLETE_ANGLE = 230;
 static const uint16_t ACCEL_TIME = 50000;
 static const uint16_t THROW_COMPLETE_VELOCITY = 0;
@@ -124,16 +124,20 @@ void fire(){
             }
         }
         start_angle = angle;
+        uint16_t throw_close_angle = start_angle + THROW_CLOSE_ANGLE_DIFF;
         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
             // Debug.write("Fire!\r\n");
             // Seal vent (which is normally open)
+            magOn();
             safeDigitalWrite(VENT_VALVE_DO, HIGH);
+            Debug.println("vent close");
             vent_closed = true;
             // can we actually determine vent close time?
             delay(10);
             
             // Open throw valve
             safeDigitalWrite(THROW_VALVE_DO, HIGH);
+            Debug.println("throw open");
             throw_open = true;
             fire_time = micros();
             // In fighting form, should probably just turn on flamethrower here
@@ -141,28 +145,33 @@ void fire(){
             while (swing_length < SWING_TIMEOUT && angle < THROW_COMPLETE_ANGLE) {
                 sensor_read_time = micros();
                 angle_read_ok = readAngle(&angle);
+                Debug.println(angle);
                 pressure_read_ok = readMlhPressure(&pressure);
                 // Keep throw valve open until 5 degrees
-                if (throw_open && angle > THROW_CLOSE_ANGLE) {
+                if (throw_open && angle > throw_close_angle) {
                     throw_close_timestep = timestep;
                     safeDigitalWrite(THROW_VALVE_DO, LOW);
+                    Debug.println("throw close");
                     throw_open = false;
                 }
                 if (vent_closed && angle > VENT_OPEN_ANGLE) {
                     vent_open_timestep = timestep;
                     safeDigitalWrite(VENT_VALVE_DO, LOW);
+                    Debug.println("vent open");
                     vent_closed = false;
                 }
-                // close throw, open vent if hammer velocity below threshold after 50 ms initial acceleration time
+                // close throw, open vent if hammer velocity below threshold after THROW_CLOSE_ANGLE_DIFF degrees traversed
                 if (angle > (start_angle + 5)) {
                     velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
                     if (velocity_read_ok && abs(angular_velocity) < THROW_COMPLETE_VELOCITY) {
                         if (throw_open) {throw_close_timestep = timestep;}
                         safeDigitalWrite(THROW_VALVE_DO, LOW);
+                        Debug.println("throw close");
                         throw_open = false;
                         delay(10);
                         if (vent_closed) {vent_open_timestep = timestep;}
                         safeDigitalWrite(VENT_VALVE_DO, LOW);
+                        Debug.println("vent open");
                         vent_closed = false;
                     }
                 }
@@ -188,23 +197,28 @@ void fire(){
             // Open vent valve after 1 second even if target angle not achieved
             if (vent_closed) {vent_open_timestep = timestep;}
             safeDigitalWrite(VENT_VALVE_DO, LOW);
-            
-            // Send buffered throw data over serial
-            for (uint16_t i = 0; i < datapoints_collected; i++) {
-                Debug.print(angle_data[i], DEC);
-                Debug.print("\t");
-                Debug.println(pressure_data[i]);
-            }
-            Debug.print("timestep\t");
-            Debug.println(DATA_COLLECT_TIMESTEP);
-            Debug.print("throw_close_timestep\t");
-            Debug.println(throw_close_timestep);
-            Debug.print("vent_open_timestep\t");
-            Debug.println(vent_open_timestep);
+            magOff();
         }
+        Debug.println("finished");
+        // Send buffered throw data over serial
+        for (uint16_t i = 0; i < datapoints_collected; i++) {
+            Debug.print("data");
+            Debug.print("\t");
+            Debug.print(angle_data[i], DEC);
+            Debug.print("\t");
+            Debug.println(pressure_data[i]);
+        }
+        Debug.print("timestep\t");
+        Debug.println(DATA_COLLECT_TIMESTEP);
+        Debug.print("throw_close_timestep\t");
+        Debug.println(throw_close_timestep);
+        Debug.print("vent_open_timestep\t");
+        Debug.println(vent_open_timestep);
     }
 }
 
+// this is for testing pressurization of cylinder with hammer forward
+// hammer must be between 170 and 190 to fire
 void fire_test(){
     uint32_t fire_time;
     uint32_t swing_length = 0;
@@ -298,6 +312,123 @@ void fire_test(){
     }
 }
 
+// placeholder for later-- a function to gently move the hammer to the forward position before approaching the robot to safe it
+// #define GENTLE_THROW_CLOSE_ANGLE 41
+// void gentle_fire(){
+//     uint32_t fire_time;
+//     uint32_t swing_length = 0;
+//     uint32_t sensor_read_time;
+//     uint16_t throw_close_timestep = 0;
+//     uint16_t vent_open_timestep = 0;
+//     uint16_t datapoints_collected = 0;
+//     uint16_t timestep = 0;
+//     bool vent_closed = false;
+//     bool throw_open = false;
+//     uint32_t delay_time;
+//     uint16_t angle;
+//     uint16_t start_angle;
+//     bool angle_read_ok;
+//     int16_t pressure;
+//     bool pressure_read_ok;
+//     int16_t angular_velocity;
+//     bool velocity_read_ok;
+    
+//     if (weaponsEnabled()){
+//         bool angle_read_ok = readAngle(&angle);
+//         // if angle data isn't coming back, abort
+//         while (!angle_read_ok) {
+//             uint8_t start_attempts = 1;
+//             if (start_attempts < 5) {
+//                 angle_read_ok = readAngle(&angle);
+//                 start_attempts++;
+//             } else {
+//                 return;
+//             }
+//         }
+//         start_angle = angle;
+//         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
+//             // Debug.write("Fire!\r\n");
+//             // Seal vent (which is normally open)
+//             magOn();
+//             safeDigitalWrite(VENT_VALVE_DO, HIGH);
+//             vent_closed = true;
+//             // can we actually determine vent close time?
+//             delay(10);
+            
+//             // Open throw valve
+//             safeDigitalWrite(THROW_VALVE_DO, HIGH);
+//             throw_open = true;
+//             fire_time = micros();
+//             // In fighting form, should probably just turn on flamethrower here
+//             // Wait until hammer swing complete, up to 1 second
+//             while (swing_length < SWING_TIMEOUT && angle < THROW_COMPLETE_ANGLE) {
+//                 sensor_read_time = micros();
+//                 angle_read_ok = readAngle(&angle);
+//                 pressure_read_ok = readMlhPressure(&pressure);
+//                 // Keep throw valve open until 5 degrees
+//                 if (throw_open && angle > GENTLE_THROW_CLOSE_ANGLE) {
+//                     throw_close_timestep = timestep;
+//                     safeDigitalWrite(THROW_VALVE_DO, LOW);
+//                     throw_open = false;
+//                 }
+//                 if (vent_closed && angle > GENTLE_VENT_OPEN_ANGLE) {
+//                     vent_open_timestep = timestep;
+//                     safeDigitalWrite(VENT_VALVE_DO, LOW);
+//                     vent_closed = false;
+//                 }
+//                 // close throw, open vent if hammer velocity below threshold after 5 degrees traversed
+//                 if (angle > (start_angle + 5)) {
+//                     velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
+//                     if (velocity_read_ok && abs(angular_velocity) < THROW_COMPLETE_VELOCITY) {
+//                         if (throw_open) {throw_close_timestep = timestep;}
+//                         safeDigitalWrite(THROW_VALVE_DO, LOW);
+//                         throw_open = false;
+//                         delay(10);
+//                         if (vent_closed) {vent_open_timestep = timestep;}
+//                         safeDigitalWrite(VENT_VALVE_DO, LOW);
+//                         vent_closed = false;
+//                     }
+//                 }
+//                 if (datapoints_collected < MAX_DATAPOINTS){
+//                     angle_data[datapoints_collected] = angle;
+//                     pressure_data[datapoints_collected] = pressure;
+//                     // velocities[datapoints_collected] = angular_velocity;
+//                     datapoints_collected++;
+//                 }
+//                 // Ensure that loop step takes 1 ms or more (without this it takes quite a bit less)
+//                 sensor_read_time = micros() - sensor_read_time;
+//                 delay_time = DATA_COLLECT_TIMESTEP - sensor_read_time;
+//                 if (delay_time > 0) {
+//                     delayMicroseconds(delay_time);
+//                 }
+//                 timestep++;
+//                 swing_length = micros() - fire_time;
+//             }
+//             // Close throw valve after 1 second even if target angle not achieved
+//             if (throw_open) {throw_close_timestep = timestep;}
+//             safeDigitalWrite(THROW_VALVE_DO, LOW);
+//             delay(10);
+//             // Open vent valve after 1 second even if target angle not achieved
+//             if (vent_closed) {vent_open_timestep = timestep;}
+//             safeDigitalWrite(VENT_VALVE_DO, LOW);
+//             magOff();
+            
+//             // Send buffered throw data over serial
+//             for (uint16_t i = 0; i < datapoints_collected; i++) {
+//                 Debug.print(angle_data[i], DEC);
+//                 Debug.print("\t");
+//                 Debug.println(pressure_data[i]);
+//             }
+//             Debug.print("timestep\t");
+//             Debug.println(DATA_COLLECT_TIMESTEP);
+//             Debug.print("throw_close_timestep\t");
+//             Debug.println(throw_close_timestep);
+//             Debug.print("vent_open_timestep\t");
+//             Debug.println(vent_open_timestep);
+//         }
+//     }
+// }
+
 void flameStart(){
     if (weaponsEnabled()){
         safeDigitalWrite(PROPANE_DO, HIGH);
@@ -305,7 +436,7 @@ void flameStart(){
 }
 
 void flameEnd(){
-    // seems like this shouldn't require enable, even though change to disable should close valve itself
+    // seems like this shouldn't require enable, even though disable should close valve itself
     digitalWrite(PROPANE_DO, LOW);
 }
 

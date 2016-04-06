@@ -78,6 +78,14 @@ static uint8_t loop_type;
 uint32_t last_drive_command = micros();
 
 void chompLoop() {
+    if (millis() % 1000 == 0) {
+        uint16_t angle;
+        readAngle(&angle);
+        Debug.print("millis\t");
+        Debug.print(millis());
+        Debug.print("\t");
+        Debug.println(angle);
+    }
     loop_type = 1;
     uint32_t start_time = micros();
     if (micros() - last_request_time > 1000000UL){
@@ -99,8 +107,9 @@ void chompLoop() {
                 break;
             case HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
-                    // drive(0, 0);
                     if (autofireEnabled(previous_rc_bitfield)){
+                        // delay(200);
+                        // digitalWrite(A3, HIGH);
                         fire();
                     }
                 } else {
@@ -111,7 +120,7 @@ void chompLoop() {
         // sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
         requestDetections();
         steer_bias = pidSteer(detection_count, getDetections(), 600);   // 600 cm ~ 20 ft
-        // complementaryFilter(left_drive_value, right_drive_value, detection_count, getDetections(), 200, &target_x_after_leadtime, &target_y_after_leadtime);
+        // targetPredict(left_drive_value, right_drive_value, detection_count, getDetections(), 200, &target_x_after_leadtime, &target_y_after_leadtime, &steer_bias);
     }
 
     if (bufferSbusData()){
@@ -132,9 +141,9 @@ void chompLoop() {
             }
             // Manual hammer fire
             if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-                // fire();
-                delay(200);
-                digitalWrite(A3, HIGH);
+                fire();
+                // delay(200);
+                // digitalWrite(A3, HIGH);
             }
             if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
                 // retract();
@@ -153,17 +162,11 @@ void chompLoop() {
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
     
-    if (getTargetingEnable()) {
-        if (!targeting_enabled) {
-            targeting_enabled = true;
-        }
-        // don't spam motor controllers -- only send drive command every 10 ms
-        if (micros() - last_drive_command > 10000UL) {
-            drive(left_drive_value, right_drive_value);
-            last_drive_command = micros();
-        }
-    } else {
-        targeting_enabled = false;
+    // don't spam motor controllers -- only send drive command every 10 ms
+    // drive always called now to log drive command history. only commands roboteqs if getTargetingEnable()
+    if (micros() - last_drive_command > 10000UL) {
+        drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
+        last_drive_command = micros();
     }
     
     uint32_t loop_speed = micros() - start_time;
