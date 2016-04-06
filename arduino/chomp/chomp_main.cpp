@@ -162,17 +162,11 @@ void chompLoop() {
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
     
-    if (getTargetingEnable()) {
-        if (!targeting_enabled) {
-            targeting_enabled = true;
-        }
-        // don't spam motor controllers -- only send drive command every 10 ms
-        if (micros() - last_drive_command > 10000UL) {
-            drive(left_drive_value - steer_bias, right_drive_value - steer_bias);
-            last_drive_command = micros();
-        }
-    } else {
-        targeting_enabled = false;
+    // don't spam motor controllers -- only send drive command every 10 ms
+    // drive always called now to log drive command history. only commands roboteqs if getTargetingEnable()
+    if (micros() - last_drive_command > 10000UL) {
+        drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
+        last_drive_command = micros();
     }
     
     uint32_t loop_speed = micros() - start_time;
