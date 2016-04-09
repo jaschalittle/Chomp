@@ -97,7 +97,7 @@ Object callNearestObj (uint8_t num_detections, Detection* detections) {
 }
 
 
-#define P_COEFF 50
+#define P_COEFF 100
 int16_t pidSteer (unsigned int num_detections, Detection* detections, uint16_t threshold) {
     Object nearest_obj = callNearestObj(num_detections, detections);
     if (nearest_obj.Distance < threshold) {
@@ -129,11 +129,9 @@ static float est_target_y_vel;
 
 #define LEDDAR_DELTA_HISTORY_LENGTH 5
 static int16_t x_deltas[LEDDAR_DELTA_HISTORY_LENGTH];
-static uint8_t x_delta_index = 0;
 static int16_t y_deltas[LEDDAR_DELTA_HISTORY_LENGTH];
-static uint8_t y_delta_index = 0;
 static float leddar_delta_ts[LEDDAR_DELTA_HISTORY_LENGTH];
-static uint8_t leddar_delta_t_index = 0;
+static uint8_t leddar_delta_index = 0;
 
 void targetPredict(int16_t drive_left, int16_t drive_right, uint8_t num_detections, Detection* detections, uint16_t leadtime, 
                    int16_t* target_x_after_leadtime, int16_t* target_y_after_leadtime, int16_t* steer_bias) {
@@ -189,41 +187,41 @@ void targetPredict(int16_t drive_left, int16_t drive_right, uint8_t num_detectio
         }
         
         // average velocity over last LEDDAR_DELTA_HISTORY_LENGTH Leddar returns
-        x_deltas[x_delta_index] = obs_target_x - last_target_x;
-        x_delta_index = (x_delta_index + 1) % LEDDAR_DELTA_HISTORY_LENGTH;
-        y_deltas[y_delta_index] = obs_target_y - last_target_y;
-        y_delta_index = (y_delta_index + 1) % LEDDAR_DELTA_HISTORY_LENGTH;
+        x_deltas[leddar_delta_index] = obs_target_x - last_target_x;
+        y_deltas[leddar_delta_index] = obs_target_y - last_target_y;
         int16_t x_delta_sum = 0;
         int16_t y_delta_sum = 0;
         for (uint8_t i = 0; i < LEDDAR_DELTA_HISTORY_LENGTH; i++) {
             x_delta_sum += x_deltas[i];
             y_delta_sum += y_deltas[i];
         }
-        leddar_delta_ts[leddar_delta_t_index] = leddar_delta_t;
-        leddar_delta_t_index = (leddar_delta_t_index + 1) % LEDDAR_DELTA_HISTORY_LENGTH;
-        float avg_leddar_delta_t = 0;
-        for (uint8_t i; i < LEDDAR_DELTA_HISTORY_LENGTH; i++) {
-            avg_leddar_delta_t += leddar_delta_ts[i];
+        leddar_delta_ts[leddar_delta_index] = leddar_delta_t;
+        leddar_delta_index = (leddar_delta_index + 1) % LEDDAR_DELTA_HISTORY_LENGTH;
+        float leddar_delta_t_sum = 0;
+        for (uint8_t i = 0; i < LEDDAR_DELTA_HISTORY_LENGTH; i++) {
+            leddar_delta_t_sum += leddar_delta_ts[i];
         }
-        avg_leddar_delta_t /= LEDDAR_DELTA_HISTORY_LENGTH;
-        float new_x_vel = (float) x_delta_sum / LEDDAR_DELTA_HISTORY_LENGTH / avg_leddar_delta_t;
-        float new_y_vel = (float) y_delta_sum / LEDDAR_DELTA_HISTORY_LENGTH / avg_leddar_delta_t;
+        float new_x_vel = (float) x_delta_sum / leddar_delta_t_sum;
+        float new_y_vel = (float) y_delta_sum / leddar_delta_t_sum;
+        
+        est_target_x_vel = new_x_vel;
+        est_target_y_vel = new_y_vel;
 
         // calc expected next position. need to get angle from us turning in here. or put in IMU read/processing
-        // float our_forward_vel, our_angular_vel;
-        // readImu(&our_forward_vel, &our_angular_vel);
-        // float turn_radius = our_forward_vel / our_angular_vel;
-        // float turn_angle = our_forward_vel / turn_radius;
-        // int16_t our_x_vel = turn_radius - cos(turn_angle) * turn_radius;  // need to figure out angle sign
-        // int16_t our_y_vel = sin(turn_angle) * turn_radius; // need to figure out angle sign
-        // int16_t our_new_x = our_x_vel * leadtime;
-        // int16_t our_new_y = our_y_vel * leadtime;
+        float our_forward_vel, our_angular_vel;
+        readImu(&our_forward_vel, &our_angular_vel);
+        float turn_radius = our_forward_vel / our_angular_vel;
+        float turn_angle = our_forward_vel / turn_radius;
+        int16_t our_x_vel = turn_radius - cos(turn_angle) * turn_radius;  // need to figure out angle sign
+        int16_t our_y_vel = sin(turn_angle) * turn_radius; // need to figure out angle sign
+        int16_t our_new_x = our_x_vel * leadtime;
+        int16_t our_new_y = our_y_vel * leadtime;
         
         // if IMU reading doesn't come back, output angle * P_TERM
         
         // until IMU set up, this will only work if we are stationary
-        int16_t our_new_x = 0;
-        int16_t our_new_y = 0;
+            // int16_t our_new_x = 0;
+            // int16_t our_new_y = 0;
         
         // add prediction of our next pos when we get it running
         last_target_x = obs_target_x;
@@ -232,29 +230,26 @@ void targetPredict(int16_t drive_left, int16_t drive_right, uint8_t num_detectio
         // predict x and y after leadtime
         *target_x_after_leadtime = last_target_x + est_target_x_vel * leadtime - our_new_x;
         *target_y_after_leadtime = last_target_y + est_target_y_vel * leadtime - our_new_y;
-        *steer_bias = P_COEFF * atan2(*target_x_after_leadtime, *target_y_after_leadtime) * 64 / PI;
+        *steer_bias = P_COEFF * atan((float) *target_x_after_leadtime / *target_y_after_leadtime) * 64 / PI;
 
         last_leddar_time = micros();
-        
-        Debug.print(obs_target_x);
-        Debug.print("\t");
-        Debug.print(obs_target_y);
-        Debug.print("\t");
 
-        Debug.print(*target_x_after_leadtime);
-        Debug.print("\t");
-        Debug.print(*target_y_after_leadtime);
-        Debug.print("\t");
-        
-        Debug.print(est_target_x_vel);
-        Debug.print("\t");
-        Debug.print(est_target_y_vel);
-        Debug.print("\t");
-        
-        // Debug.println();
+        Debug.print(obs_target_x); Debug.print("\t");
+        Debug.print(obs_target_y); Debug.print("\t");
+        Debug.print(*target_x_after_leadtime); Debug.print("\t");
+        Debug.print(*target_y_after_leadtime); Debug.print("\t");
+        Debug.print(est_target_x_vel); Debug.print("\t");
+        Debug.print(est_target_y_vel); Debug.print("\t");
 
-        Debug.println(*steer_bias);
         
+
+        // Debug.println(*steer_bias);
+        // Debug.println(atan((float) *target_x_after_leadtime / *target_y_after_leadtime));
+        Debug.print(our_angular_vel); Debug.print("\t");
+        Debug.print(our_forward_vel); Debug.print("\t");
+        
+        Debug.println();
+
         return;
 	}	
 }

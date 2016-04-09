@@ -30,7 +30,7 @@ enum RCBitfield {
 
 bool bufferSbusData();
 
-void parseSbus();
+bool parseSbus();
 
 void attachRCInterrupts();
 
