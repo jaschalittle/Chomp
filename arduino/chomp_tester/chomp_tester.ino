@@ -1,7 +1,7 @@
 #include <Servo.h>
 #include <SoftwareSerial.h>
 Servo myservo;
-SoftwareSerial Sbus = SoftwareSerial(9,8);
+SoftwareSerial Sbus = SoftwareSerial(A4, A3);
 HardwareSerial &Debug = Serial;
 
 // Copied from pins.h in chomp
@@ -90,19 +90,34 @@ void test_enable_disable(){
   disable();
 }
 
-
 void test_flamethrower(){
   Debug.println("Testing flamethrower");
   pinMode(PROPANE_DO, INPUT);
   enable();
   zero_sbus();
   uint16_t sbus_channels_flame[6] = {0, 0, 0, 1000, 0};
-  for (int i = 0; i < 10; i++){
-    send_sbus(sbus_channels_flame);
-  }
+  send_sbus(sbus_channels_flame);
   delay(100);
-  int propane  = digitalRead(PROPANE_DO);
-  expect(propane == HIGH);
+  expect(digitalRead(PROPANE_DO) == HIGH);
+  zero_sbus();
+  delay(100);
+  expect(digitalRead(PROPANE_DO) == LOW);
+  disable();
+}
+
+void test_mags(){
+  Debug.println("Testing magnets");
+  pinMode(MAG1_DO, INPUT);
+  pinMode(MAG2_DO, INPUT);
+  enable();
+  zero_sbus();
+  expect(digitalRead(MAG1_DO) == LOW);
+  expect(digitalRead(MAG2_DO) == LOW);
+  uint16_t sbus_channels_mag[6] = {0, 0, 0, 0, 2000};
+  send_sbus(sbus_channels_mag);
+  delay(100);
+  expect(digitalRead(MAG1_DO) == HIGH);
+  expect(digitalRead(MAG2_DO) == HIGH);
   disable();
 }
 
@@ -112,9 +127,11 @@ void setup() {
   Debug.begin(115200);
   // Simulates enable/disable RC pulse
   myservo.attach(WEAPONS_ENABLE_PIN);
-
+  Debug.println("===============TEST REPORT==============");
   test_enable_disable();
   test_flamethrower();
+  test_mags();
+  Debug.println("========================================");
 }
 
 void loop() {
