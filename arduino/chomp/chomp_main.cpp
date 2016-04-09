@@ -13,6 +13,7 @@
 #include "chump_targeting.h"
 #include <avr/wdt.h>
 
+
 // SAFETY CODE ----------------------------------------------------
 void safeState(){
     valveSafe();
@@ -77,6 +78,8 @@ int16_t target_y_after_leadtime;
 static uint8_t loop_type;
 uint32_t last_drive_command = micros();
 
+// int16_t drive_command = 0;  // for correlating RC to actual velocity
+
 void chompLoop() {
     if (millis() % 1000 == 0) {
         uint16_t angle;
@@ -118,15 +121,29 @@ void chompLoop() {
                 break;
         }
         // sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
-        requestDetections();
-        steer_bias = pidSteer(detection_count, getDetections(), 600);   // 600 cm ~ 20 ft
+        // steer_bias = pidSteer(detection_count, getDetections(), 600);   // 600 cm ~ 20 ft
         // targetPredict(left_drive_value, right_drive_value, detection_count, getDetections(), 200, &target_x_after_leadtime, &target_y_after_leadtime, &steer_bias);
+        
+        requestDetections();
+        
+        // below is for correlating RC to actual velocity
+        // if (getTargetingEnable()) {
+        //     printMiddleDistance(detection_count, getDetections());
+        //     Debug.print(drive_command); Debug.print("\t");
+        //     mpu.read_all();
+        //     Debug.print(mpu.accel_data[1] * 9.8, 6); Debug.print("\t");
+        //     Debug.println(micros() - last_imu_read);
+        //     last_imu_read = micros();
+        //     drive_command += 1;
+        // } else {
+        //     last_imu_read = micros();
+        //     drive_command = 0;
+        // }
     }
 
     if (bufferSbusData()){
         loop_type |= 4;
-        wdt_reset();
-        parseSbus();
+        if (parseSbus()) { wdt_reset(); }
         // React to RC state changes
         char current_rc_bitfield = getRcBitfield();
         char diff = previous_rc_bitfield ^ current_rc_bitfield;
@@ -142,12 +159,13 @@ void chompLoop() {
             // Manual hammer fire
             if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
                 fire();
+                // gentleFire();  // use retract system to put hammer forward
                 // delay(200);
                 // digitalWrite(A3, HIGH);
             }
             if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
-                // retract();
-                digitalWrite(A3, LOW);
+                retract();
+                // digitalWrite(A3, LOW);
             }
             if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
                 magOn();
@@ -162,10 +180,12 @@ void chompLoop() {
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
     
+    // ideally, this would only be called if there is fresh RC input. otherwise, it is ugly for drive prediction stuff
     // don't spam motor controllers -- only send drive command every 10 ms
     // drive always called now to log drive command history. only commands roboteqs if getTargetingEnable()
     if (micros() - last_drive_command > 10000UL) {
-        drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
+        drive(left_drive_value - steer_bias, right_drive_value - steer_bias, true);
+        // drive(-drive_command, drive_command, getTargetingEnable());
         last_drive_command = micros();
     }
     
