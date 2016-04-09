@@ -9,7 +9,7 @@ void retract();
 
 void fire();
 
-void fire_test();
+void gentleFire();
 
 void flameStart();
 
