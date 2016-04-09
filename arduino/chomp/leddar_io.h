@@ -1,6 +1,8 @@
 #ifndef LEDDAR_IO_H
 #define LEDDAR_IO_H
 
+#define LEDDAR_FREQ 50
+
 // Represents a measurement
 struct Detection
 {
