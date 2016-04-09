@@ -12,30 +12,30 @@
 #include "weapons.h"
 
 // for correlating drive control to speed
-void printMiddleDistance(unsigned int num_detections, Detection* detections) {
-    int segment7_dist = 10000;
-    int segment8_dist = 10000;
-    for (uint8_t i = 0; i < num_detections; i++) {
-        if (detections[i].Segment == 7 && detections[i].Distance < segment7_dist) {
-            segment7_dist = detections[i].Distance;
-        } else if (detections[i].Segment == 8 && detections[i].Distance < segment8_dist) {
-            segment8_dist = detections[i].Distance;
-        }
-    }
-    if (segment7_dist == 10000 && segment8_dist == 10000) {
-        Xbee.print("n/a");
-        Xbee.print("\t");
-    } else if (segment7_dist == 10000) {
-        Xbee.print(segment8_dist);
-        Xbee.print("\t");
-    } else if (segment8_dist == 10000) {
-        Xbee.print(segment7_dist);
-        Xbee.print("\t");
-    } else {
-        Xbee.print((segment7_dist + segment8_dist) / 2);
-        Xbee.print("\t");
-    }
-}
+// void printMiddleDistance(unsigned int num_detections, Detection* detections) {
+//     int segment7_dist = 10000;
+//     int segment8_dist = 10000;
+//     for (uint8_t i = 0; i < num_detections; i++) {
+//         if (detections[i].Segment == 7 && detections[i].Distance < segment7_dist) {
+//             segment7_dist = detections[i].Distance;
+//         } else if (detections[i].Segment == 8 && detections[i].Distance < segment8_dist) {
+//             segment8_dist = detections[i].Distance;
+//         }
+//     }
+//     if (segment7_dist == 10000 && segment8_dist == 10000) {
+//         Xbee.print("n/a");
+//         Xbee.print("\t");
+//     } else if (segment7_dist == 10000) {
+//         Xbee.print(segment8_dist);
+//         Xbee.print("\t");
+//     } else if (segment8_dist == 10000) {
+//         Xbee.print(segment7_dist);
+//         Xbee.print("\t");
+//     } else {
+//         Xbee.print((segment7_dist + segment8_dist) / 2);
+//         Xbee.print("\t");
+//     }
+// }
 
 void chumpSetup() {
     // canSetup();
@@ -85,7 +85,6 @@ void chumpLoop() {
                 break;
             case HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
-                    drive(0, 0);
                     if (autofireEnabled(previous_rc_bitfield)){
                         fire();
                     }
@@ -94,21 +93,20 @@ void chumpLoop() {
                 }
                 break;
         }
-    // sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
-    requestDetections();
-    steer_bias = pidSteer(detection_count, getDetections(), 600);   // 600 cm ~ 20 ft
-
+        // sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
+        requestDetections();
+        steer_bias = pidSteer(detection_count, getDetections(), 600);   // 600 cm ~ 20 ft
+    }
     // code for correlating distance to RC input
     // if (targeting_enabled && left_drive_value <= 600) {
-        // left_drive_value += 50;
-        // right_drive_value += 50;
-        // printMiddleDistance(detection_count, getDetections());
-        // Debug.print(left_drive_value);
-        // Debug.print("\t");
-        // Debug.print(right_drive_value);
-        // Debug.println();
+    //     left_drive_value += 50;
+    //     right_drive_value += 50;
+    //     printMiddleDistance(detection_count, getDetections());
+    //     Debug.print(left_drive_value);
+    //     Debug.print("\t");
+    //     Debug.print(right_drive_value);
+    //     Debug.println();
     // }
-    }
 
     // should this be renamed to weapons_rc for clarity?
     if (bufferSbusData()){
@@ -140,14 +138,18 @@ void chumpLoop() {
         previous_rc_bitfield = current_rc_bitfield;
     }
 
-    // left_drive_value = getLeftRc();
-    // right_drive_value = getRightRc();
-    drive(left_drive_value - steer_bias, right_drive_value - steer_bias);
+    left_drive_value = getLeftRc();
+    right_drive_value = getRightRc();
+    // Debug.print(left_drive_value);
+    // Debug.print("\t");
+    // Debug.println(right_drive_value);
 
     targeting_enabled = getTargetingEnable();
     if (targeting_enabled) {
-        drive(left_drive_value - steer_bias, right_drive_value - steer_bias);
+        drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
         // Debug.print(steer_bias);
         // Debug.println();
+    } else {
+        drive(left_drive_value, right_drive_value, getTargetingEnable());
     }
 }
