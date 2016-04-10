@@ -54,8 +54,8 @@ void chompSetup() {
     // Come up safely
     safeState();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
-    // wdt_enable(WDTO_4S);
-    //xbeeInit();
+    wdt_enable(WDTO_4S);
+    // xbeeInit();
     Debug.begin(115200);
     Sbus.begin(100000);
     driveSetup();
@@ -63,6 +63,7 @@ void chompSetup() {
     sensorSetup();
     pinMode(A3, OUTPUT);  // laser pointer
     attachRCInterrupts();
+    Debug.println("STARTUP");
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
@@ -142,39 +143,42 @@ void chompLoop() {
     }
 
     if (bufferSbusData()){
-        loop_type |= 4;
-        if (parseSbus()) { wdt_reset(); }
-        // React to RC state changes
-        char current_rc_bitfield = getRcBitfield();
-        char diff = previous_rc_bitfield ^ current_rc_bitfield;
-        if (diff) {
-            // Flame on -> off
-            if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
-                flameEnd();
+        bool in_failsafe_state = parseSbus();
+        if (!in_failsafe_state) {
+            loop_type |= 4;
+            wdt_reset();
+            // React to RC state changes
+            char current_rc_bitfield = getRcBitfield();
+            char diff = previous_rc_bitfield ^ current_rc_bitfield;
+            if (diff) {
+                // Flame on -> off
+                if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
+                    flameEnd();
+                }
+                // Flame off -> on
+                if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
+                    flameStart();
+                }
+                // Manual hammer fire
+                if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
+                    fire();
+                    // gentleFire();  // use retract system to put hammer forward
+                    // delay(200);
+                    // digitalWrite(A3, HIGH);
+                }
+                if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
+                    retract();
+                    // digitalWrite(A3, LOW);
+                }
+                if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
+                    magOn();
+                }
+                if( (diff & MAG_CTRL_BIT) && !(current_rc_bitfield & MAG_CTRL_BIT)){
+                    magOff();
+                }
             }
-            // Flame off -> on
-            if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
-                flameStart();
-            }
-            // Manual hammer fire
-            if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-                fire();
-                // gentleFire();  // use retract system to put hammer forward
-                // delay(200);
-                // digitalWrite(A3, HIGH);
-            }
-            if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
-                retract();
-                // digitalWrite(A3, LOW);
-            }
-            if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
-                magOn();
-            }
-            if( (diff & MAG_CTRL_BIT) && !(current_rc_bitfield & MAG_CTRL_BIT)){
-                magOff();
-            }
+            previous_rc_bitfield = current_rc_bitfield;
         }
-        previous_rc_bitfield = current_rc_bitfield;
     }
     
     left_drive_value = getLeftRc();
