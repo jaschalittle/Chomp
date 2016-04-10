@@ -2,10 +2,11 @@
 #include "xbee.h"
 #include "pins.h"
 
-
+static bool xbee_enabled = false;
 void xbeeInit(){
-  Xbee.begin(115200);
+  Xbee.begin(57600);
   pinMode(XBEE_CTS, INPUT);
+  xbee_enabled = true;
 }
 
 #define BUFSIZE 256
@@ -39,14 +40,14 @@ void xbeeBufferData(char* data, unsigned int len){
 }
 
 void xbeePushData(){
-    if (true){//(digitalRead(XBEE_CTS) == LOW){
+    if (xbee_enabled){
       uint8_t len = 0;
       if (head < tail){
         len = min(BUFSIZE - tail, 16);
       } else {
         len = min(head - tail, 16);
       }
-      Serial.write(buf + tail, len);
+      Xbee.write(buf + tail, len);
       tail = (tail + len) % BUFSIZE;
     }
 }

@@ -55,7 +55,7 @@ void chompSetup() {
     safeState();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     // wdt_enable(WDTO_4S);
-    // xbeeInit();
+    //xbeeInit();
     Debug.begin(115200);
     Sbus.begin(100000);
     driveSetup();
@@ -188,22 +188,17 @@ void chompLoop() {
         // drive(-drive_command, drive_command, getTargetingEnable());
         last_drive_command = micros();
     }
-    
-    uint32_t loop_speed = micros() - start_time;
-    // Debug.print(loop_type);
-    // Debug.print("\t");
-    // Debug.println(loop_speed);
-    // Read other sensors, to report out
-    // uint16_t pressure;
-    // bool pressure_read_ok = readMlhPressure(&pressure);
-    // uint16_t angle;
-    // bool angle_read_ok = readAngle(&angle);
-    // Debug.println(angle);
 
-    if (micros() - last_telem_time > 200000L){
-        // send_sensor_telem(loop_speed, pressure);
-        // last_telem_time = micros();
+   if (micros() - last_telem_time > 200000L){
+      uint32_t loop_speed = micros() - start_time;
+      int16_t pressure;
+      bool pressure_read_ok = readMlhPressure(&pressure);
+      uint16_t angle;
+      bool angle_read_ok = readAngle(&angle);
+      send_sensor_telem(loop_speed, pressure, angle);
+      last_telem_time = micros();
     }
+   xbeePushData();
 }
 
 void electricalCheckouts(){

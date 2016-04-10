@@ -5,76 +5,43 @@
 #include "autofire.h"
 #include "pins.h"
 
-bool cts(){
-  return (digitalRead(XBEE_CTS) == LOW);
-}
-
-// I think int is same as short in avrland
-void write_int(char* packet, int16_t n){
-  for (uint8_t i = 0; i < 4; i++){
-    packet[i] = 0xFF & n >> (i*8); 
-  }
-}
-
-void write_ulong(char* packet, uint32_t n){
-  for (uint8_t i = 0; i < 4; i++){
-    packet[i] = 0xFF & n >> (i*8); 
-  }
-}
-
-void write_short(char* packet, int16_t n){
-  for (uint8_t i = 0; i < 2; i++){
-    packet[i] = 0xFF & n >> (i*8); 
-  }
-}
-
-void write_float(char* packet, float n){
-  // get access to the float as a byte-array:
-  uint8_t * data = (uint8_t *) &n;
-   for (uint8_t i = 0; i < 4; i++){
-    packet[i] = data[i];
-  }
-}
-
-void write_terminator(char* packet){
-  packet[0] = 0x55;
-  packet[1] = 0x55;
-}
-
-void send_sensor_telem(uint32_t loop_speed, float pressure){
-  const uint8_t LEN = 11;
-  char packet[LEN];
-  write_terminator(packet);
-  packet[3] = 1; // packet id
-  
-  write_ulong(packet+3, loop_speed);
-  write_int(packet+7, (int)pressure);
-  if(cts()){
-    Xbee.write(packet, LEN);
-  }
-  
+void send_sensor_telem(uint32_t loop_speed, int16_t pressure, uint16_t angle){
+  const uint16_t packet_len = 11;
+  const uint8_t start = 0x01;
+  const uint16_t ending = 0x6666;
+  char sensor_data[packet_len] = {0};
+  uint8_t offset = 0;
+  memcpy(sensor_data, &start, sizeof(uint8_t));
+  offset += sizeof(uint8_t);
+  memcpy(sensor_data + offset, &loop_speed, sizeof(uint32_t));
+  offset += sizeof(uint32_t);
+  memcpy(sensor_data + offset, &pressure, sizeof(int16_t));
+  offset += sizeof(int16_t);
+  memcpy(sensor_data + offset, &angle, sizeof(uint16_t));
+  offset += sizeof(uint16_t);
+  memcpy(sensor_data + offset, &ending, sizeof(uint16_t));
+  xbeeBufferData(sensor_data, packet_len);
 }
 
 void sendLeddarTelem(Detection* detections, unsigned int count, LeddarState state){
-//  write_short(terminator);
-//  char packet_id = 2;
-//  Xbee.write(packet_id);
-//  write_int(state);
-//  uint8_t j=0;
-//  for (int i = 0; i < 16; i++){
-////    Xbee.print(detections[i].Segment);
-////    Xbee.print("/");
-////    Xbee.print(detections[i].Distance);
-////    Xbee.print(" " );
-//    //while(detections[j].Segment < i) { j++; }
-//    if(detections[j].Segment > i){
-//      write_short(0);
-//    }else{
-//      write_short((short)detections[j].Distance);
-//      j++;
-//    }
-//    delay(5);
-//  }
-//  //Xbee.print("\r\n");
+  const uint16_t packet_len = 39;
+  const uint8_t start = 0x02;
+  const uint16_t ending = 0x6666;
+  char sensor_data[packet_len] = {0};
+  uint8_t offset = 0;
+  memcpy(sensor_data, &start, sizeof(uint8_t));
+  offset += sizeof(uint8_t);
+  memcpy(sensor_data + offset, &state, sizeof(int16_t));
+  offset += sizeof(int16_t);
+  const uint16_t segments = 0x2301;
+  memcpy(sensor_data + offset, &segments, sizeof(uint16_t));
+  offset += sizeof(uint16_t);
+  for (uint16_t i = 0; i < 16; i++){
+      uint16_t dist = random(i*10, i*10+5);
+      memcpy(sensor_data + offset, &dist, sizeof(uint16_t));
+      offset += sizeof(uint16_t);
+  }
+  memcpy(sensor_data + offset, &ending, sizeof(uint16_t));
+  xbeeBufferData(sensor_data, packet_len);
 }
 
