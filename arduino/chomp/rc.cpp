@@ -132,6 +132,7 @@ bool getTargetingEnable() {
 #define HAMMER_RETRACT_THRESHOLD 500
 #define FLAME_CTRL_THRESHOLD 500
 #define MAG_CTRL_THRESHOLD 1500
+#define DANGER_MODE_THRESHOLD 1500
 
 uint8_t getRcBitfield() {
   uint8_t bitfield = 0;
@@ -150,5 +151,14 @@ uint8_t getRcBitfield() {
   if ( sbusChannels[MAG_CTRL] > MAG_CTRL_THRESHOLD){
     bitfield |= MAG_CTRL_BIT;
   }
+  if ( sbusChannels[DANGER_MODE] > DANGER_MODE_THRESHOLD){
+    bitfield |= DANGER_CTRL_BIT;
+  }
   return bitfield;
 }
+
+// WARNING - this function assumes that you have successfully received an SBUS packet!
+uint16_t getHammerIntensity(){
+  return sbusChannels[INTENSITY];
+}
+

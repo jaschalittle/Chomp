@@ -68,6 +68,7 @@ void chompSetup() {
 
 static int16_t previous_leddar_state = FAR_ZONE;
 static int8_t previous_rc_bitfield = 0;
+static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
 static uint32_t last_telem_time = micros();
 static int16_t left_drive_value = 0;
@@ -114,7 +115,7 @@ void chompLoop() {
                     if (autofireEnabled(previous_rc_bitfield)){
                         // delay(200);
                         // digitalWrite(A3, HIGH);
-                        fire();
+                        fire( hammer_intensity );
                     }
                 } else {
                     previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
@@ -150,6 +151,7 @@ void chompLoop() {
             // React to RC state changes
             char current_rc_bitfield = getRcBitfield();
             char diff = previous_rc_bitfield ^ current_rc_bitfield;
+            hammer_intensity = getHammerIntensity();
             if (diff) {
                 // Flame on -> off
                 if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
@@ -161,14 +163,22 @@ void chompLoop() {
                 }
                 // Manual hammer fire
                 if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-                    fire();
-                    // gentleFire();  // use retract system to put hammer forward
-                    // delay(200);
-                    // digitalWrite(A3, HIGH);
+                    if (current_rc_bitfield & DANGER_CTRL_BIT){
+                      no_angle_fire(hammer_intensity);
+                    } else {
+                      fire(hammer_intensity);
+                      // gentleFire();  // use retract system to put hammer forward
+                      // delay(200);
+                      // digitalWrite(A3, HIGH);
+                    }
                 }
                 if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
+                  if (current_rc_bitfield & DANGER_CTRL_BIT){
+                    no_angle_retract();
+                  } else {
                     retract();
                     // digitalWrite(A3, LOW);
+                  }
                 }
                 if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
                     magOn();
@@ -192,22 +202,17 @@ void chompLoop() {
         // drive(-drive_command, drive_command, getTargetingEnable());
         last_drive_command = micros();
     }
-    
-    uint32_t loop_speed = micros() - start_time;
-    // Debug.print(loop_type);
-    // Debug.print("\t");
-    // Debug.println(loop_speed);
-    // Read other sensors, to report out
-    // uint16_t pressure;
-    // bool pressure_read_ok = readMlhPressure(&pressure);
-    // uint16_t angle;
-    // bool angle_read_ok = readAngle(&angle);
-    // Debug.println(angle);
 
-    if (micros() - last_telem_time > 200000L){
-        // send_sensor_telem(loop_speed, pressure);
-        // last_telem_time = micros();
+   if (micros() - last_telem_time > 200000L){
+      uint32_t loop_speed = micros() - start_time;
+      int16_t pressure;
+      bool pressure_read_ok = readMlhPressure(&pressure);
+      uint16_t angle;
+      bool angle_read_ok = readAngle(&angle);
+      send_sensor_telem(loop_speed, pressure, angle);
+      last_telem_time = micros();
     }
+   xbeePushData();
 }
 
 void electricalCheckouts(){

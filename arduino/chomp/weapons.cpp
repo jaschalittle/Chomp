@@ -43,6 +43,7 @@ void retract(){
     uint32_t sensor_read_time;
     uint32_t delay_time;
     bool angle_read_ok = readAngle(&start_angle);
+
     // if angle data isn't coming back, abort
     while (!angle_read_ok) {
         uint8_t start_attempts = 1;
@@ -85,7 +86,7 @@ void retract(){
     }
 }
 
-void fire(){
+void fire( uint16_t hammer_intensity ){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -103,7 +104,7 @@ void fire(){
     bool pressure_read_ok;
     int16_t angular_velocity;
     bool velocity_read_ok;
-    
+
     if (weaponsEnabled()){
         bool angle_read_ok = readAngle(&angle);
         // if angle data isn't coming back, abort
@@ -208,6 +209,56 @@ void fire(){
         Debug.print("vent_open_timestep\t");
         Debug.println(vent_open_timestep);
     }
+}
+
+void no_angle_retract(){
+  // Make sure we're vented
+    safeDigitalWrite(VENT_VALVE_DO, LOW);
+
+    DriveSerial.println("@05!G 100");  // start motor to aid meshing
+    safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
+    DriveSerial.println("@05!G 1000");
+    uint32_t retract_start_time = micros();
+    while (micros() - retract_start_time < 1000000L){
+       if (bufferSbusData()){
+        bool error = parseSbus();
+        if (!error) {
+          char current_rc_bitfield = getRcBitfield();
+          if (!(current_rc_bitfield & HAMMER_RETRACT_BIT)){
+            break;
+          }
+          // continue retracting
+        } else {
+          break;
+        }
+      }
+    }
+    safeDigitalWrite(RETRACT_VALVE_DO, LOW);
+    DriveSerial.println("@05!G 0");
+}
+const uint16_t NO_ANGLE_THROW_DURATION = 35; // ms to leave throw valve open
+const uint16_t NO_ANGLE_SWING_DURATION = 200; // total estimated time in ms of a swing (to calculate vent time)
+void no_angle_fire( uint16_t hammer_intensity ){
+  if (weaponsEnabled()){
+      magOn();
+      // Seal vent valve
+      safeDigitalWrite(VENT_VALVE_DO, HIGH);
+      // can we actually determine vent close time?
+      delay(10);
+      
+      // Open throw valve
+      safeDigitalWrite(THROW_VALVE_DO, HIGH);
+      delay(NO_ANGLE_THROW_DURATION);
+      safeDigitalWrite(THROW_VALVE_DO, LOW);
+
+      // Wait the estimated remaining time in the swing and then vent
+      delay(NO_ANGLE_SWING_DURATION - NO_ANGLE_THROW_DURATION);
+      safeDigitalWrite(VENT_VALVE_DO, LOW);
+
+      magOff();
+  }
+  // Stay in this function for the full second to make sure we're not moving, before we allow the user to possibly retract
+  delay( 1000 - NO_ANGLE_SWING_DURATION );
 }
 
 // use retract motor to gently move hammer to forward position to safe it for approach

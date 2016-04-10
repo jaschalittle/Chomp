@@ -121,7 +121,13 @@ void test_mags(){
   disable();
 }
 
+void test_fire_angle_block(){
+  
+}
 void setup() {
+  TCCR0B = (TCCR0B & 0b11111000) | 0x01;
+  //pinMode(5, OUTPUT);
+  analogWrite(5, 128);
   // Start sbus
   Sbus.begin(100000);
   Debug.begin(115200);
@@ -135,4 +141,6 @@ void setup() {
 }
 
 void loop() {
+  
+  
 }
