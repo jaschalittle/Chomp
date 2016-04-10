@@ -1,2 +1,2 @@
-INTERFACE CHOMP_SERIAL serial_interface.rb nil COM5 9600 NONE 1 10.0 nil TERMINATED '' 0x5555 true 0 nil false
+INTERFACE CHOMP_SERIAL serial_interface.rb nil COM8 57600 NONE 1 10.0 nil TERMINATED '' 0x6666 true 0 nil false
     TARGET CHOMP
