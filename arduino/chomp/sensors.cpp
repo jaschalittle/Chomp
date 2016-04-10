@@ -20,12 +20,12 @@ uint32_t last_imu_read;
 void sensorSetup(){
     pinMode(ANGLE_AI, INPUT);
     pinMode(PRESSURE_AI, INPUT);
-    SPI.begin();
-    delay(2000);
-    mpu.init(true, true);
-    delay(2000);
-    mpu.calib_acc();
-    last_imu_read = micros();
+//    SPI.begin();
+//    delay(2000);
+//    mpu.init(true, true);
+//    delay(2000);
+//    mpu.calib_acc();
+//    last_imu_read = micros();
 }
 
 // static const uint32_t pressure_sensor_range = 920 - 102;
