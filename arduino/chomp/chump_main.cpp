@@ -52,6 +52,7 @@ void chumpSetup() {
 
 static int previous_leddar_state = FAR_ZONE;
 static char previous_rc_bitfield = 0;
+static uint16_t hammer_intensity = 0;
 static unsigned long last_request_time = micros();
 static unsigned long last_telem_time = micros();
 static int16_t left_drive_value = 0;
@@ -86,7 +87,7 @@ void chumpLoop() {
             case HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
                     if (autofireEnabled(previous_rc_bitfield)){
-                        fire();
+                        fire( hammer_intensity );
                     }
                 } else {
                     previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
@@ -114,6 +115,7 @@ void chumpLoop() {
         // React to RC state changes
         char current_rc_bitfield = getRcBitfield();
         char diff = previous_rc_bitfield ^ current_rc_bitfield;
+        hammer_intensity = getHammerIntensity();
         if (diff) {
             // Flame on -> off
             // if (diff & FLAME_CTRL_BIT & previous_rc_bitfield) {
@@ -128,7 +130,7 @@ void chumpLoop() {
             // Manual hammer fire
             // if (diff & HAMMER_FIRE_BIT & current_rc_bitfield) {
             if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-                fire();
+                fire( hammer_intensity );
             }
             // if (diff & HAMMER_RETRACT_BIT & current_rc_bitfield) {
             if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){

@@ -88,7 +88,7 @@ void retract(){
     }
 }
 
-void fire(){
+void fire( uint16_t hammer_intensity ){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -106,7 +106,7 @@ void fire(){
     bool pressure_read_ok;
     int16_t angular_velocity;
     bool velocity_read_ok;
-    
+
     if (weaponsEnabled()){
         bool angle_read_ok = readAngle(&angle);
         // if angle data isn't coming back, abort
