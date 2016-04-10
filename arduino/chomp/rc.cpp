@@ -76,8 +76,9 @@ bool bufferSbusData() {
   return false;
 }
 
-static uint16_t sbusChannels [17];
+static uint16_t sbusChannels [17];  // could initialize this with failsafe values for extra safety
 bool parseSbus(){
+    bool failsafe = true;
     if (sbusData[0] == 0x0F && sbusData[24] == 0x00) {
         // perverse little endian-ish packet structure-- low bits come in first byte, remaining high bits
         // in next byte
@@ -98,10 +99,9 @@ bool parseSbus(){
         sbusChannels[13] = (sbusData[20] << 9  | sbusData[19] << 1 | sbusData[18] >> 7) & 0x07FF; // 2, 8, 1
         sbusChannels[14] = (sbusData[21] << 6  | sbusData[20] >> 2)                     & 0x07FF; // 5, 6
         sbusChannels[15] = (sbusData[22] << 3  | sbusData[21] >> 5)                     & 0x07FF; // 8, 3
-        return true;
-    } else {
-        return false;
+        failsafe = sbusData[23] & 0x0008;
     }
+    return failsafe;
 }
 
 int16_t getLeftRc() {
