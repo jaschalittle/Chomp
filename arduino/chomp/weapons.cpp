@@ -5,10 +5,10 @@
 #include "pins.h"
 #include "utils.h"
 
-#define FORWARD_ANGLE_OFFSET 41  // actual angle read 221
-#define VERTICAL_ANGLE_OFFSET 32  // actual angle read 122
-#define BACK_ANGLE_OFFSET 25
 
+#define RELATIVE_TO_FORWARD 221  // offset of axle anfle from 180 when hammer forward on floor. actual angle read 221
+#define RELATIVE_TO_VERTICAL 32  // offset of axle angle from 90 when hammer arms vertical. actual angle read 122
+#define RELATIVE_TO_BACK 25  // offset of axle angle from 0 when hammer back on floor. actual angle read 25
 
 bool weaponsEnabled(){
     return g_enabled;
@@ -18,28 +18,25 @@ bool autofireEnabled(char bitfield){
     return bitfield & AUTO_HAMMER_ENABLE_BIT;
 }
 
-static const uint32_t RETRACT_TIMEOUT = 4000 * 1000L;  // microseconds
-static const uint16_t RETRACT_BEGIN_ANGLE_MIN = 90;
-static const uint16_t RETRACT_BEGIN_VEL_MAX = 5;
-#define RETRACT_COMPLETE_ANGLE 60  // angle read  angle 53 off ground good on 4-09
-static const int16_t RETRACT_ANGLE_AMOUNT = 90;
+// RETRACT CONSTANTS
+static const uint32_t RETRACT_TIMEOUT = 4000 * 1000L;  // in microseconds
+#define RETRACT_BEGIN_VEL_MAX 5
+static const uint16_t RETRACT_COMPLETE_ANGLE = 53 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
 
-// for collecting hammer swing data
+// HAMMER DATA BUFFERS
 static const uint16_t MAX_DATAPOINTS = 500;
 static uint16_t angle_data[MAX_DATAPOINTS];
 static int16_t pressure_data[MAX_DATAPOINTS];
-// static int16_t velocities[MAX_DATAPOINTS];
 
-// I wanted to multiply to minimize potential for errors, and also seemed like these constants could be outside?
-static const uint32_t SWING_TIMEOUT = 1000 * 1000L;  // microseconds
+// HAMMER THROW CONSTANTS
+static const uint32_t SWING_TIMEOUT = 1000 * 1000L;  // in microseconds
 static const uint32_t DATA_COLLECT_TIMESTEP = 2000L;  // timestep for data logging, in microseconds
-static const uint16_t THROW_BEGIN_ANGLE_MIN = 5;
-static const uint16_t THROW_BEGIN_ANGLE_MAX = 35;
-static const uint16_t THROW_CLOSE_ANGLE_DIFF = 5;
+static const uint16_t THROW_BEGIN_ANGLE_MIN = RELATIVE_TO_BACK - 5;
+static const uint16_t THROW_BEGIN_ANGLE_MAX = RELATIVE_TO_BACK + 10;
+#define THROW_CLOSE_ANGLE_DIFF 3  // angle distance between throw open and throw close
 static const uint16_t VENT_OPEN_ANGLE = 175;
-static const uint16_t THROW_COMPLETE_ANGLE = 230;
-static const uint16_t ACCEL_TIME = 50000;
-static const uint16_t THROW_COMPLETE_VELOCITY = 0;
+static const uint16_t THROW_COMPLETE_ANGLE = RELATIVE_TO_FORWARD;
+#define THROW_COMPLETE_VELOCITY 0
 
 void retract(){
     uint16_t start_angle;
@@ -65,10 +62,10 @@ void retract(){
     // Consider inferring hammer velocity here and requiring that it be below some threshold
     // Only retract if hammer is forward
     bool velocity_read_ok = angularVelocity(&angular_velocity);
-    if (weaponsEnabled() && angle > (BACK_ANGLE_OFFSET + RETRACT_COMPLETE_ANGLE) && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
+    if (weaponsEnabled() && angle > RETRACT_COMPLETE_ANGLE && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
     // if (weaponsEnabled()) {
         retract_time = micros();
-        while (micros() - retract_time < RETRACT_TIMEOUT && angle > (BACK_ANGLE_OFFSET + RETRACT_COMPLETE_ANGLE)) {
+        while (micros() - retract_time < RETRACT_TIMEOUT && angle > RETRACT_COMPLETE_ANGLE) {
         // while (micros() - retract_time < RETRACT_TIMEOUT) {
             sensor_read_time = micros();
             angle_read_ok = readAngle(&angle);
@@ -157,7 +154,7 @@ void fire(){
                     vent_closed = false;
                 }
                 // close throw, open vent if hammer velocity below threshold after THROW_CLOSE_ANGLE_DIFF degrees traversed
-                if (angle > (start_angle + 5)) {
+                if (angle > (start_angle + THROW_CLOSE_ANGLE_DIFF)) {
                     velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
                     if (velocity_read_ok && abs(angular_velocity) < THROW_COMPLETE_VELOCITY) {
                         if (throw_open) {throw_close_timestep = timestep;}
