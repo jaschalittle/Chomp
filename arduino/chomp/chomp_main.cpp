@@ -163,14 +163,22 @@ void chompLoop() {
                 }
                 // Manual hammer fire
                 if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-                    fire(hammer_intensity);
-                    // gentleFire();  // use retract system to put hammer forward
-                    // delay(200);
-                    // digitalWrite(A3, HIGH);
+                    if (current_rc_bitfield & DANGER_CTRL_BIT){
+                      no_angle_fire(hammer_intensity);
+                    } else {
+                      fire(hammer_intensity);
+                      // gentleFire();  // use retract system to put hammer forward
+                      // delay(200);
+                      // digitalWrite(A3, HIGH);
+                    }
                 }
                 if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
+                  if (current_rc_bitfield & DANGER_CTRL_BIT){
+                    no_angle_retract();
+                  } else {
                     retract();
                     // digitalWrite(A3, LOW);
+                  }
                 }
                 if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
                     magOn();
