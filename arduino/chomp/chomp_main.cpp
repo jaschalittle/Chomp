@@ -54,7 +54,7 @@ void chompSetup() {
     // Come up safely
     safeState();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
-    wdt_enable(WDTO_4S);
+    // wdt_enable(WDTO_4S);
     // xbeeInit();
     Debug.begin(115200);
     Sbus.begin(100000);
@@ -78,7 +78,6 @@ static int16_t steer_bias = 0; // positive turns right, negative turns left
 int16_t target_x_after_leadtime;
 int16_t target_y_after_leadtime;
 static uint8_t loop_type;
-uint32_t last_drive_command = micros();
 
 // int16_t drive_command = 0;  // for correlating RC to actual velocity
 
@@ -197,10 +196,9 @@ void chompLoop() {
     // ideally, this would only be called if there is fresh RC input. otherwise, it is ugly for drive prediction stuff
     // don't spam motor controllers -- only send drive command every 10 ms
     // drive always called now to log drive command history. only commands roboteqs if getTargetingEnable()
-    if (micros() - last_drive_command > 10000UL) {
-        drive(left_drive_value - steer_bias, right_drive_value - steer_bias, true);
+    if (newRc()) {
+        drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
         // drive(-drive_command, drive_command, getTargetingEnable());
-        last_drive_command = micros();
     }
 
    if (micros() - last_telem_time > 200000L){
