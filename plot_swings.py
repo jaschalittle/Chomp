@@ -9,13 +9,13 @@ import sys
 import time
 
 
-def polyfit_derivative(data, num_points):
+def polyfit_derivative(data, num_points, timestep):
     poly_derivatives = list()
     for i in range(len(data) - num_points):
         x = sum(range(num_points)) / num_points
         polyfit = np.polyfit(range(num_points), data[i:i + num_points], 2)
         first_derivative = 2 * polyfit[0] * x + polyfit[1]
-        poly_derivatives.append(first_derivative * 1000)
+        poly_derivatives.append(first_derivative * (1000000 / timestep))
     return poly_derivatives
 
 def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, filetag, timestep = 1000):
@@ -45,7 +45,7 @@ def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, f
     plt.ylabel("pressure (psi)", color="red")
 
     # calculate peak velocity and ke in hammer head
-    angular_velocities = polyfit_derivative(angles, 13)
+    angular_velocities = polyfit_derivative(angles, 13, timestep)
     max_v = np.array(angular_velocities).max() / 360 * 1.07 * 2 * np.pi
     ke = max_v ** 2 * 3.4 / 2   # 3.4 kg, 1.07 m radius arc
     plt.title("peak {:.2f} m/s\n{:.2f} J".format(max_v, ke))
@@ -85,22 +85,31 @@ def stream_data(serial_device, baudrate):
     filetag = time.strftime("%Y-%m-%d_%H-%M-%S")
     swing_num = 0
     while True:
-        line = ser.readline().rstrip().split("\t")
-        print "\t".join(line)
-        if line[0] == "timestep":
-            timestep = int(line[1])
-        elif line[0] == "throw_close_timestep":
-            throw_close_time = int(line[1])
-        elif line[0] == "vent_open_timestep":
-            vent_open_time = int(line[1])
-            swing_num += 1
-            plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, filetag, timestep=timestep)
-            angles = list()
-            pressures = list()
-        else:
-            angle, pressure = map(int, line)
-            angles.append(angle)
-            pressures.append(pressure)
+        try:
+            line = ser.readline().rstrip().split("\t")
+            if line[0] == "timestep":
+                timestep = int(line[1])
+                print "\t".join(line)
+            elif line[0] == "throw_close_timestep":
+                throw_close_time = int(line[1])
+                print "\t".join(line)
+            elif line[0] == "vent_open_timestep":
+                vent_open_time = int(line[1])
+                print "\t".join(line)
+                swing_num += 1
+                plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, filetag, timestep=timestep)
+                angles = list()
+                pressures = list()
+            elif line[0] == "millis":
+                if int(line[1]) % 1000 == 0:
+                    print "{} seconds".format(int(line[1]) // 1000)
+            elif line[0] == "data":
+                angle, pressure = map(int, line[1:3])
+                angles.append(angle)
+                pressures.append(pressure)
+        except ValueError as err:
+            print "\t".join(line)
+            print err
 
 def main():
     try:
