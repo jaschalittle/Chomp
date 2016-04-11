@@ -3,7 +3,7 @@ import itertools
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import serial
 import sys
 import time
@@ -28,8 +28,8 @@ def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, f
         print >>fh, "vent_open_time\t{}".format(vent_open_time)
 
     # set up x and y for plotting
-    angles = pd.Series(angles)
-    pressures = pd.Series(pressures)
+    angles = np.array(angles)
+    pressures = np.array(pressures)
     timestep = timestep / 1000  # convert to ms
     x = np.arange(0, len(angles) * timestep, timestep)
 
