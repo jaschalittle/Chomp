@@ -38,6 +38,8 @@ bool parseSbus();
 
 void attachRCInterrupts();
 
+bool newRc();
+
 int16_t getLeftRc();
 
 int16_t getRightRc();

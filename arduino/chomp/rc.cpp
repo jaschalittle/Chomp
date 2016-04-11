@@ -12,7 +12,9 @@ static volatile uint32_t RIGHT_RC_prev_time = 0;
 static volatile uint16_t TARGETING_ENABLE_pwm_val = 1520;
 static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
 
-// values for converting RC PWM to Roboteq drive control (-1000 to 1000)
+static volatile bool NEW_RC = false;
+
+// values for converting Futaba 7C RC PWM to Roboteq drive control (-1000 to 1000)
 // CH1 922-2120 1522 neutral CH2 909-2106 1503 neutral
 #define LEFT_PWM_NEUTRAL 1522
 #define LEFT_PWM_RANGE 599
@@ -24,12 +26,34 @@ static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
 #define RIGHT_DEADBAND_MIN 1473
 #define RIGHT_DEADBAND_MAX 1533
 
+// values for converting Futaba 9C RC PWM to Roboteq drive control (-1000 to 1000)
+// CH1 922-2120 1522 neutral CH2 909-2106 1503 neutral
+// #define LEFT_PWM_NEUTRAL 1506
+// #define LEFT_PWM_RANGE 598
+// #define RIGHT_PWM_NEUTRAL 1530
+// #define RIGHT_PWM_RANGE 598
+// // deadband is 60 wide, 5%
+// #define LEFT_DEADBAND_MIN 1476
+// #define LEFT_DEADBAND_MAX 1536
+// #define RIGHT_DEADBAND_MIN 1500
+// #define RIGHT_DEADBAND_MAX 1560
+
 void LEFT_RC_rising();
 void LEFT_RC_falling();
 void RIGHT_RC_rising();
 void RIGHT_RC_falling();
-void TARGETING_ENABLE_rising();
+// void TARGETING_ENABLE_rising();
 void TARGETING_ENABLE_falling();
+
+void TARGETING_ENABLE_rising() {
+    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_falling, FALLING);
+    TARGETING_ENABLE_prev_time = micros();
+}
+void TARGETING_ENABLE_falling() {
+    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
+    TARGETING_ENABLE_pwm_val = micros() - TARGETING_ENABLE_prev_time;
+    NEW_RC = true;
+}
 
 // Forgive me, I know not what I do.
 #define CREATE_RISING_ISR( rc_interrupt )\
@@ -48,8 +72,6 @@ CREATE_FALLING_ISR(LEFT_RC);
 CREATE_RISING_ISR(LEFT_RC);
 CREATE_FALLING_ISR(RIGHT_RC);
 CREATE_RISING_ISR(RIGHT_RC);
-CREATE_FALLING_ISR(TARGETING_ENABLE);
-CREATE_RISING_ISR(TARGETING_ENABLE);
 
 // Set up all RC interrupts
 void attachRCInterrupts(){
@@ -59,6 +81,16 @@ void attachRCInterrupts(){
     attachInterrupt(LEFT_RC, LEFT_RC_rising, RISING);
     attachInterrupt(RIGHT_RC, RIGHT_RC_rising, RISING);
     attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
+}
+
+// test whether there is new unused RC drive command
+bool newRc() {
+    if (NEW_RC) {
+        NEW_RC = false;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 static uint8_t sbusData[25] = {0};
@@ -118,7 +150,7 @@ int16_t getRightRc() {
     if (RIGHT_RC_pwm_val > RIGHT_DEADBAND_MAX || RIGHT_RC_pwm_val < RIGHT_DEADBAND_MIN) {
         drive_value = ((int16_t) RIGHT_RC_pwm_val - RIGHT_PWM_NEUTRAL) * 1000L / RIGHT_PWM_RANGE;
     }
-    // Debug.print(RIGHT_RC_pwm_val); Debug.print("\t");
+    // Debug.print(RIGHT_RC_pwm_val); Debug.println("\t");
     return drive_value;
 }
 
