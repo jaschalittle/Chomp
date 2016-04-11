@@ -20,7 +20,7 @@ bool autofireEnabled(char bitfield){
 
 // RETRACT CONSTANTS
 static const uint32_t RETRACT_TIMEOUT = 4000 * 1000L;  // in microseconds
-#define RETRACT_BEGIN_VEL_MAX 5
+#define RETRACT_BEGIN_VEL_MAX 10
 static const uint16_t RETRACT_COMPLETE_ANGLE = 53 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
 
 // HAMMER DATA BUFFERS
@@ -33,7 +33,7 @@ static const uint32_t SWING_TIMEOUT = 1000 * 1000L;  // in microseconds
 static const uint32_t DATA_COLLECT_TIMESTEP = 2000L;  // timestep for data logging, in microseconds
 static const uint16_t THROW_BEGIN_ANGLE_MIN = RELATIVE_TO_BACK - 5;
 static const uint16_t THROW_BEGIN_ANGLE_MAX = RELATIVE_TO_BACK + 10;
-#define THROW_CLOSE_ANGLE_DIFF 3  // angle distance between throw open and throw close
+#define THROW_CLOSE_ANGLE_DIFF 20  // angle distance between throw open and throw close
 static const uint16_t VENT_OPEN_ANGLE = 175;
 static const uint16_t THROW_COMPLETE_ANGLE = RELATIVE_TO_FORWARD;
 #define THROW_COMPLETE_VELOCITY 0
