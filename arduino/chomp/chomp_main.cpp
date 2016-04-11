@@ -55,7 +55,7 @@ void chompSetup() {
     safeState();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     wdt_enable(WDTO_4S);
-    // xbeeInit();
+    //xbeeInit();
     Debug.begin(115200);
     Sbus.begin(100000);
     driveSetup();
@@ -71,6 +71,7 @@ static int8_t previous_rc_bitfield = 0;
 static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
 static uint32_t last_telem_time = micros();
+static uint32_t last_leddar_telem_time = micros();
 static int16_t left_drive_value = 0;
 static int16_t right_drive_value = 0;
 static bool targeting_enabled = false;
@@ -122,7 +123,12 @@ void chompLoop() {
                 }
                 break;
         }
-        // sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
+        if (micros() - last_leddar_telem_time > 100000L){
+          bool success = sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
+          if (success){
+            last_leddar_telem_time = micros();
+          }
+        }
         // steer_bias = pidSteer(detection_count, getDetections(), 600);   // 600 cm ~ 20 ft
         // targetPredict(left_drive_value, right_drive_value, detection_count, getDetections(), 200, &target_x_after_leadtime, &target_y_after_leadtime, &steer_bias);
         
@@ -203,14 +209,16 @@ void chompLoop() {
         last_drive_command = micros();
     }
 
-   if (micros() - last_telem_time > 200000L){
+   if (micros() - last_telem_time > 50000L){
       uint32_t loop_speed = micros() - start_time;
       int16_t pressure;
       bool pressure_read_ok = readMlhPressure(&pressure);
       uint16_t angle;
       bool angle_read_ok = readAngle(&angle);
-      send_sensor_telem(loop_speed, pressure, angle);
-      last_telem_time = micros();
+      bool success = send_sensor_telem(loop_speed, pressure, angle);
+      if (success){
+        last_telem_time = micros();
+      }
     }
    xbeePushData();
 }
