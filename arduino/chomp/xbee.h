@@ -11,7 +11,7 @@
 
 void xbeeInit();
 
-void xbeeBufferData(char* data, unsigned int len);
+bool xbeeBufferData(char* data, unsigned int len);
 void xbeePushData();
 
 #endif // XBEE_H

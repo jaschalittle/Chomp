@@ -5,7 +5,7 @@
 // Sensors
 #define PRESSURE_AI A15
 #define ANGLE_AI A1
-
+#define XBEE_CTS A2
 // ----------------- DIGITAL  ---------------
 
 // Weapons RC input
@@ -23,7 +23,7 @@
 #define MAG2_DO 10
 #define MAG1_DO 11
 
-#define XBEE_CTS 12
+
 
 // Drive RC input
 // Mega2560 digital interrupt pins:

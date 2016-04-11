@@ -20,13 +20,13 @@ unsigned int space(){
   return BUFSIZE - (BUFSIZE - tail + head);
 }
 
-void xbeeBufferData(char* data, unsigned int len){
+bool xbeeBufferData(char* data, unsigned int len){
 //     Serial.print(head);
 //     Serial.print(":");
 //     Serial.print(tail);
 //     Serial.print("\r\n");
    if ( len >= space()){
-    return;
+    return false;
    }
    uint8_t firstCopyLen = min(len, BUFSIZE - head);
    memcpy(buf + head, data, firstCopyLen);
@@ -37,10 +37,11 @@ void xbeeBufferData(char* data, unsigned int len){
      memcpy(buf + head, data+firstCopyLen, secondCopyLen);
      head = (head + secondCopyLen) % BUFSIZE;
    }
+   return true;
 }
 
 void xbeePushData(){
-    if (xbee_enabled){
+    if (xbee_enabled && digitalRead(XBEE_CTS) == LOW){
       uint8_t len = 0;
       if (head < tail){
         len = min(BUFSIZE - tail, 16);
