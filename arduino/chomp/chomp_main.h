@@ -4,6 +4,4 @@
 void chompSetup();
 void chompLoop();
 
-void electricalCheckouts();
-
 #endif // CHOMP_MAIN_H

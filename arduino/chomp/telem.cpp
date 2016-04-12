@@ -5,7 +5,7 @@
 #include "autofire.h"
 #include "pins.h"
 
-bool send_sensor_telem(uint32_t loop_speed, int16_t pressure, uint16_t angle){
+bool sendSensorTelem(uint32_t loop_speed, int16_t pressure, uint16_t angle){
   const uint16_t packet_len = 11;
   const uint8_t start = 0x01;
   const uint16_t ending = 0x6666;

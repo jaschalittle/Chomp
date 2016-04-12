@@ -1,0 +1,46 @@
+diff --git a/arduino/chomp/weapons.cpp b/arduino/chomp/weapons.cpp
+index e8f9f8d..63ff729 100644
+--- a/arduino/chomp/weapons.cpp
++++ b/arduino/chomp/weapons.cpp
+@@ -33,7 +33,7 @@ static const uint32_t SWING_TIMEOUT = 1000 * 1000L;  // in microseconds
+ static const uint32_t DATA_COLLECT_TIMESTEP = 2000L;  // timestep for data logging, in microseconds
+ static const uint16_t THROW_BEGIN_ANGLE_MIN = RELATIVE_TO_BACK - 5;
+ static const uint16_t THROW_BEGIN_ANGLE_MAX = RELATIVE_TO_BACK + 10;
+-#define THROW_CLOSE_ANGLE_DIFF 20  // angle distance between throw open and throw close
++#define THROW_CLOSE_ANGLE_DIFF 10  // angle distance between throw open and throw close
+ static const uint16_t VENT_OPEN_ANGLE = 175;
+ static const uint16_t THROW_COMPLETE_ANGLE = RELATIVE_TO_FORWARD;
+ #define THROW_COMPLETE_VELOCITY 0
+@@ -136,7 +136,7 @@ void fire( uint16_t hammer_intensity ){
+             fire_time = micros();
+             // In fighting form, should probably just turn on flamethrower here
+             // Wait until hammer swing complete, up to 1 second
+-            while (swing_length < SWING_TIMEOUT && angle < THROW_COMPLETE_ANGLE) {
++            while (swing_length < SWING_TIMEOUT){// && angle < THROW_COMPLETE_ANGLE) {
+                 sensor_read_time = micros();
+                 angle_read_ok = readAngle(&angle);
+                 Debug.println(angle);
+@@ -191,8 +191,10 @@ void fire( uint16_t hammer_intensity ){
+             // Open vent valve after 1 second even if target angle not achieved
+             if (vent_closed) {vent_open_timestep = timestep;}
+             safeDigitalWrite(VENT_VALVE_DO, LOW);
+-            magOff();
++            
+         }
++        delayMicroseconds(500000 - (micros() - fire_time));
++        magOff();
+         Debug.println("finished");
+         // Send buffered throw data over serial
+         for (uint16_t i = 0; i < datapoints_collected; i++) {
+diff --git a/plot_swings.py b/plot_swings.py
+index be7c5ae..8b37bbc 100644
+--- a/plot_swings.py
++++ b/plot_swings.py
+@@ -84,6 +84,7 @@ def stream_data(serial_device, baudrate):
+     pressures = list()
+     filetag = time.strftime("%Y-%m-%d_%H-%M-%S")
+     swing_num = 0
++    print("Listening.")
+     while True:
+         try:
+             line = ser.readline().rstrip().split("\t")

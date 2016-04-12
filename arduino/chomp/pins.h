@@ -1,6 +1,9 @@
 #ifndef PINS_H
 #define PINS_H
 
+//------------------ DEFINES----------------
+#define HARD_WIRED
+
 // ----------------- ANALOG ----------------- 
 // Sensors
 #define PRESSURE_AI A15
@@ -22,8 +25,6 @@
 
 #define MAG2_DO 10
 #define MAG1_DO 11
-
-
 
 // Drive RC input
 // Mega2560 digital interrupt pins:

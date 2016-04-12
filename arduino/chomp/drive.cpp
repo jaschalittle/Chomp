@@ -3,9 +3,7 @@
 #include "drive.h"
 #include "pins.h"
 
-
 // Serial out pins defined in chomp.ino-- check there to verify proper connectivity to motor controllers
-
 
 void driveSetup() {
     DriveSerial.begin(115200);
@@ -47,8 +45,6 @@ void drive( int16_t l_drive_value, int16_t r_drive_value, bool drive_enabled ) {
         DriveSerial.println(r_drive_value);
         DriveSerial.print("@04!G ");
         DriveSerial.println(l_drive_value);
-        // Debug.print(l_drive_value); Debug.print("\t");
-        // Debug.println(r_drive_value); //Debug.print("\t");
     }
 }
 

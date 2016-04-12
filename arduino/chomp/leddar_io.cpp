@@ -88,12 +88,7 @@ uint8_t parseDetections(){
     Detections[i].Distance = ((uint16_t)receivedData[offset+1])*256 + receivedData[offset];
     Detections[i].Amplitude = ((float)receivedData[offset+3])*4+ ((float)receivedData[offset+2])/64;
     Detections[i].Segment = receivedData[offset+4]/16;
-//    Xbee.print(Detections[i].Segment);
-//    Xbee.print("/");
-//    Xbee.print(Detections[i].Distance);
-//    Xbee.print(" ");
   }
-//  Xbee.print("\r\n");
 
   return detection_count;
 }

@@ -5,27 +5,6 @@
 #include "sensors.h"
 #include <math.h>
 
-
-void sendLeddar (uint8_t segment, uint16_t distance) {
-    // if (distance > 0x0FFF) distance = 0x0FFF;
-    // Xbee.write((segment << 4) | (distance >> 4));
-    // Xbee.write(distance & 0xFF);
-    
-    // Xbee.print(segment);
-    // Xbee.print("/");
-    // Xbee.print(distance);
-    // Xbee.print("\t");
-}
-
-
-void sendAngle (uint8_t angle) {
-    // Xbee.write(angle);
-    // Xbee.write(0x00);
-    // Xbee.write(0x00);
-    // Xbee.println(angle);
-}
-
-
 #define MIN_OBJECT_DISTANCE 10
 #define EDGE_MIN_DELTA 30
 // Consider adding requirement that near objects must cover multiple segments
@@ -42,19 +21,16 @@ Object callNearestObj (uint8_t num_detections, Detection* detections) {
     uint16_t min_distance = min_detection.Distance;
     float right_edge = -1.0;
     float left_edge = 0.0;
-    sendLeddar(0, min_detection.Distance);
 
     Object objects[8];
     uint8_t num_objects = 0;
     for (uint8_t i = 1; i < 16; i++) {
         int16_t delta = min_detections[i].Distance - min_distance;
         if (delta < -30) {
-            // Xbee.print("LEFT\t");
             left_edge = i;
             min_distance = min_detections[i].Distance;
         } else if (delta > EDGE_MIN_DELTA) {
             if (left_edge > right_edge) {
-                // Xbee.print("RIGHT\t");
                 right_edge = i;
                 objects[num_objects].Distance = min_distance;
                 objects[num_objects].Left_edge = left_edge;
@@ -67,7 +43,6 @@ Object callNearestObj (uint8_t num_detections, Detection* detections) {
         } else {
             if (min_detections[i].Distance < min_distance) min_distance = min_detections[i].Distance;
         }
-        sendLeddar(i, min_detections[i].Distance);
     }
     
     // call object after loop if no matching right edge seen for a left edge-- end of loop can be a right edge
@@ -82,17 +57,7 @@ Object callNearestObj (uint8_t num_detections, Detection* detections) {
     for (uint8_t i = 1; i < num_objects; i++) {
         if (objects[i].Distance < nearest_obj.Distance) nearest_obj = objects[i];
     }
-    // nearest_obj.Angle = (left_edge + right_edge) / 2 - 8;
-    // Serial.print(nearest_obj.Left_edge);
-    // Serial.print("\t");
-    // Serial.print(nearest_obj.Right_edge);
-    // Serial.print("\t");
-    // Serial.print("Nearest/");
-    // Serial.print(nearest_obj.Distance);
-    // Serial.print("/");
-    // Serial.print(((float) nearest_obj.Left_edge + (float) nearest_obj.Right_edge) / 2 - 8);
-    // Serial.print("\t");
-    // Serial.println();
+
     return nearest_obj;
 }
 
@@ -102,14 +67,12 @@ int16_t pidSteer (unsigned int num_detections, Detection* detections, uint16_t t
     Object nearest_obj = callNearestObj(num_detections, detections);
     if (nearest_obj.Distance < threshold) {
         float angle = ((float) nearest_obj.Left_edge + (float) nearest_obj.Right_edge) / 2.0 - 8.0;
-        // sendAngle((uint8_t) (angle + 8.0) / 16.0 * 255.0);
         int16_t steer_bias = P_COEFF * angle;
         return steer_bias;
     } else {
         return 0;
     }
 }
-
 
 static const float dtC = 1.0 / LEDDAR_FREQ;
 static const float tau = 0.2;  // time constant-- when model prediction in balance with sensor data

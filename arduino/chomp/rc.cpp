@@ -141,7 +141,6 @@ int16_t getLeftRc() {
     if (LEFT_RC_pwm_val > LEFT_DEADBAND_MAX || LEFT_RC_pwm_val < LEFT_DEADBAND_MIN) {
         drive_value = ((int16_t) LEFT_RC_pwm_val - LEFT_PWM_NEUTRAL) * 1000L / LEFT_PWM_RANGE;
     }
-    // Debug.print(LEFT_RC_pwm_val); Debug.print("\t");
     return drive_value;
 }
 
@@ -150,12 +149,10 @@ int16_t getRightRc() {
     if (RIGHT_RC_pwm_val > RIGHT_DEADBAND_MAX || RIGHT_RC_pwm_val < RIGHT_DEADBAND_MIN) {
         drive_value = ((int16_t) RIGHT_RC_pwm_val - RIGHT_PWM_NEUTRAL) * 1000L / RIGHT_PWM_RANGE;
     }
-    // Debug.print(RIGHT_RC_pwm_val); Debug.println("\t");
     return drive_value;
 }
 
 bool getTargetingEnable() {
-    // Debug.println(TARGETING_ENABLE_pwm_val);
     return TARGETING_ENABLE_pwm_val > 1700;
 }
 

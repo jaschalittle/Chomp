@@ -5,7 +5,7 @@
 // Forward decls
 struct Detection;
 
-bool send_sensor_telem(uint32_t loop_speed, int16_t pressure, uint16_t angle);
+bool sendSensorTelem(uint32_t loop_speed, int16_t pressure, uint16_t angle);
 bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState state);
 
 #endif //TELEM_H
