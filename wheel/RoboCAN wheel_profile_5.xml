@@ -34,7 +34,7 @@
               <Node Text="Priority 1" Value="0">
                 <Nodes />
               </Node>
-              <Node Text="Priority 2" Value="1">
+              <Node Text="Priority 2" Value="3">
                 <Nodes />
               </Node>
               <Node Text="Priority 3" Value="3">
@@ -90,10 +90,10 @@
           <Node Text="Bit Rate" Value="3">
             <Nodes />
           </Node>
-          <Node Text="Node ID" Value="4">
+          <Node Text="Node ID" Value="5">
             <Nodes />
           </Node>
-          <Node Text="Listen Node ID" Value="5">
+          <Node Text="Listen Node ID" Value="6">
             <Nodes />
           </Node>
           <Node Text="Heartbeat (ms)" Value="0">
@@ -414,10 +414,10 @@
         <Nodes>
           <Node Text="PIn1" Value="">
             <Nodes>
-              <Node Text="Capture Type" Value="1">
+              <Node Text="Capture Type" Value="0">
                 <Nodes />
               </Node>
-              <Node Text="Input Use" Value="17">
+              <Node Text="Input Use" Value="16">
                 <Nodes />
               </Node>
               <Node Text="Range" Value="">
@@ -519,7 +519,7 @@
           </Node>
           <Node Text="PIn4" Value="">
             <Nodes>
-              <Node Text="Capture Type" Value="1">
+              <Node Text="Capture Type" Value="0">
                 <Nodes />
               </Node>
               <Node Text="Input Use" Value="16">
@@ -547,7 +547,7 @@
               <Node Text="Action on Min" Value="16">
                 <Nodes />
               </Node>
-              <Node Text="Action on Max" Value="19">
+              <Node Text="Action on Max" Value="16">
                 <Nodes />
               </Node>
             </Nodes>
@@ -589,10 +589,10 @@
           </Node>
           <Node Text="Voltage Limits">
             <Nodes>
-              <Node Text="Over Voltage Limit (V)" Value="600">
+              <Node Text="Over Voltage Limit (V)" Value="350">
                 <Nodes />
               </Node>
-              <Node Text="Under Voltage Limit (V)" Value="420">
+              <Node Text="Under Voltage Limit (V)" Value="240">
                 <Nodes />
               </Node>
             </Nodes>

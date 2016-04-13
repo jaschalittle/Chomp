@@ -16,7 +16,7 @@ enum SBUSChannels {
     HAMMER_CTRL = 2,
     FLAME_CTRL = 3,
     MAG_CTRL = 4,
-    GENTLE_HAMMER_CTRL = 5,
+    GENTLE_HAM_CTRL = 5,
     INTENSITY = 6,
     DANGER_MODE = 7,
 };
@@ -28,8 +28,10 @@ enum RCBitfield {
     HAMMER_FIRE_BIT = 2,
     HAMMER_RETRACT_BIT = 4,
     FLAME_CTRL_BIT = 8,
-    MAG_CTRL_BIT = 16,
-    DANGER_CTRL_BIT = 32,
+    GENTLE_HAM_F_BIT = 16,
+    GENTLE_HAM_R_BIT = 32,
+    MAG_CTRL_BIT = 64,
+    DANGER_CTRL_BIT = 128,
 };
 
 bool bufferSbusData();

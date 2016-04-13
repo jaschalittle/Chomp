@@ -266,7 +266,7 @@ void no_angle_fire( uint16_t hammer_intensity ){
 #define GENTLE_THROW_BEGIN_ANGLE_MIN 20
 #define GENTLE_THROW_STOP_ANGLE 142
 #define GENTLE_THROW_COMPLETE_ANGLE 142
-#define GENTLE_THROW_TIMEOUT 5000000L
+#define GENTLE_THROW_TIMEOUT 500000L
 void gentleFire(){
     uint32_t fire_time;
     uint32_t swing_length = 0;
@@ -292,13 +292,13 @@ void gentleFire(){
         }
         fire_time = micros();
         start_angle = angle;
-        if (angle > GENTLE_THROW_BEGIN_ANGLE_MIN && angle < GENTLE_THROW_COMPLETE_ANGLE) {
+        if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
             while (swing_length < GENTLE_THROW_TIMEOUT && angle < GENTLE_THROW_STOP_ANGLE) {
                 angle_read_ok = readAngle(&angle);
                 swing_length = micros() - fire_time;
                 DriveSerial.println("@05!G -100");  // start motor to aid meshing
                 safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
-                DriveSerial.println("@05!G -300");
+                DriveSerial.println("@05!G -1000");
                 sensor_read_time = micros() - sensor_read_time;
                 delay_time = 1000 - sensor_read_time;
                 if (delay_time > 0) {

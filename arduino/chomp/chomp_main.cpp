@@ -147,6 +147,12 @@ void chompLoop() {
                     retract();
                   }
                 }
+                if( (diff & GENTLE_HAM_F_BIT) && (current_rc_bitfield & GENTLE_HAM_F_BIT)) {
+                    gentleFire();
+                }
+                if( (diff & GENTLE_HAM_R_BIT) && (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
+                    retract();
+                }
                 if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
                     magOn();
                 }
