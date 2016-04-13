@@ -160,6 +160,8 @@ bool getTargetingEnable() {
 #define HAMMER_FIRE_THRESHOLD 1500 // 900 neutral, 170 to 1800
 #define HAMMER_RETRACT_THRESHOLD 500
 #define FLAME_CTRL_THRESHOLD 500
+#define GENTLE_HAM_F_THRESHOLD 500
+#define GENTLE_HAM_R_THRESHOLD 1500
 #define MAG_CTRL_THRESHOLD 1500
 #define DANGER_MODE_THRESHOLD 1500
 
@@ -176,6 +178,12 @@ uint8_t getRcBitfield() {
   }
   if ( sbusChannels[FLAME_CTRL] > FLAME_CTRL_THRESHOLD){
     bitfield |= FLAME_CTRL_BIT;
+  }
+  if ( sbusChannels[GENTLE_HAM_CTRL] < GENTLE_HAM_F_THRESHOLD){
+    bitfield |= GENTLE_HAM_F_BIT;
+  }
+  if ( sbusChannels[GENTLE_HAM_CTRL] > GENTLE_HAM_R_THRESHOLD){
+    bitfield |= GENTLE_HAM_R_BIT;
   }
   if ( sbusChannels[MAG_CTRL] > MAG_CTRL_THRESHOLD){
     bitfield |= MAG_CTRL_BIT;
