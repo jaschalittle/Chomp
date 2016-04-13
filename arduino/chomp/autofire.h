@@ -7,7 +7,8 @@ struct Detection;
 enum LeddarState {
   FAR_ZONE,
   ARM_ZONE,
-  HIT_ZONE
+  HIT_ZONE,
+  PREDICTIVE_HIT_ZONE
 };
 
 LeddarState getState(unsigned int detection_count, Detection* detections);
