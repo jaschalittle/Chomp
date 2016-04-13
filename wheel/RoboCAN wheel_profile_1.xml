@@ -90,10 +90,10 @@
           <Node Text="Bit Rate" Value="3">
             <Nodes />
           </Node>
-          <Node Text="Node ID" Value="4">
+          <Node Text="Node ID" Value="1">
             <Nodes />
           </Node>
-          <Node Text="Listen Node ID" Value="1">
+          <Node Text="Listen Node ID" Value="5">
             <Nodes />
           </Node>
           <Node Text="Heartbeat (ms)" Value="0">
