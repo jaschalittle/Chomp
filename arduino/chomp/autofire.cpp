@@ -1,6 +1,8 @@
 #include "Arduino.h"
 #include "autofire.h"
 #include "leddar_io.h"
+#include "utils.h"
+#include "pins.h"
 
 // Inclusive range
 #define CENTER_ZONE_ARM_MIN 0
@@ -14,31 +16,126 @@
 #define ARM_THRESHOLD 150
 #define FIRE_THRESHOLD 70
 #define CONTIG_THRESHOLD 2
+
+int APPROACH_THRESHOLDS[16] = { 76, 76, 75, 74, 73, 72, 71, 70, 70, 71, 72, 73, 74, 75, 76, 76 };
+#define APPROACH_BUFFER_SIZE 4
+
+float bufferVelocity(int8_t* buf, int8_t curs, bool assert_pos){
+  int16_t delta_sum = 0;
+  debug_print("{ ");
+  for(int i = curs; i < curs + APPROACH_BUFFER_SIZE; i++){debug_print(buf[i % APPROACH_BUFFER_SIZE]);debug_print(",");}
+  debug_print(" }");
+  for(int i = curs + 1; i < curs + APPROACH_BUFFER_SIZE; i++){
+    int16_t delta = buf[i % APPROACH_BUFFER_SIZE] - buf[(i - 1) % APPROACH_BUFFER_SIZE];
+    delta_sum += delta;
+    if (abs(delta) >= 3) { return 0.0; } // too fast for our blood
+    if (assert_pos){
+      if (delta < 0) { return 0.0; }
+    } else {
+      if (delta > 0) { return 0.0; }
+    }
+  }
+  return delta_sum/(float)(APPROACH_BUFFER_SIZE-1);
+}
+
+static int8_t left_buffer[APPROACH_BUFFER_SIZE];
+static int8_t left_buffer_cursor = 0;
+bool leftApproach(uint16_t detection_count, Detection* detections){
+  int16_t last_detected_segment = -1;
+  int16_t inner_contiguous_edge = -1;
+  for (int i = 0; i < detection_count && detections[i].Segment < 8; i++){
+    if (detections[i].Distance - FACE_OFFSET < APPROACH_THRESHOLDS[detections[i].Segment]){
+      if (detections[i].Segment - last_detected_segment == 1){
+        inner_contiguous_edge = detections[i].Segment;
+      } else { break; }
+      last_detected_segment = detections[i].Segment;
+    }
+  }
+
+  left_buffer[left_buffer_cursor] = inner_contiguous_edge;
+  left_buffer_cursor = (left_buffer_cursor + 1) % APPROACH_BUFFER_SIZE;
+
+  if (inner_contiguous_edge != -1){
+    debug_print("Left inner edge:");
+    debug_print(inner_contiguous_edge);
+    debug_print("\t");
+    float vel = bufferVelocity(left_buffer, left_buffer_cursor, true);
+    Debug.print(vel);
+    debug_print("\t");
+    int16_t predicted_seg = inner_contiguous_edge + (int16_t)(vel*10.0);
+    debug_println(predicted_seg);
+    bool fire = predicted_seg >= CENTER_ZONE_FIRE_MAX;
+    if (fire){debug_println(" FIRE!");}
+    return fire;
+  }
+  return false;
+}
+
+static int8_t right_buffer[APPROACH_BUFFER_SIZE];
+static int8_t right_buffer_cursor = 0;
+bool rightApproach(uint16_t detection_count, Detection* detections){
+  int16_t last_detected_segment = 16;
+  int16_t inner_contiguous_edge = 16;
+  for (int i = detection_count - 1; i >=0 && detections[i].Segment >= 8; i--){
+    if (detections[i].Distance - FACE_OFFSET < APPROACH_THRESHOLDS[detections[i].Segment]){
+      if (last_detected_segment - detections[i].Segment  == 1){
+        inner_contiguous_edge = detections[i].Segment;
+      } else { break; }
+      last_detected_segment = detections[i].Segment;
+    }
+  }
+
+  right_buffer[right_buffer_cursor] = inner_contiguous_edge;
+  right_buffer_cursor = (right_buffer_cursor + 1) % APPROACH_BUFFER_SIZE;
+
+  if (inner_contiguous_edge != 16){
+    debug_print("Right inner edge:");
+    debug_print(inner_contiguous_edge);
+    debug_print("\t");
+    float vel = bufferVelocity(right_buffer, right_buffer_cursor, false);
+    Debug.print(vel);
+    debug_print("\t");
+    int16_t predicted_seg = inner_contiguous_edge + (int16_t)(vel*10.0);
+    debug_println(predicted_seg);
+    bool fire = predicted_seg <= CENTER_ZONE_FIRE_MIN;
+    if (fire){debug_println(" FIRE!");}
+    return fire;
+  }
+  return false;
+}
+
 LeddarState getState(unsigned int detection_count, Detection* detections){
-  int last_detected_segment = 0;
-  int contiguous = 1;
+  int last_detected_segment = -1; // Off the left edge
+  int contiguous = 0;
   for (int i = 0; i < detection_count; i++){
     if (detections[i].Segment < CENTER_ZONE_FIRE_MAX && detections[i].Segment > CENTER_ZONE_FIRE_MIN &&
         detections[i].Distance - FACE_OFFSET < FIRE_THRESHOLD){
       if (detections[i].Segment - last_detected_segment == 1){
         contiguous += 1;
+        if (contiguous >= CONTIG_THRESHOLD){
+          return HIT_ZONE;
+        }
       } else {
         contiguous = 1;
       }
       last_detected_segment = detections[i].Segment;
     }
   }
-  if (contiguous >= CONTIG_THRESHOLD){
-    return HIT_ZONE;
-  }
+ 
+//  if (leftApproach(detection_count, detections) || rightApproach(detection_count, detections)){ 
+//    return PREDICTIVE_HIT_ZONE; 
+//  }
   
-  last_detected_segment = 0;
-  contiguous = 1;
+  last_detected_segment = -1;
+  contiguous = 0;
   for (int i = 0; i < detection_count; i++){
     if (detections[i].Segment <= CENTER_ZONE_ARM_MAX && detections[i].Segment >= CENTER_ZONE_ARM_MIN &&
         detections[i].Distance - FACE_OFFSET < ARM_THRESHOLD){
       if (detections[i].Segment - last_detected_segment == 1){
         contiguous += 1;
+        if (contiguous >= CONTIG_THRESHOLD){
+          return ARM_ZONE;
+        }
       } else {
         contiguous = 1;
       }
@@ -46,9 +143,6 @@ LeddarState getState(unsigned int detection_count, Detection* detections){
     }
   }
 
-  if (contiguous >= CONTIG_THRESHOLD){
-    return ARM_ZONE;
-  }
   return FAR_ZONE;
 }
 
