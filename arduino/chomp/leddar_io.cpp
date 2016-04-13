@@ -85,9 +85,9 @@ uint8_t parseDetections(){
   // Parse out detection info
   for ( uint16_t i = 0; i < detection_count; i++){
     uint16_t offset = i * 5 + 3;
-    Detections[i].Distance = ((uint16_t)receivedData[offset+1])*256 + receivedData[offset];
-    Detections[i].Amplitude = ((float)receivedData[offset+3])*4+ ((float)receivedData[offset+2])/64;
-    Detections[i].Segment = 15 - (receivedData[offset+4]/16); // flip the segment ID since we're upside down
+    Detections[detection_count - 1 - i].Distance = ((uint16_t)receivedData[offset+1])*256 + receivedData[offset];
+    Detections[detection_count - 1 - i].Amplitude = ((float)receivedData[offset+3])*4+ ((float)receivedData[offset+2])/64;
+    Detections[detection_count - 1 - i].Segment = 15 - (receivedData[offset+4]/16); // flip the segment ID since we're upside down
   }
 
   return detection_count;
