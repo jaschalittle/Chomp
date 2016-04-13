@@ -2,13 +2,13 @@
 #define PINS_H
 
 //------------------ DEFINES----------------
-#define HARD_WIRED
+//#define HARD_WIRED
 
 // ----------------- ANALOG ----------------- 
 // Sensors
 #define PRESSURE_AI A15
 #define ANGLE_AI A1
-#define XBEE_CTS A2
+#define XBEE_CTS A12
 // ----------------- DIGITAL  ---------------
 
 // Weapons RC input
