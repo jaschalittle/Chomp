@@ -181,7 +181,7 @@ void chompLoop() {
       readMlhPressure(&pressure);
       uint16_t angle = 0;
       readAngle(&angle);
-      bool success = sendSensorTelem(loop_speed, pressure, angle);
+      bool success = sendHealthSensorTelem(loop_speed, previous_rc_bitfield, pressure, angle);
       if (success){
         last_telem_time = micros();
       }
