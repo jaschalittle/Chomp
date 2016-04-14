@@ -9,9 +9,9 @@ void retract();
 
 void fire( uint16_t hammer_intensity );
 
-void no_angle_retract();
+void noAngleRetract();
 
-void no_angle_fire( uint16_t hammer_intensity );
+void noAngleFire( uint16_t hammer_intensity );
 
 void gentleFire();
 

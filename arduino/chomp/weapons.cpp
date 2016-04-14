@@ -212,34 +212,35 @@ void fire( uint16_t hammer_intensity ){
     }
 }
 
-void no_angle_retract(){
-  // Make sure we're vented
+void noAngleRetract(){
+    // Make sure we're vented
     safeDigitalWrite(VENT_VALVE_DO, LOW);
 
     DriveSerial.println("@05!G 100");  // start motor to aid meshing
     safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
     DriveSerial.println("@05!G 1000");
-    uint32_t retract_start_time = micros();
-    while (micros() - retract_start_time < 1000000L){
-       if (bufferSbusData()){
-        bool error = parseSbus();
-        if (!error) {
-          char current_rc_bitfield = getRcBitfield();
-          if (!(current_rc_bitfield & HAMMER_RETRACT_BIT)){
-            break;
-          }
-          // continue retracting
-        } else {
-          break;
-        }
+    uint32_t inter_sbus_time = micros();
+    while (micros() - inter_sbus_time < 30000UL){
+        if (bufferSbusData()){
+            if (parseSbus()) {
+                char current_rc_bitfield = getRcBitfield();
+                if (!(current_rc_bitfield & HAMMER_RETRACT_BIT)){
+                    break;
+                }
+                inter_sbus_time = micros();
+            // continue retracting
+            } else {
+                break;
+            }
       }
     }
     safeDigitalWrite(RETRACT_VALVE_DO, LOW);
     DriveSerial.println("@05!G 0");
 }
+
 const uint16_t NO_ANGLE_THROW_DURATION = 35; // ms to leave throw valve open
 const uint16_t NO_ANGLE_SWING_DURATION = 200; // total estimated time in ms of a swing (to calculate vent time)
-void no_angle_fire( uint16_t hammer_intensity ){
+void noAngleFire( uint16_t hammer_intensity ){
   if (weaponsEnabled()){
       magOn();
       // Seal vent valve
@@ -268,47 +269,28 @@ void no_angle_fire( uint16_t hammer_intensity ){
 #define GENTLE_THROW_COMPLETE_ANGLE 142
 #define GENTLE_THROW_TIMEOUT 500000L
 void gentleFire(){
-    uint32_t fire_time;
-    uint32_t swing_length = 0;
-    uint32_t sensor_read_time;
-    uint32_t delay_time;
-    uint16_t angle;
-    uint16_t start_angle;
-    bool angle_read_ok;
-    int16_t angular_velocity;
-    bool velocity_read_ok;
-    
-    if (weaponsEnabled()){
-        bool angle_read_ok = readAngle(&angle);
-        // if angle data isn't coming back, abort
-        while (!angle_read_ok) {
-            uint8_t start_attempts = 1;
-            if (start_attempts < 5) {
-                angle_read_ok = readAngle(&angle);
-                start_attempts++;
-            } else {
-                return;
-            }
-        }
-        fire_time = micros();
-        start_angle = angle;
-        if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
-            while (swing_length < GENTLE_THROW_TIMEOUT && angle < GENTLE_THROW_STOP_ANGLE) {
-                angle_read_ok = readAngle(&angle);
-                swing_length = micros() - fire_time;
-                DriveSerial.println("@05!G -100");  // start motor to aid meshing
-                safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
-                DriveSerial.println("@05!G -1000");
-                sensor_read_time = micros() - sensor_read_time;
-                delay_time = 1000 - sensor_read_time;
-                if (delay_time > 0) {
-                    delayMicroseconds(delay_time);
+    // Make sure we're vented
+    safeDigitalWrite(VENT_VALVE_DO, LOW);
+    DriveSerial.println("@05!G -100");  // start motor to aid meshing
+    safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
+    DriveSerial.println("@05!G -1000");
+    uint32_t inter_sbus_time = micros();
+    while ((micros() - inter_sbus_time) < 30000UL) {
+        if (bufferSbusData()){
+            if (parseSbus()) {
+                char current_rc_bitfield = getRcBitfield();
+                if (!(current_rc_bitfield & HAMMER_RETRACT_BIT)){
+                    break;
                 }
-                swing_length = micros() - fire_time;
+                inter_sbus_time = micros();
+            // continue retracting
+            } else {
+                break;
             }
         }
-        safeDigitalWrite(RETRACT_VALVE_DO, LOW);
     }
+    safeDigitalWrite(RETRACT_VALVE_DO, LOW);
+    DriveSerial.println("@05!G 0");
 }
 
 void flameStart(){
