@@ -135,14 +135,14 @@ void chompLoop() {
                 // Manual hammer fire
                 if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
                     if (current_rc_bitfield & DANGER_CTRL_BIT){
-                      no_angle_fire(hammer_intensity);
+                      noAngleFire(hammer_intensity);
                     } else {
                       fire(hammer_intensity);
                     }
                 }
                 if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
                   if (current_rc_bitfield & DANGER_CTRL_BIT){
-                    no_angle_retract();
+                    noAngleRetract();
                   } else {
                     retract();
                   }
@@ -151,7 +151,7 @@ void chompLoop() {
                     gentleFire();
                 }
                 if( (diff & GENTLE_HAM_R_BIT) && (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
-                    retract();
+                    noAngleRetract();
                 }
                 if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
                     magOn();
