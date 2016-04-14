@@ -6,6 +6,10 @@
 #include "drive.h"
 #include <math.h>
 
+#define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
+// #define P_COEFF 1000
+
+// 8 Leddar segments is 0.436332 rad
 #define SEGMENTS_TO_RAD 0.049087385f
 #define RAD_TO_SEGMENTS 20.371832f
 #define SEGMENTS_TO_DEGREES 2.8125f
@@ -13,7 +17,7 @@
 
 
 #define MIN_OBJECT_DISTANCE 25
-#define MIN_OBJECT_SIZE 30
+#define MIN_OBJECT_SIZE 10
 #define EDGE_CALL_THRESHOLD 90
 #define MATCH_THRESHOLD 40  // will be exceeded by a 20 m/s object
 #define NO_OBS_THRESHOLD 100  // 2 seconds with 50 Hz Leddar data
@@ -33,8 +37,8 @@ void trackObject(uint8_t num_detections, Detection* detections) {
     // call all objects in frame by detecting edges
     int16_t last_seg_distance = min_detections[0].Distance;
     int16_t min_obj_distance = min_detections[0].Distance;
-    uint8_t right_edge = -1.0;
-    uint8_t left_edge = 0.0;
+    int8_t right_edge = -1;
+    int8_t left_edge = 0;
     Object objects[8];
     uint16_t size;
     uint8_t num_objects = 0;
@@ -54,7 +58,8 @@ void trackObject(uint8_t num_detections, Detection* detections) {
                 // Debug.print(min_detections[i].Distance); Debug.print("\t");
                 right_edge = i;
                 size = sin(SEGMENTS_TO_RAD * (float) (right_edge - left_edge) / 2) * min_obj_distance * 2;
-                if (size > MIN_OBJECT_SIZE) {
+                // no size check if left edge is FOV edge-- that means we can't see both edges
+                if (size > MIN_OBJECT_SIZE || left_edge == 0) {
                     objects[num_objects].Distance = min_obj_distance;
                     objects[num_objects].Left_edge = left_edge;
                     objects[num_objects].Right_edge = right_edge;
@@ -78,14 +83,13 @@ void trackObject(uint8_t num_detections, Detection* detections) {
     if (left_edge > right_edge) {
         right_edge = 16.0;
         size = sin(SEGMENTS_TO_RAD * (float) (right_edge - left_edge) / 2) * min_obj_distance * 2;
-        if (size > MIN_OBJECT_SIZE) {
-            objects[num_objects].Distance = min_obj_distance;
-            objects[num_objects].Left_edge = left_edge;
-            objects[num_objects].Right_edge = 16;
-            objects[num_objects].Angle = ((float) (left_edge + right_edge) / 2 - 8) * SEGMENTS_TO_RAD;
-            objects[num_objects].Size = size;
-            num_objects++;
-        }
+        // no size check here, since we can't see both edges
+        objects[num_objects].Distance = min_obj_distance;
+        objects[num_objects].Left_edge = left_edge;
+        objects[num_objects].Right_edge = 16;
+        objects[num_objects].Angle = ((float) (left_edge + right_edge) / 2 - 8) * SEGMENTS_TO_RAD;
+        objects[num_objects].Size = size;
+        num_objects++;
     }
     
     // DEBUG PRINTS
@@ -96,7 +100,7 @@ void trackObject(uint8_t num_detections, Detection* detections) {
         Debug.print(objects[i].Angle); Debug.print(" ");
         Debug.print(objects[i].Size); Debug.print(" ");
     }
-    Debug.println();
+    // Debug.println();
     // DEBUG PRINTS
     
     // if an object has been called, assign it to existing tracked object or to new one
@@ -117,7 +121,7 @@ void trackObject(uint8_t num_detections, Detection* detections) {
             // if new detection doesn't agree well with previous, ignore and wait for next reading
             // allow this to happen NO_OBS_THRESHOLD times before going for best match anyway
             // CONSIDER GOING FOR NEAREST OBJECT IF NO_OBS_THRESHOLD EXCEEDED
-            if (min_diff_from_last < MATCH_THRESHOLD && tracked_object.Num_no_obs < NO_OBS_THRESHOLD) { 
+            if (tracked_object.Num_no_obs < NO_OBS_THRESHOLD && min_diff_from_last > (MATCH_THRESHOLD + tracked_object.Num_no_obs * 2)) { 
                 tracked_object.countNoObs(micros() - last_leddar_time);
             }
             else {
@@ -145,6 +149,7 @@ void trackObject(uint8_t num_detections, Detection* detections) {
                     }
                 }
             }
+            tracked_object.update(nearest_obj, micros() - last_leddar_time);
         }
     } else {
         // if no objects called and we have been tracking something, increment Num_no_obs
@@ -162,8 +167,8 @@ void trackObject(uint8_t num_detections, Detection* detections) {
     //     Debug.print(objects[i].Angle); Debug.print(" ");
     //     Debug.print(objects[i].Distance); Debug.print(" ");
     // }
-    // Debug.print(tracked_object.Angle); Debug.print(" ");
-    // Debug.print(tracked_object.Distance);
+    Debug.print(tracked_object.Angle); Debug.print(" ");
+    Debug.print(tracked_object.Distance);
     // Serial.print("\t");
     // Serial.print(tracked_object.Right_edge);
     // Serial.print("\t");
@@ -175,13 +180,10 @@ void trackObject(uint8_t num_detections, Detection* detections) {
     // Serial.println();
     // return tracked_object;
     
-    // Debug.println();
+    Debug.println();
     // DEBUG PRINTS
 }
 
-// 8 Leddar segments is 0.436332 rad
-// #define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
-#define P_COEFF 1000
 #define ERROR_DELTA_BUFFER_LENGTH 5
 float error_delta_buffer[ERROR_DELTA_BUFFER_LENGTH];
 static float leddar_delta_ts[ERROR_DELTA_BUFFER_LENGTH];
