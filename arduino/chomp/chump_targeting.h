@@ -36,7 +36,7 @@ struct Track
     float Angular_velocity;
 
     // Default constructor
-    Track() : Num_obs(0), Angle(0.0) { }
+    Track() : Num_obs(0), Angle(0.0), Size(0) { }
     void reset() {
         Distance = 0;
         Size = 0;
