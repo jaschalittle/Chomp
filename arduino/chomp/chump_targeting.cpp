@@ -17,10 +17,10 @@
 #define DEGREES_TO_SEGMENTS 0.3555556f
 
 
-#define MIN_OBJECT_DISTANCE 25
-#define MIN_OBJECT_SIZE 10
+#define MIN_OBJECT_DISTANCE 35
+#define MIN_OBJECT_SIZE 30
 #define MAX_OBJECT_SIZE 180
-#define EDGE_CALL_THRESHOLD 90
+#define EDGE_CALL_THRESHOLD 60
 #define MATCH_THRESHOLD 30  // will be exceeded by a 15 m/s object?
 #define NO_OBS_THRESHOLD 100  // 2 seconds with 50 Hz Leddar data
 // Consider adding requirement that near objects must cover multiple segments
