@@ -4,6 +4,7 @@
 #include "sensors.h"
 #include "pins.h"
 #include "utils.h"
+#include <avr/wdt.h>
 
 
 #define RELATIVE_TO_FORWARD 221  // offset of axle anfle from 180 when hammer forward on floor. actual angle read 221
@@ -19,7 +20,7 @@ bool autofireEnabled(char bitfield){
 }
 
 // RETRACT CONSTANTS
-#define RETRACT_BEGIN_VEL_MAX 10
+#define RETRACT_BEGIN_VEL_MAX 45.0f
 static const uint32_t RETRACT_TIMEOUT = 4000 * 1000L;  // in microseconds
 static const uint16_t RETRACT_COMPLETE_ANGLE = 53 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
 
@@ -29,7 +30,7 @@ static uint16_t angle_data[MAX_DATAPOINTS];
 static int16_t pressure_data[MAX_DATAPOINTS];
 
 // HAMMER THROW CONSTANTS
-#define THROW_CLOSE_ANGLE_DIFF 20  // angle distance between throw open and throw close
+#define THROW_CLOSE_ANGLE_DIFF 3  // angle distance between throw open and throw close
 #define VENT_OPEN_ANGLE 175
 #define DATA_COLLECT_TIMESTEP 2000  // timestep for data logging, in microseconds
 #define THROW_COMPLETE_VELOCITY 0
@@ -56,7 +57,7 @@ void retract(){
         }
     }
     uint16_t angle = start_angle;
-    int16_t angular_velocity = 0;
+    float angular_velocity;
     safeDigitalWrite(VENT_VALVE_DO, LOW);
     uint32_t retract_time;
     uint32_t angle_complete_time = 0;
@@ -64,7 +65,7 @@ void retract(){
     // Consider inferring hammer velocity here and requiring that it be below some threshold
     // Only retract if hammer is forward
     bool velocity_read_ok = angularVelocity(&angular_velocity);
-    if (weaponsEnabled() && angle > RETRACT_COMPLETE_ANGLE && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
+    if (weaponsEnabled() && angle > RETRACT_COMPLETE_ANGLE && velocity_read_ok && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
     // if (weaponsEnabled()) {
         retract_time = micros();
         while (micros() - retract_time < RETRACT_TIMEOUT && angle > RETRACT_COMPLETE_ANGLE) {
@@ -271,23 +272,56 @@ void noAngleFire( uint16_t hammer_intensity ){
 void gentleFire(){
     // Make sure we're vented
     safeDigitalWrite(VENT_VALVE_DO, LOW);
-    DriveSerial.println("@05!G -100");  // start motor to aid meshing
     safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
-    DriveSerial.println("@05!G -1000");
+    delay(50);
+    DriveSerial.println("@05!G -300");
     uint32_t inter_sbus_time = micros();
     while ((micros() - inter_sbus_time) < 30000UL) {
         if (bufferSbusData()){
-            if (parseSbus()) {
+            bool error = parseSbus();
+            if (!error) {
+                wdt_reset();
                 char current_rc_bitfield = getRcBitfield();
-                if (!(current_rc_bitfield & HAMMER_RETRACT_BIT)){
+                if (!(current_rc_bitfield & GENTLE_HAM_F_BIT)){
                     break;
                 }
+                delay(5);
+                DriveSerial.println("@05!G -300");
                 inter_sbus_time = micros();
             // continue retracting
             } else {
                 break;
             }
         }
+    }
+    safeDigitalWrite(RETRACT_VALVE_DO, LOW);
+    DriveSerial.println("@05!G 0");
+}
+
+void gentleRetract(){
+    // Make sure we're vented
+    safeDigitalWrite(VENT_VALVE_DO, LOW);
+    safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
+    delay(50);
+    DriveSerial.println("@05!G 1000");
+    uint32_t inter_sbus_time = micros();
+    while (micros() - inter_sbus_time < 30000UL){
+        if (bufferSbusData()){
+            bool error = parseSbus();
+            if (!error) {
+                wdt_reset();
+                char current_rc_bitfield = getRcBitfield();
+                if (!(current_rc_bitfield & GENTLE_HAM_R_BIT)){
+                    break;
+                }
+                delay(5);
+                DriveSerial.println("@05!G 1000");
+                inter_sbus_time = micros();
+            // continue retracting
+            } else {
+                break;
+            }
+      }
     }
     safeDigitalWrite(RETRACT_VALVE_DO, LOW);
     DriveSerial.println("@05!G 0");

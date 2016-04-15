@@ -15,6 +15,8 @@ void noAngleFire( uint16_t hammer_intensity );
 
 void gentleFire();
 
+void gentleRetract();
+
 void flameStart();
 
 void flameEnd();
