@@ -54,7 +54,7 @@ void chompSetup() {
     // Come up safely
     safeState();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
-    // wdt_enable(WDTO_4S);
+    wdt_enable(WDTO_4S);
 #ifdef HARD_WIRED
     Debug.begin(115200);
     Debug.println("STARTUP");
