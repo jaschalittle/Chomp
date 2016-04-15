@@ -1,0 +1,32 @@
+// Parse out detection info
+  for ( unsigned int channel = 1; channel < 17; channel++){
+    uint8_t startbyte = (channel - 1) * 11 / 8;
+    uint8_t bitshift = (channel - 1) * 11 % 8;
+    uint8_t endbyte = (channel * 11 - 1) / 8;
+    uint8_t secondbitshift = 7 - (channel * 11 - 1) % 8; //ch2 = 5, need to bit shift right by 2
+    uint8_t bitcount = 0;
+    for (uint8_t byte_index = startbyte; byte_index <= endbyte, byte_index++) {
+      // bit shift byte first to dump irrelevant values, then convert to 16 bit. then need to bit shift three bits. then OR with second byte.
+      bitcount += 8 - bitshift;
+      uint16_t channel_value = (uint16_t) (sbusData[startbyte] << bitshift) << (11 - bitcount); // may need to cast as uint16_t before shifting
+      bitshift
+      channel_value = channel_value | (sbusData[startbyte + 1] >> lastbitindex);
+      sbus_channels[channel] = (sbusData[startbyte] << firstbitshift) | (sbusData[startbyte + 1] >> lastbitindex);
+    }
+
+  sbusChannels[0]  = ((sbusData[1] | sbusData[2] << 8) & 0x07FF);
+  sbusChannels[1]  = ((sbusData[2] >> 3 | sbusData[3] << 5) & 0x07FF);
+  sbusChannels[2]  = ((sbusData[3] >> 6 | sbusData[4] << 2 | sbusData[5] << 10) & 0x07FF);
+  sbusChannels[3]  = ((sbusData[5] >> 1 | sbusData[6] << 7) & 0x07FF);
+  sbusChannels[4]  = ((sbusData[6] >> 4 | sbusData[7] << 4) & 0x07FF);
+  sbusChannels[5]  = ((sbusData[7] >> 7 | sbusData[8] << 1|sbusData[9] << 9) & 0x07FF);
+  sbusChannels[6]  = ((sbusData[9] >> 2 | sbusData[10] << 6) & 0x07FF);
+  sbusChannels[7]  = ((sbusData[10] >> 5 | sbusData[11] << 3) & 0x07FF); // & the other 8 + 2 channels if you need them
+  sbusChannels[8]  = ((sbusData[12] | sbusData[13] << 8) & 0x07FF);
+  sbusChannels[9]  = ((sbusData[13] >> 3 | sbusData[14] << 5) & 0x07FF);
+  sbusChannels[10] = ((sbusData[14] >> 6 | sbusData[15] << 2 | sbusData[16] << 10) & 0x07FF);
+  sbusChannels[11] = ((sbusData[16] >> 1 | sbusData[17] << 7) & 0x07FF);
+  sbusChannels[12] = ((sbusData[17] >> 4 | sbusData[18] << 4) & 0x07FF);
+  sbusChannels[13] = ((sbusData[18] >> 7 | sbusData[19] << 1|sbusData[20] << 9) & 0x07FF);
+  sbusChannels[14] = ((sbusData[20] >> 2 | sbusData[21] << 6) & 0x07FF);
+  sbusChannels[15] = ((sbusData[21] >> 5 | sbusData[22] << 3) & 0x07FF);
