@@ -7,8 +7,8 @@
 #include <math.h>
 
 
-#define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
-// #define P_COEFF 1000
+// #define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
+#define P_COEFF 1100
 
 // 8 Leddar segments is 0.436332 rad
 #define SEGMENTS_TO_RAD 0.049087385f
@@ -97,72 +97,72 @@ void trackObject(uint8_t num_detections, Detection* detections, uint16_t distanc
     }
     
     // DEBUG PRINTS
-    for (uint8_t i = 0; i < num_objects; i++) {
-        Debug.print(objects[i].Distance); Debug.print(" ");
-        Debug.print(objects[i].Left_edge); Debug.print(" ");
-        Debug.print(objects[i].Right_edge); Debug.print(" ");
-        Debug.print(objects[i].Angle); Debug.print(" ");
-        Debug.print(objects[i].Size); Debug.print(" ");
-    }
-    Debug.println();
+    // for (uint8_t i = 0; i < num_objects; i++) {
+    //     Debug.print(objects[i].Distance); Debug.print(" ");
+    //     Debug.print(objects[i].Left_edge); Debug.print(" ");
+    //     Debug.print(objects[i].Right_edge); Debug.print(" ");
+    //     Debug.print(objects[i].Angle); Debug.print(" ");
+    //     Debug.print(objects[i].Size); Debug.print(" ");
+    // }
+    // Debug.println();
     // DEBUG PRINTS
     
     // if an object has been called, assign it to existing tracked object or to new one
     if (num_objects > 0) {
         // if we have been tracking something, pick new object closest to previous one
-        if (tracked_object.Num_obs > 0) {
-            Object best_match = objects[0];
-            int16_t min_diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[0].Distance);
-            for (uint8_t i = 1; i < num_objects; i++) {
-                uint16_t diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[i].Distance);  // difference between radial distances
-                uint16_t avg_distance = (tracked_object.Distance + objects[i].Distance) / 2;  // average radial distance of tracked_object and this object
-                diff_from_last += sin(abs(tracked_object.Angle - objects[i].Angle) / 2) * avg_distance * 2;  // add estimate of lateral distance diff to radial distance diff
-                if (diff_from_last < min_diff_from_last) {
-                    min_diff_from_last = diff_from_last;
-                    best_match = objects[i];
-                }
-            }
-            // if new detection doesn't agree well with previous, ignore and wait for next reading
-            // allow this to happen NO_OBS_THRESHOLD times before going for best match anyway
-            // CONSIDER GOING FOR NEAREST OBJECT IF NO_OBS_THRESHOLD EXCEEDED
-            if (tracked_object.Num_no_obs < NO_OBS_THRESHOLD && min_diff_from_last > (MATCH_THRESHOLD + tracked_object.Num_no_obs * 2)) { 
-                tracked_object.countNoObs(micros() - last_leddar_time);
-            }
-            else {
-                tracked_object.update(best_match, micros() - last_leddar_time);
-            }
-        } else {
+        // if (tracked_object.Num_obs > 0) {
+        //     Object best_match = objects[0];
+        //     int16_t min_diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[0].Distance);
+        //     for (uint8_t i = 1; i < num_objects; i++) {
+        //         uint16_t diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[i].Distance);  // difference between radial distances
+        //         uint16_t avg_distance = (tracked_object.Distance + objects[i].Distance) / 2;  // average radial distance of tracked_object and this object
+        //         diff_from_last += sin(abs(tracked_object.Angle - objects[i].Angle) / 2) * avg_distance * 2;  // add estimate of lateral distance diff to radial distance diff
+        //         if (diff_from_last < min_diff_from_last) {
+        //             min_diff_from_last = diff_from_last;
+        //             best_match = objects[i];
+        //         }
+        //     }
+        //     // if new detection doesn't agree well with previous, ignore and wait for next reading
+        //     // allow this to happen NO_OBS_THRESHOLD times before going for best match anyway
+        //     // CONSIDER GOING FOR NEAREST OBJECT IF NO_OBS_THRESHOLD EXCEEDED
+        //     if (tracked_object.Num_no_obs < NO_OBS_THRESHOLD && min_diff_from_last > (MATCH_THRESHOLD + tracked_object.Num_no_obs * 2)) { 
+        //         tracked_object.countNoObs(micros() - last_leddar_time);
+        //     }
+        //     else {
+        //         tracked_object.update(best_match, micros() - last_leddar_time);
+        //     }
+        // } else {
             // if there is an obj with two edges, select the nearest one to track
             Object nearest_obj = objects[0];
-            bool two_edge_obj_present = objects[0].Left_edge != 0 && objects[0].Right_edge != 16;
-            for (uint8_t i = 1; i < num_objects; i++) {
-                if (objects[i].Size > MIN_OBJECT_SIZE && objects[i].Distance < nearest_obj.Distance) {
-                    if (objects[i].Left_edge != 0 && objects[i].Right_edge != 16) { 
-                        nearest_obj = objects[i];
-                        two_edge_obj_present = true; 
-                    }
-                }
-            }
+            // bool two_edge_obj_present = objects[0].Left_edge != 0 && objects[0].Right_edge != 16;
+            // for (uint8_t i = 1; i < num_objects; i++) {
+            //     if (objects[i].Distance < nearest_obj.Distance) {
+            //         if (objects[i].Left_edge != 0 && objects[i].Right_edge != 16) { 
+            //             nearest_obj = objects[i];
+            //             two_edge_obj_present = true; 
+            //         }
+            //     }
+            // }
             // if there is no obj with two edges, select nearest single edge obj to track
             nearest_obj = objects[0];
-            if (!two_edge_obj_present) {
+            // if (!two_edge_obj_present) {
                 for (uint8_t i = 1; i < num_objects; i++) {
-                    if (objects[i].Size > MIN_OBJECT_SIZE && objects[i].Distance < nearest_obj.Distance) {
+                    if (objects[i].Distance < nearest_obj.Distance) {
                         nearest_obj = objects[i];
-                        two_edge_obj_present = true; 
                     }
                 }
-            }
+            // }
             tracked_object.update(nearest_obj, micros() - last_leddar_time);
-        }
+        // }
     } else {
-        // if no objects called and Num_no_obs exceeded, forget tracked object
-        if (tracked_object.Num_no_obs >= NO_OBS_THRESHOLD) {
-            tracked_object.reset();
-        // if no objects called and we have been tracking something, increment Num_no_obs
-        } else if (tracked_object.Num_obs > 0) {
-            tracked_object.countNoObs(micros() - last_leddar_time);
-        }
+        tracked_object.reset();
+    //     // if no objects called and Num_no_obs exceeded, forget tracked object
+    //     if (tracked_object.Num_no_obs >= NO_OBS_THRESHOLD) {
+    //         tracked_object.reset();
+    //     // if no objects called and we have been tracking something, increment Num_no_obs
+    //     } else if (tracked_object.Num_obs > 0) {
+    //         tracked_object.countNoObs(micros() - last_leddar_time);
+    //     }
     }
     last_leddar_time = micros();
     
