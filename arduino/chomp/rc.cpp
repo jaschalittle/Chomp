@@ -196,6 +196,10 @@ uint8_t getRcBitfield() {
 
 // WARNING - this function assumes that you have successfully received an SBUS packet!
 uint16_t getHammerIntensity(){
-  return sbusChannels[INTENSITY];
+  uint16_t channel_val = sbusChannels[INTENSITY];
+  if (channel_val < 172) { channel_val = 172; } else if (channel_val > 1811) { channel_val = 1811; }
+  // Taranis throttle has been tuned for linearity, 9 steps on throttle lines. intensity is 0-based, 0-8.
+  uint16_t intensity = (sbusChannels[INTENSITY] - 172 + 102) / 205;
+  return intensity;
 }
 

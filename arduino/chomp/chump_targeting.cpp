@@ -6,6 +6,7 @@
 #include "drive.h"
 #include <math.h>
 
+
 #define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
 // #define P_COEFF 1000
 
@@ -18,13 +19,14 @@
 
 #define MIN_OBJECT_DISTANCE 25
 #define MIN_OBJECT_SIZE 10
+#define MAX_OBJECT_SIZE 180
 #define EDGE_CALL_THRESHOLD 90
-#define MATCH_THRESHOLD 40  // will be exceeded by a 20 m/s object
+#define MATCH_THRESHOLD 30  // will be exceeded by a 15 m/s object?
 #define NO_OBS_THRESHOLD 100  // 2 seconds with 50 Hz Leddar data
 // Consider adding requirement that near objects must cover multiple segments
 static Track tracked_object;
 static uint32_t last_leddar_time = micros();
-void trackObject(uint8_t num_detections, Detection* detections) {
+void trackObject(uint8_t num_detections, Detection* detections, uint16_t distance_threshold) {
     
     // only keep and analyze nearest detection in each segment
     Detection min_detections[16];
@@ -59,7 +61,7 @@ void trackObject(uint8_t num_detections, Detection* detections) {
                 right_edge = i;
                 size = sin(SEGMENTS_TO_RAD * (float) (right_edge - left_edge) / 2) * min_obj_distance * 2;
                 // no size check if left edge is FOV edge-- that means we can't see both edges
-                if (size > MIN_OBJECT_SIZE || left_edge == 0) {
+                if ((size > MIN_OBJECT_SIZE || left_edge == 0) && size < MAX_OBJECT_SIZE && min_obj_distance < distance_threshold) {
                     objects[num_objects].Distance = min_obj_distance;
                     objects[num_objects].Left_edge = left_edge;
                     objects[num_objects].Right_edge = right_edge;
@@ -79,17 +81,19 @@ void trackObject(uint8_t num_detections, Detection* detections) {
         }
     }
     
-    // call object after loop if no matching right edge seen for a left edge-- end of loop can be a right edge
-    if (left_edge > right_edge) {
+    // call object after loop if no matching right edge seen for a left edge-- end of loop can be a right edge. do not call entire FOV an object
+    if ((left_edge != 0 && left_edge > right_edge) && min_obj_distance < distance_threshold) {
         right_edge = 16.0;
         size = sin(SEGMENTS_TO_RAD * (float) (right_edge - left_edge) / 2) * min_obj_distance * 2;
-        // no size check here, since we can't see both edges
-        objects[num_objects].Distance = min_obj_distance;
-        objects[num_objects].Left_edge = left_edge;
-        objects[num_objects].Right_edge = 16;
-        objects[num_objects].Angle = ((float) (left_edge + right_edge) / 2 - 8) * SEGMENTS_TO_RAD;
-        objects[num_objects].Size = size;
-        num_objects++;
+        // no min size check here, since we can't see both edges
+        if (size < MAX_OBJECT_SIZE) {
+            objects[num_objects].Distance = min_obj_distance;
+            objects[num_objects].Left_edge = left_edge;
+            objects[num_objects].Right_edge = 16;
+            objects[num_objects].Angle = ((float) (left_edge + right_edge) / 2 - 8) * SEGMENTS_TO_RAD;
+            objects[num_objects].Size = size;
+            num_objects++;
+        }
     }
     
     // DEBUG PRINTS
@@ -100,7 +104,7 @@ void trackObject(uint8_t num_detections, Detection* detections) {
         Debug.print(objects[i].Angle); Debug.print(" ");
         Debug.print(objects[i].Size); Debug.print(" ");
     }
-    // Debug.println();
+    Debug.println();
     // DEBUG PRINTS
     
     // if an object has been called, assign it to existing tracked object or to new one
@@ -152,8 +156,11 @@ void trackObject(uint8_t num_detections, Detection* detections) {
             tracked_object.update(nearest_obj, micros() - last_leddar_time);
         }
     } else {
+        // if no objects called and Num_no_obs exceeded, forget tracked object
+        if (tracked_object.Num_no_obs >= NO_OBS_THRESHOLD) {
+            tracked_object.reset();
         // if no objects called and we have been tracking something, increment Num_no_obs
-        if (tracked_object.Num_obs > 0) {
+        } else if (tracked_object.Num_obs > 0) {
             tracked_object.countNoObs(micros() - last_leddar_time);
         }
     }
@@ -167,8 +174,11 @@ void trackObject(uint8_t num_detections, Detection* detections) {
     //     Debug.print(objects[i].Angle); Debug.print(" ");
     //     Debug.print(objects[i].Distance); Debug.print(" ");
     // }
-    Debug.print(tracked_object.Angle); Debug.print(" ");
-    Debug.print(tracked_object.Distance);
+    
+    // Debug.print(tracked_object.Angle); Debug.print(" ");
+    // Debug.print(tracked_object.Distance); Debug.print(" ");
+    // Debug.print(tracked_object.Size);
+    
     // Serial.print("\t");
     // Serial.print(tracked_object.Right_edge);
     // Serial.print("\t");
@@ -180,7 +190,7 @@ void trackObject(uint8_t num_detections, Detection* detections) {
     // Serial.println();
     // return tracked_object;
     
-    Debug.println();
+    // Debug.println();
     // DEBUG PRINTS
 }
 
@@ -191,12 +201,12 @@ static uint8_t error_buffer_index = 0;
 float target_angular_vel = 0.0;
 float last_angle = 0.0;
 
-int16_t pidSteer (unsigned int num_detections, Detection* detections, uint16_t threshold, int16_t *steer_bias, bool reset) {
+int16_t pidSteer (unsigned int num_detections, Detection* detections, uint16_t distance_threshold, int16_t *steer_bias, bool reset) {
     if (reset) {
         Debug.println("reset");
         tracked_object.reset();
     }
-    trackObject(num_detections, detections);
+    trackObject(num_detections, detections, distance_threshold);
     *steer_bias = P_COEFF * tracked_object.Angle;
     
     // code below is for trying to add feed forward term
