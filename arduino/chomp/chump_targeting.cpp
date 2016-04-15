@@ -8,7 +8,7 @@
 
 
 // #define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
-#define P_COEFF 1100
+#define P_COEFF 1200
 
 // 8 Leddar segments is 0.436332 rad
 #define SEGMENTS_TO_RAD 0.049087385f
@@ -16,13 +16,13 @@
 #define SEGMENTS_TO_DEGREES 2.8125f
 #define DEGREES_TO_SEGMENTS 0.3555556f
 
-
-#define MIN_OBJECT_DISTANCE 35
-#define MIN_OBJECT_SIZE 30
-#define MAX_OBJECT_SIZE 180
+#define MAX_FOLLOW_DISTANCE 90
+#define MIN_OBJECT_DISTANCE 30
+#define MIN_OBJECT_SIZE 20
+#define MAX_OBJECT_SIZE 150
 #define EDGE_CALL_THRESHOLD 60
-#define MATCH_THRESHOLD 30  // will be exceeded by a 15 m/s object?
-#define NO_OBS_THRESHOLD 100  // 2 seconds with 50 Hz Leddar data
+#define MATCH_THRESHOLD 60
+#define NO_OBS_THRESHOLD 25  // 0.5 seconds with 50 Hz Leddar data
 // Consider adding requirement that near objects must cover multiple segments
 static Track tracked_object;
 static uint32_t last_leddar_time = micros();
@@ -96,44 +96,54 @@ void trackObject(uint8_t num_detections, Detection* detections, uint16_t distanc
         }
     }
     
+#ifdef HARD_WIRED
     // DEBUG PRINTS
-    // for (uint8_t i = 0; i < num_objects; i++) {
-    //     Debug.print(objects[i].Distance); Debug.print(" ");
-    //     Debug.print(objects[i].Left_edge); Debug.print(" ");
-    //     Debug.print(objects[i].Right_edge); Debug.print(" ");
-    //     Debug.print(objects[i].Angle); Debug.print(" ");
-    //     Debug.print(objects[i].Size); Debug.print(" ");
-    // }
-    // Debug.println();
+    for (uint8_t i = 0; i < num_objects; i++) {
+        Debug.print(objects[i].Distance); Debug.print(" ");
+        Debug.print(objects[i].Left_edge); Debug.print(" ");
+        Debug.print(objects[i].Right_edge); Debug.print(" ");
+        Debug.print(objects[i].Angle); Debug.print(" ");
+        Debug.print(objects[i].Size); Debug.print(" ");
+    }
+    Debug.println();
     // DEBUG PRINTS
-    
+#endif
+
     // if an object has been called, assign it to existing tracked object or to new one
     if (num_objects > 0) {
         // if we have been tracking something, pick new object closest to previous one
-        // if (tracked_object.Num_obs > 0) {
-        //     Object best_match = objects[0];
-        //     int16_t min_diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[0].Distance);
-        //     for (uint8_t i = 1; i < num_objects; i++) {
-        //         uint16_t diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[i].Distance);  // difference between radial distances
-        //         uint16_t avg_distance = (tracked_object.Distance + objects[i].Distance) / 2;  // average radial distance of tracked_object and this object
-        //         diff_from_last += sin(abs(tracked_object.Angle - objects[i].Angle) / 2) * avg_distance * 2;  // add estimate of lateral distance diff to radial distance diff
-        //         if (diff_from_last < min_diff_from_last) {
-        //             min_diff_from_last = diff_from_last;
-        //             best_match = objects[i];
-        //         }
-        //     }
-        //     // if new detection doesn't agree well with previous, ignore and wait for next reading
-        //     // allow this to happen NO_OBS_THRESHOLD times before going for best match anyway
-        //     // CONSIDER GOING FOR NEAREST OBJECT IF NO_OBS_THRESHOLD EXCEEDED
-        //     if (tracked_object.Num_no_obs < NO_OBS_THRESHOLD && min_diff_from_last > (MATCH_THRESHOLD + tracked_object.Num_no_obs * 2)) { 
-        //         tracked_object.countNoObs(micros() - last_leddar_time);
-        //     }
-        //     else {
-        //         tracked_object.update(best_match, micros() - last_leddar_time);
-        //     }
-        // } else {
-            // if there is an obj with two edges, select the nearest one to track
+        if (tracked_object.Num_obs > 0) {
+            Object best_match = objects[0];
+            int16_t min_diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[0].Distance);
+            for (uint8_t i = 1; i < num_objects; i++) {
+                uint16_t diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[i].Distance);  // difference between radial distances
+                uint16_t avg_distance = (tracked_object.Distance + objects[i].Distance) / 2;  // average radial distance of tracked_object and this object
+                diff_from_last += sin(abs(tracked_object.Angle - objects[i].Angle) / 2) * avg_distance * 2;  // add estimate of lateral distance diff to radial distance diff
+                if (diff_from_last < min_diff_from_last) {
+                    min_diff_from_last = diff_from_last;
+                    best_match = objects[i];
+                }
+            }
+            if (min_diff_from_last < MATCH_THRESHOLD) {
+                tracked_object.update(best_match, micros() - last_leddar_time);
+            // if MATCH_THRESHOLD exceeded and object was close when lost, continue following it until Num_no_obs exceeded
+            } else if (tracked_object.Num_no_obs < NO_OBS_THRESHOLD && tracked_object.Distance < MAX_FOLLOW_DISTANCE) { 
+                tracked_object.countNoObs(micros() - last_leddar_time);
+            // if object was farther than MAX_FOLLOW_DISTANCE or Num_no_obs exceeded, forget it and lock onto new object
+            } else {
+                tracked_object.reset();
+                Object nearest_obj = objects[0];
+                for (uint8_t i = 1; i < num_objects; i++) {
+                    if (objects[i].Distance < nearest_obj.Distance) {
+                        nearest_obj = objects[i];
+                    }
+                }
+                tracked_object.update(nearest_obj, micros() - last_leddar_time);
+            }
+        // if we aren't tracking something, lock onto nearest object
+        } else {
             Object nearest_obj = objects[0];
+            // if there is an obj with two edges, select the nearest one to track
             // bool two_edge_obj_present = objects[0].Left_edge != 0 && objects[0].Right_edge != 16;
             // for (uint8_t i = 1; i < num_objects; i++) {
             //     if (objects[i].Distance < nearest_obj.Distance) {
@@ -144,7 +154,7 @@ void trackObject(uint8_t num_detections, Detection* detections, uint16_t distanc
             //     }
             // }
             // if there is no obj with two edges, select nearest single edge obj to track
-            nearest_obj = objects[0];
+            // nearest_obj = objects[0];
             // if (!two_edge_obj_present) {
                 for (uint8_t i = 1; i < num_objects; i++) {
                     if (objects[i].Distance < nearest_obj.Distance) {
@@ -153,16 +163,19 @@ void trackObject(uint8_t num_detections, Detection* detections, uint16_t distanc
                 }
             // }
             tracked_object.update(nearest_obj, micros() - last_leddar_time);
-        // }
+        }
+    // below is called if no objects called in current Leddar return
     } else {
-        tracked_object.reset();
-    //     // if no objects called and Num_no_obs exceeded, forget tracked object
-    //     if (tracked_object.Num_no_obs >= NO_OBS_THRESHOLD) {
-    //         tracked_object.reset();
-    //     // if no objects called and we have been tracking something, increment Num_no_obs
-    //     } else if (tracked_object.Num_obs > 0) {
-    //         tracked_object.countNoObs(micros() - last_leddar_time);
-    //     }
+        // if no objects called and we have been tracking something, increment Num_no_obs
+        if (tracked_object.Num_obs > 0 && tracked_object.Distance < MAX_FOLLOW_DISTANCE) {
+            tracked_object.countNoObs(micros() - last_leddar_time);
+        } else {
+            tracked_object.reset();
+        }
+        // if no objects called and Num_no_obs exceeded, forget tracked object
+        if (tracked_object.Num_no_obs >= NO_OBS_THRESHOLD) {
+            tracked_object.reset();
+        }
     }
     last_leddar_time = micros();
     
@@ -178,17 +191,6 @@ void trackObject(uint8_t num_detections, Detection* detections, uint16_t distanc
     // Debug.print(tracked_object.Angle); Debug.print(" ");
     // Debug.print(tracked_object.Distance); Debug.print(" ");
     // Debug.print(tracked_object.Size);
-    
-    // Serial.print("\t");
-    // Serial.print(tracked_object.Right_edge);
-    // Serial.print("\t");
-    // Serial.print("Nearest/");
-    // Serial.print(tracked_object.Distance);
-    // Serial.print("\t");
-    // Serial.print(SEGMENTS_TO_RAD, 5);
-    // Serial.print("\t");
-    // Serial.println();
-    // return tracked_object;
     
     // Debug.println();
     // DEBUG PRINTS
@@ -209,17 +211,6 @@ int16_t pidSteer (unsigned int num_detections, Detection* detections, uint16_t d
     trackObject(num_detections, detections, distance_threshold);
     *steer_bias = P_COEFF * tracked_object.Angle;
     
-    // code below is for trying to add feed forward term
-    // int16_t feed_forward = 0;
-    // float error_from_lead = tracked_object.Angle;
-    // calculate feed_forward term if vel more than 5.7 deg/s
-    // float our_angular_vel = getZgyroBuffered();
-    // tracked_object.estimateVelocity(our_angular_vel);
-    // if (abs(tracked_object.Angular_velocity) > 0.1 && tracked_object.Num_obs >= TRACK_BUFFER_LENGTH) {
-    //     feed_forward = (tracked_object.Angular_velocity > 0) ? -322.1380f * tracked_object.Angular_velocity + 126.8426f : -322.1380f * tracked_object.Angular_velocity - 126.8426f;
-    //     error_from_lead = tracked_object.Angle + tracked_object.Angular_velocity * 0.2;  // angle at 200 ms
-    // }
-    // *steer_bias = feed_forward + P_COEFF * error_from_lead;
     // Debug.print(tracked_object.Angle); Debug.print(" "); 
     // Debug.print(tracked_object.Size); Debug.print(" "); 
     // Debug.print(our_angular_vel); Debug.print(" "); 
