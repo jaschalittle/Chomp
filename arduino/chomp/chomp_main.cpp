@@ -88,10 +88,6 @@ void chompLoop() {
         requestDetections();
     }
     
-    // get targeting RC command. reset targeting if RC state changes.
-    reset_targeting = targeting_enabled ^ getTargetingEnable();
-    targeting_enabled = getTargetingEnable();
-        
     if (bufferDetections()){
         uint8_t detection_count = parseDetections();
         last_request_time = micros();
@@ -121,6 +117,10 @@ void chompLoop() {
           }
         }      
         requestDetections();
+        
+        // get targeting RC command. reset targeting if RC state changes.
+        reset_targeting = targeting_enabled ^ getTargetingEnable();
+        targeting_enabled = getTargetingEnable();
         
         // auto centering code
         pidSteer(detection_count, getDetections(), 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
