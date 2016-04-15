@@ -6,6 +6,8 @@
 #include "utils.h"
 #include <avr/wdt.h>
 
+uint8_t HAMMER_INTENSITIES_ANGLE[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 60 };
+// uint8_t HAMMER_INTENSITIES_TIME[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 60 };
 
 #define RELATIVE_TO_FORWARD 221  // offset of axle anfle from 180 when hammer forward on floor. actual angle read 221
 #define RELATIVE_TO_VERTICAL 32  // offset of axle angle from 90 when hammer arms vertical. actual angle read 122
