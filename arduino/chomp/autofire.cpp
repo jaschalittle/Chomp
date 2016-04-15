@@ -8,8 +8,8 @@
 #define CENTER_ZONE_ARM_MIN 0
 #define CENTER_ZONE_ARM_MAX 15
 
-// Exclusive range: 6, 7, 8, 9
-#define CENTER_ZONE_FIRE_MIN 5
+// inclusive start, exclusive end
+#define CENTER_ZONE_FIRE_MIN 6
 #define CENTER_ZONE_FIRE_MAX 10
 
 #define FACE_OFFSET 20
@@ -107,31 +107,37 @@ bool rightApproach(uint16_t detection_count, Detection* detections){
 LeddarState getState(unsigned int detection_count, Detection* detections){
   int last_detected_segment = -1; // Off the left edge
   int contiguous = 0;
-  for (int i = 0; i < detection_count; i++){
-    if (detections[i].Segment < CENTER_ZONE_FIRE_MAX && detections[i].Segment > CENTER_ZONE_FIRE_MIN &&
-        detections[i].Distance - FACE_OFFSET < FIRE_THRESHOLD){
-      if (detections[i].Segment - last_detected_segment == 1){
-        contiguous += 1;
-        if (contiguous >= CONTIG_THRESHOLD){
-          return HIT_ZONE;
-        }
-      } else {
-        contiguous = 1;
+  
+  // only keep and analyze nearest detection in each segment
+  Detection min_detections[16];
+  for (uint8_t i = 0; i < detection_count; i++) {
+      if (detections[i].Distance < min_detections[detections[i].Segment].Distance) {
+          min_detections[detections[i].Segment] = detections[i];
       }
-      last_detected_segment = detections[i].Segment;
+  }
+
+  // For firing, require that the entire center zone be occupied
+  for (int i = CENTER_ZONE_FIRE_MIN; i < CENTER_ZONE_FIRE_MAX; i++){
+    if (min_detections[i].Distance - FACE_OFFSET < FIRE_THRESHOLD){
+      contiguous += 1;
+    } else {
+      break;
     }
   }
- 
-//  if (leftApproach(detection_count, detections) || rightApproach(detection_count, detections)){ 
+  if (contiguous == CENTER_ZONE_FIRE_MAX - CENTER_ZONE_FIRE_MIN){
+    return HIT_ZONE;
+  }
+  
+//  if (leftApproach(16, min_detections) || rightApproach(16, min_detections)){ 
 //    return PREDICTIVE_HIT_ZONE; 
 //  }
-  
+
+  // For arming, only require that we detect a multi-segment object in the arm zone somewhere
   last_detected_segment = -1;
   contiguous = 0;
-  for (int i = 0; i < detection_count; i++){
-    if (detections[i].Segment <= CENTER_ZONE_ARM_MAX && detections[i].Segment >= CENTER_ZONE_ARM_MIN &&
-        detections[i].Distance - FACE_OFFSET < ARM_THRESHOLD){
-      if (detections[i].Segment - last_detected_segment == 1){
+  for (int i = 0; i < 16; i++){
+    if ( min_detections[i].Distance - FACE_OFFSET < ARM_THRESHOLD){
+      if (min_detections[i].Segment - last_detected_segment == 1){
         contiguous += 1;
         if (contiguous >= CONTIG_THRESHOLD){
           return ARM_ZONE;
@@ -139,7 +145,7 @@ LeddarState getState(unsigned int detection_count, Detection* detections){
       } else {
         contiguous = 1;
       }
-      last_detected_segment = detections[i].Segment;
+      last_detected_segment = min_detections[i].Segment;
     }
   }
 
