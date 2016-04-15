@@ -38,44 +38,59 @@ bool readMlhPressure(int16_t* pressure){
     return true;
 }
 
+#define MIN_ANGLE_ANALOG_READ 50
+#define ZERO_ANGLE_ANALOG_READ 102
+#define MAX_ANGLE_ANALOG_READ 920
 // 0 deg is 10% of input voltage, empirically observed to be 100 counts
 // 360 deg is 90% of input voltage, empirically observed to be 920 counts
 bool readAngle(uint16_t* angle){
     uint16_t counts = analogRead(ANGLE_AI);
-    if ( counts < 50 ) { return false; } // Failure mode in shock, rails to 0;
-    if ( counts < 102 ) { *angle = 0; return true; }
-    if ( counts > 920 ) { *angle = 360; return true; }
+    if ( counts < MIN_ANGLE_ANALOG_READ ) { return false; } // Failure mode in shock, rails to 0;
+    if ( counts < ZERO_ANGLE_ANALOG_READ ) { *angle = 0; return true; }
+    if ( counts > MAX_ANGLE_ANALOG_READ ) { *angle = 359; return true; }
 
-    *angle = (int16_t) (counts - 102) * 11 / 25;  // safe with 16 bit uints, accurate to 0.02%%
+    *angle = (int16_t) (counts - ZERO_ANGLE_ANALOG_READ) * 11 / 25;  // safe with 16 bit uints, accurate to 0.02%%
+    return true;
+}
+
+#define ANGLE_CONVERSION_FLOAT 0.4400978f  // 360 / (920 - 102)
+bool readAngleFloat(float* angle){
+    uint16_t counts = analogRead(ANGLE_AI);
+    if ( counts < MIN_ANGLE_ANALOG_READ ) { return false; } // Failure mode in shock, rails to 0;
+    if ( counts < ZERO_ANGLE_ANALOG_READ ) { *angle = 0.0; return true; }
+    if ( counts > MAX_ANGLE_ANALOG_READ ) { *angle = 359.9; return true; }
+
+    *angle = (float) (counts - ZERO_ANGLE_ANALOG_READ) * ANGLE_CONVERSION_FLOAT;
     return true;
 }
 
 
-bool angularVelocity (int16_t* angular_velocity) {
+bool angularVelocity (float* angular_velocity) {
     // This function could filter low angle values and ignore them for summing. If we only rail to 0V, we could still get a velocity.
-    int16_t angle_traversed = 0;
-    int16_t abs_angle_traversed = 0;
-    uint16_t last_angle;
-    bool angle_read_ok = readAngle(&last_angle);
-    uint16_t new_angle;
-    int16_t delta;
+    float angle_traversed = 0;
+    float abs_angle_traversed = 0;
+    float last_angle;
+    bool angle_read_ok = readAngleFloat(&last_angle);
+    float new_angle;
+    float delta;
     uint32_t read_time = micros();
-    // Take 50 readings. This should be 5-10 ms. 1 rps = 2.78 deg/s
+    // Take 50 readings. This should be ~25 ms. 1 rps = 2.78 deg/s
     uint8_t num_readings = 50;
     for (uint8_t i = 0; i < num_readings; i++) {
-        if (readAngle(&new_angle)) {
-            delta = (int16_t) new_angle - last_angle;
+        if (readAngleFloat(&new_angle)) {
+            delta = new_angle - last_angle;
             abs_angle_traversed += abs(delta);
             angle_traversed += delta;
             last_angle = new_angle;
+            delayMicroseconds(300);
         } else {
             angle_read_ok = false;
         }
     }
     // if angle read ever sketchy or if data too noisy, do not return angular velocity
     if (angle_read_ok && abs(angle_traversed) - angle_traversed < num_readings * 2) {
-        read_time = (micros() - read_time) / 1000;    // convert to milliseconds
-        *angular_velocity = angle_traversed * 1000 / read_time;  // degrees per second
+        float read_time_seconds = (float) (micros() - read_time) / 1000000.0f;    // convert to milliseconds
+        *angular_velocity = angle_traversed / read_time_seconds;  // degrees per second
         return true;
     } else {
         return false;
