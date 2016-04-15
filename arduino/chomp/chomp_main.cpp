@@ -54,7 +54,7 @@ void chompSetup() {
     // Come up safely
     safeState();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
-    wdt_enable(WDTO_4S);
+    // wdt_enable(WDTO_4S);
 #ifdef HARD_WIRED
     Debug.begin(115200);
     Debug.println("STARTUP");
@@ -77,6 +77,9 @@ static uint32_t last_leddar_telem_time = micros();
 static int16_t left_drive_value = 0;
 static int16_t right_drive_value = 0;
 static int16_t steer_bias = 0; // positive turns right, negative turns left
+static bool targeting_enabled = false;
+static bool new_autodrive = false;
+static bool reset_targeting = false;
 
 void chompLoop() {
     uint32_t start_time = micros();
@@ -84,6 +87,11 @@ void chompLoop() {
         last_request_time = micros();
         requestDetections();
     }
+    
+    // get targeting RC command. reset targeting if RC state changes.
+    reset_targeting = targeting_enabled ^ getTargetingEnable();
+    targeting_enabled = getTargetingEnable();
+        
     if (bufferDetections()){
         uint8_t detection_count = parseDetections();
         last_request_time = micros();
@@ -113,6 +121,10 @@ void chompLoop() {
           }
         }      
         requestDetections();
+        
+        // auto centering code
+        pidSteer(detection_count, getDetections(), 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
+        new_autodrive = true;
     }
 
     if (bufferSbusData()){
@@ -167,12 +179,9 @@ void chompLoop() {
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
     
-    // ideally, this would only be called if there is fresh RC input. otherwise, it is ugly for drive prediction stuff
-    // don't spam motor controllers -- only send drive command every 10 ms
-    // drive always called now to log drive command history. only commands roboteqs if getTargetingEnable()
-    if (newRc()) {
+    if (newRc() || new_autodrive && getTargetingEnable()) {
         drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
-        // drive(-drive_command, drive_command, getTargetingEnable());
+        new_autodrive = false;
     }
 
    if (micros() - last_telem_time > 50000L){
