@@ -21,7 +21,7 @@ bool bufferDetections();
 uint8_t parseDetections();
 
 Detection* getDetections();
-
+void getMinDetections(uint8_t detection_count, Detection* inputDetections, Detection* outputMinDetections);
 
 // Table of CRC values for highorder byte
 static uint8_t CRC_HI[] =

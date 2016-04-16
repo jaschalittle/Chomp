@@ -27,6 +27,9 @@ bool sendHealthSensorTelem(uint32_t loop_speed, char cmd_bitfield, int16_t press
 }
 
 bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState state){
+  Detection min_detections[16];
+  getMinDetections(count, detections, min_detections);
+
   const uint16_t packet_len = 45;
   const uint8_t start = 0x02;
   const uint16_t ending = 0x6666;
@@ -41,12 +44,7 @@ bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState stat
   offset += sizeof(uint64_t);
   uint16_t j = 0;
   for (uint16_t i = 0; i < 16; i++){
-      uint16_t dist = 1000;
-      if (detections[j].Segment == i){
-        dist = detections[j].Distance;
-        while (j < count && detections[j].Segment == i){j++;}
-      }
-      memcpy(sensor_data + offset, &dist, sizeof(uint16_t));
+      memcpy(sensor_data + offset, &min_detections[i].Distance, sizeof(uint16_t));
       offset += sizeof(uint16_t);
   }
   memcpy(sensor_data + offset, &ending, sizeof(uint16_t));

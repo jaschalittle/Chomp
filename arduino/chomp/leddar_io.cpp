@@ -99,12 +99,21 @@ uint8_t parseDetections(){
       Detections[detection_count - 1 - i].Segment = segment; // flip the segment ID since we're upside down
     }
   }
+  
   return detection_count;
 }
 
-
-
 Detection* getDetections(){
   return Detections;
+}
+
+#define MIN_OBJECT_DISTANCE 30
+// outputMinDetections should be a default-constructed array of size 16
+void getMinDetections(uint8_t detection_count, Detection* inputDetections, Detection* outputMinDetections){
+  for (uint8_t i = 0; i < detection_count; i++) {
+    if (inputDetections[i].Distance < outputMinDetections[inputDetections[i].Segment].Distance && inputDetections[i].Distance > MIN_OBJECT_DISTANCE) {
+      outputMinDetections[inputDetections[i].Segment] = inputDetections[i];
+    }
+  }
 }
 

@@ -110,11 +110,7 @@ LeddarState getState(unsigned int detection_count, Detection* detections){
   
   // only keep and analyze nearest detection in each segment
   Detection min_detections[16];
-  for (uint8_t i = 0; i < detection_count; i++) {
-      if (detections[i].Distance < min_detections[detections[i].Segment].Distance) {
-          min_detections[detections[i].Segment] = detections[i];
-      }
-  }
+  getMinDetections(detection_count, detections, min_detections);
 
   // For firing, require that the entire center zone be occupied
   for (int i = CENTER_ZONE_FIRE_MIN; i < CENTER_ZONE_FIRE_MAX; i++){

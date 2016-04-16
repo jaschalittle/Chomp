@@ -17,7 +17,6 @@
 #define DEGREES_TO_SEGMENTS 0.3555556f
 
 #define MAX_FOLLOW_DISTANCE 90
-#define MIN_OBJECT_DISTANCE 30
 #define MIN_OBJECT_SIZE 20
 #define MAX_OBJECT_SIZE 150
 #define EDGE_CALL_THRESHOLD 60
@@ -30,11 +29,7 @@ void trackObject(uint8_t num_detections, Detection* detections, uint16_t distanc
     
     // only keep and analyze nearest detection in each segment
     Detection min_detections[16];
-    for (uint8_t i = 0; i < num_detections; i++) {
-        if (detections[i].Distance < min_detections[detections[i].Segment].Distance && detections[i].Distance > MIN_OBJECT_DISTANCE) {
-            min_detections[detections[i].Segment] = detections[i];
-        }
-    }
+    getMinDetections(num_detections, detections, min_detections);
     
     // call all objects in frame by detecting edges
     int16_t last_seg_distance = min_detections[0].Distance;
