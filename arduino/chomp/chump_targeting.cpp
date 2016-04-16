@@ -8,7 +8,7 @@
 
 
 // #define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
-#define P_COEFF 1200
+#define P_COEFF 1800
 
 // 8 Leddar segments is 0.436332 rad
 #define SEGMENTS_TO_RAD 0.049087385f
