@@ -5,7 +5,7 @@
 
 
 #define AMPLITUDE_THRESHOLDING_RANGE 125
-#define LEDDAR_AMPLITUDE_THRESHOLD 50.0f
+#define LEDDAR_AMPLITUDE_THRESHOLD 50
 
 void leddarWrapperInit(){
   LeddarSerial.begin(115200);
@@ -88,18 +88,21 @@ uint8_t parseDetections(){
   // Parse out detection info
   for ( uint16_t i = 0; i < detection_count; i++){
     uint16_t offset = i * 5 + 3;
-    float amplitude = ((float)receivedData[offset+3])*4+ ((float)receivedData[offset+2])/64;
+    uint8_t segment = 15 - (receivedData[offset+4]/16);
+    uint16_t amplitude = ((float)receivedData[offset+3])*4+ ((float)receivedData[offset+2])/64;
     uint16_t distance = ((uint16_t)receivedData[offset+1])*256 + receivedData[offset];
+    
     // filter near detections that are of insufficient amplitude
     if (distance > AMPLITUDE_THRESHOLDING_RANGE || amplitude > LEDDAR_AMPLITUDE_THRESHOLD) {
       Detections[detection_count - 1 - i].Distance = distance;
       Detections[detection_count - 1 - i].Amplitude = amplitude;
-      Detections[detection_count - 1 - i].Segment = 15 - (receivedData[offset+4]/16); // flip the segment ID since we're upside down
+      Detections[detection_count - 1 - i].Segment = segment; // flip the segment ID since we're upside down
     }
   }
-
   return detection_count;
 }
+
+
 
 Detection* getDetections(){
   return Detections;
