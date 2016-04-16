@@ -18,7 +18,7 @@ def polyfit_derivative(data, num_points, timestep):
         poly_derivatives.append(first_derivative * (1000000 / timestep))
     return np.array(poly_derivatives)
 
-def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, filetag, timestep = 1000):
+def plot_swing(angles, pressures, throw_close_time, vent_open_time, throw_close_crank_angle, swing_num, filetag, timestep = 1000):
     # write data to log
     with open("{}_swing{}.txt".format(filetag, swing_num), 'w') as fh:
         for angle, pressure in itertools.izip(angles, pressures):
@@ -48,7 +48,7 @@ def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, f
     angular_velocities = polyfit_derivative(angles, 13, timestep)
     max_v = np.array(angular_velocities).max() / 360 * 1.07 * 2 * np.pi
     ke = max_v ** 2 * 3.4 / 2   # 3.4 kg, 1.07 m radius arc
-    plt.title("peak {:.2f} m/s\n{:.2f} J".format(max_v, ke))
+    plt.title("{} crank angle fill\npeak {:.2f} m/s\n{:.2f} J".format(throw_close_crank_angle, max_v, ke))
 
     # adjust axis limits
     ymin1, ymax1 = ax1.get_ylim()
@@ -84,6 +84,7 @@ def stream_data(serial_device, baudrate):
     pressures = list()
     filetag = time.strftime("%Y-%m-%d_%H-%M-%S")
     swing_num = 0
+    throw_close_crank_angle = 0;
     while True:
         try:
             line = ser.readline().rstrip().split("\t")
@@ -97,7 +98,7 @@ def stream_data(serial_device, baudrate):
                 vent_open_time = int(line[1])
                 print "\t".join(line)
                 swing_num += 1
-                plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, filetag, timestep=timestep)
+                plot_swing(angles, pressures, throw_close_time, vent_open_time, throw_close_crank_angle, swing_num, filetag, timestep=timestep)
                 angles = list()
                 pressures = list()
             elif line[0] == "millis":
@@ -107,8 +108,8 @@ def stream_data(serial_device, baudrate):
                 angle, pressure = map(int, line[1:3])
                 angles.append(angle)
                 pressures.append(pressure)
-            else:
-                print "\t".join(line)
+            elif line[0] == "throw close crank angle":
+                throw_close_crank_angle = line[1];
         except ValueError as err:
             print "\t".join(line)
             print err
