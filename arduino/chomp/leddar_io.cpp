@@ -5,7 +5,7 @@
 
 
 #define AMPLITUDE_THRESHOLDING_RANGE 125
-#define LEDDAR_AMPLITUDE_THRESHOLD 50
+#define LEDDAR_AMPLITUDE_THRESHOLD 50.0f
 
 void leddarWrapperInit(){
   LeddarSerial.begin(115200);
