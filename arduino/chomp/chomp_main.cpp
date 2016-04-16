@@ -23,7 +23,7 @@ void safeState(){
 
 void enableState(){
    valveEnable();
-//    flameEnable(); 
+   flameEnable(); 
 }
 
 static volatile int WEAPONS_ENABLE_pwm_val = 500; // disabled
