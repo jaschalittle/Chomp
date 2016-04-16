@@ -166,7 +166,6 @@ float last_angle = 0.0;
 
 int16_t pidSteer (unsigned int num_detections, Detection* detections, uint16_t distance_threshold, int16_t *steer_bias, bool reset) {
     if (reset) {
-        Debug.println("reset");
         tracked_object.reset();
     }
     trackObject(num_detections, detections, distance_threshold);
