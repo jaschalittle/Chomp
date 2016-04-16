@@ -1,5 +1,6 @@
 #ifndef WEAPONS_H
 #define WEAPONS_H
+#include "rc.h"
 
 bool weaponsEnabled();
 
@@ -11,9 +12,9 @@ void fire( uint16_t hammer_intensity );
 
 void noAngleFire( uint16_t hammer_intensity );
 
-void gentleFire();
+void gentleFire( );
 
-void gentleRetract();
+void gentleRetract( RCBitfield cmd_bit );
 
 void flameStart();
 
