@@ -8,7 +8,7 @@ bool autofireEnabled(char bitfield);
 
 void retract();
 
-void fire( uint16_t hammer_intensity );
+void fire( uint16_t hammer_intensity, bool flame_pulse );
 
 void noAngleFire( uint16_t hammer_intensity );
 

@@ -159,14 +159,17 @@ bool getTargetingEnable() {
 #define AUTO_HAMMER_THRESHOLD 1000 // (190 down - 1800 up)
 #define HAMMER_FIRE_THRESHOLD 1500 // 900 neutral, 170 to 1800
 #define HAMMER_RETRACT_THRESHOLD 500
+
+#define FLAME_PULSE_THRESHOLD 500
 #define FLAME_CTRL_THRESHOLD 1500
+
 #define GENTLE_HAM_F_THRESHOLD 500
 #define GENTLE_HAM_R_THRESHOLD 1500
 #define MAG_CTRL_THRESHOLD 1500
 #define DANGER_MODE_THRESHOLD 1500
 
-uint8_t getRcBitfield() {
-  uint8_t bitfield = 0;
+uint16_t getRcBitfield() {
+  uint16_t bitfield = 0;
   if ( sbusChannels[AUTO_HAMMER_ENABLE] > AUTO_HAMMER_THRESHOLD){
     bitfield |= AUTO_HAMMER_ENABLE_BIT;
   }
@@ -176,9 +179,16 @@ uint8_t getRcBitfield() {
   if ( sbusChannels[HAMMER_CTRL] < HAMMER_RETRACT_THRESHOLD){
     bitfield |= HAMMER_RETRACT_BIT;
   }
+  
+  // Full stick, flamethrower is on
   if ( sbusChannels[FLAME_CTRL] > FLAME_CTRL_THRESHOLD){
     bitfield |= FLAME_CTRL_BIT;
   }
+  // Center position enables pulse mode
+  if ( sbusChannels[FLAME_CTRL] > FLAME_PULSE_THRESHOLD && sbusChannels[FLAME_CTRL] < FLAME_CTRL_THRESHOLD ){
+    bitfield |= FLAME_PULSE_BIT;
+  }
+  
   if ( sbusChannels[GENTLE_HAM_CTRL] < GENTLE_HAM_F_THRESHOLD){
     bitfield |= GENTLE_HAM_F_BIT;
   }

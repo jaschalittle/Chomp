@@ -93,7 +93,7 @@ void retract(){
     }
 }
 
-void fire( uint16_t hammer_intensity ){
+void fire( uint16_t hammer_intensity, bool flame_pulse ){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -132,8 +132,10 @@ void fire( uint16_t hammer_intensity ){
         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
             
             magOn();
+            if (flame_pulse){
+                flameStart();
+            }
             // Seal vent (which is normally open)
-            flameStart();
             safeDigitalWrite(VENT_VALVE_DO, HIGH);
             debug_println("vent close");
             vent_closed = true;

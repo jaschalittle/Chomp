@@ -69,7 +69,7 @@ void chompSetup() {
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
-static int8_t previous_rc_bitfield = 0;
+static uint16_t previous_rc_bitfield = 0;
 static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
 static uint32_t last_telem_time = micros();
@@ -103,7 +103,7 @@ void chompLoop() {
             case PREDICTIVE_HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
                     if (autofireEnabled(previous_rc_bitfield)){
-                        fire( hammer_intensity );
+                        fire( hammer_intensity, previous_rc_bitfield & FLAME_PULSE_BIT );
                     }
                 } else {
                     previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
@@ -133,8 +133,8 @@ void chompLoop() {
         if (!in_failsafe_state) {
             wdt_reset();
             // React to RC state changes
-            char current_rc_bitfield = getRcBitfield();
-            char diff = previous_rc_bitfield ^ current_rc_bitfield;
+            uint16_t current_rc_bitfield = getRcBitfield();
+            uint16_t diff = previous_rc_bitfield ^ current_rc_bitfield;
             hammer_intensity = getHammerIntensity();
             if (diff) {
                 // Flame on -> off
@@ -150,7 +150,7 @@ void chompLoop() {
                     if (current_rc_bitfield & DANGER_CTRL_BIT){
                       noAngleFire(hammer_intensity);
                     } else {
-                      fire(hammer_intensity);
+                      fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
                     }
                 }
                 if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){

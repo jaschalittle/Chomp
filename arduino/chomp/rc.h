@@ -28,10 +28,11 @@ enum RCBitfield {
     HAMMER_FIRE_BIT = 2,
     HAMMER_RETRACT_BIT = 4,
     FLAME_CTRL_BIT = 8,
-    GENTLE_HAM_F_BIT = 16,
-    GENTLE_HAM_R_BIT = 32,
-    MAG_CTRL_BIT = 64,
-    DANGER_CTRL_BIT = 128,
+    FLAME_PULSE_BIT = 16,
+    GENTLE_HAM_F_BIT = 32,
+    GENTLE_HAM_R_BIT = 64,
+    MAG_CTRL_BIT = 128,
+    DANGER_CTRL_BIT = 256,
 };
 
 bool bufferSbusData();
@@ -50,6 +51,6 @@ bool getTargetingEnable();
 
 uint16_t getHammerIntensity();
 
-uint8_t getRcBitfield();
+uint16_t getRcBitfield();
 
 #endif // RC_H
