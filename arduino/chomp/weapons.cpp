@@ -6,7 +6,8 @@
 #include "utils.h"
 #include <avr/wdt.h>
 
-uint8_t HAMMER_INTENSITIES_ANGLE[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 60 };
+uint8_t MAX_SAFE_ANGLE = 50;
+uint8_t HAMMER_INTENSITIES_ANGLE[9] = { 3, 5, 10, 15, 20, 25, 30, 40, 50 };
 // uint8_t HAMMER_INTENSITIES_TIME[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 60 };
 
 #define RELATIVE_TO_FORWARD 221  // offset of axle anfle from 180 when hammer forward on floor. actual angle read 221
@@ -32,7 +33,7 @@ static uint16_t angle_data[MAX_DATAPOINTS];
 static int16_t pressure_data[MAX_DATAPOINTS];
 
 // HAMMER THROW CONSTANTS
-#define THROW_CLOSE_ANGLE_DIFF 3  // angle distance between throw open and throw close
+// #define THROW_CLOSE_ANGLE_DIFF 3  // angle distance between throw open and throw close
 #define VENT_OPEN_ANGLE 175
 #define DATA_COLLECT_TIMESTEP 2000  // timestep for data logging, in microseconds
 #define THROW_COMPLETE_VELOCITY 0
@@ -122,7 +123,10 @@ void fire( uint16_t hammer_intensity ){
             }
         }
         start_angle = angle;
-        uint16_t throw_close_angle = start_angle + THROW_CLOSE_ANGLE_DIFF;
+        // Just in case a bug causes us to fall out of the hammer intensities array, do a last minute
+        // sanity check before we actually command a throw.
+        uint16_t throw_close_angle_diff = min(MAX_SAFE_ANGLE, HAMMER_INTENSITIES_ANGLE[hammer_intensity]);
+        uint16_t throw_close_angle = start_angle + throw_close_angle_diff;
         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
             
             magOn();
@@ -159,7 +163,7 @@ void fire( uint16_t hammer_intensity ){
                     vent_closed = false;
                 }
                 // close throw, open vent if hammer velocity below threshold after THROW_CLOSE_ANGLE_DIFF degrees traversed
-                if (angle > (start_angle + THROW_CLOSE_ANGLE_DIFF)) {
+                if (angle > (throw_close_angle)) {
                     velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
                     if (velocity_read_ok && abs(angular_velocity) < THROW_COMPLETE_VELOCITY) {
                         if (throw_open) {throw_close_timestep = timestep;}
@@ -212,6 +216,8 @@ void fire( uint16_t hammer_intensity ){
         debug_println(throw_close_timestep);
         debug_print("vent_open_timestep\t");
         debug_println(vent_open_timestep);
+        debug_print("throw close crank angle\t");
+        debug_println(throw_close_angle);
     }
 }
 
