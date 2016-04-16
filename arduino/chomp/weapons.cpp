@@ -133,6 +133,7 @@ void fire( uint16_t hammer_intensity ){
             
             magOn();
             // Seal vent (which is normally open)
+            flameStart();
             safeDigitalWrite(VENT_VALVE_DO, HIGH);
             debug_println("vent close");
             vent_closed = true;
@@ -149,7 +150,6 @@ void fire( uint16_t hammer_intensity ){
             while (swing_length < SWING_TIMEOUT && angle < THROW_COMPLETE_ANGLE) {
                 sensor_read_time = micros();
                 angle_read_ok = readAngle(&angle);
-                debug_println(angle);
                 pressure_read_ok = readMlhPressure(&pressure);
                 // Keep throw valve open until 5 degrees
                 if (throw_open && angle > throw_close_angle) {
@@ -201,6 +201,7 @@ void fire( uint16_t hammer_intensity ){
             if (vent_closed) {vent_open_timestep = timestep;}
             safeDigitalWrite(VENT_VALVE_DO, LOW);
             magOff();
+            flameEnd();
         }
         
         debug_println("finished");
@@ -258,7 +259,7 @@ void gentleFire(){
     safeDigitalWrite(VENT_VALVE_DO, LOW);
     safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
     delay(50);
-    DriveSerial.println("@05!G -300");
+    DriveSerial.println("@05!G -500");
     uint32_t inter_sbus_time = micros();
     while ((micros() - inter_sbus_time) < 30000UL) {
         if (bufferSbusData()){
@@ -270,7 +271,7 @@ void gentleFire(){
                     break;
                 }
                 delay(5);
-                DriveSerial.println("@05!G -300");
+                DriveSerial.println("@05!G -500");
                 inter_sbus_time = micros();
             // continue retracting
             } else {
@@ -312,9 +313,7 @@ void gentleRetract( RCBitfield cmd_bit ){
 }
 
 void flameStart(){
-    if (weaponsEnabled()){
-        safeDigitalWrite(PROPANE_DO, HIGH);
-    }
+    safeDigitalWrite(PROPANE_DO, HIGH);
 }
 
 void flameEnd(){
