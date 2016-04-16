@@ -16,7 +16,7 @@ def polyfit_derivative(data, num_points, timestep):
         polyfit = np.polyfit(range(num_points), data[i:i + num_points], 2)
         first_derivative = 2 * polyfit[0] * x + polyfit[1]
         poly_derivatives.append(first_derivative * (1000000 / timestep))
-    return poly_derivatives
+    return np.array(poly_derivatives)
 
 def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, filetag, timestep = 1000):
     # write data to log
@@ -30,8 +30,8 @@ def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, f
     # set up x and y for plotting
     angles = np.array(angles)
     pressures = np.array(pressures)
-    timestep = timestep / 1000  # convert to ms
-    x = np.arange(0, len(angles) * timestep, timestep)
+    graph_timestep = timestep / 1000
+    x = np.arange(0, len(angles) * graph_timestep, graph_timestep)
 
     # make plots
     fig = plt.figure()
@@ -60,11 +60,11 @@ def plot_swing(angles, pressures, throw_close_time, vent_open_time, swing_num, f
 
     # valve action labels
     ylabelpos = -15
-    ax1.axvline(throw_close_time * timestep, linestyle="dashed", color="black")
-    ax1.axvline(vent_open_time * timestep, linestyle="dashed", color="black")
+    ax1.axvline(throw_close_time * graph_timestep, linestyle="dashed", color="black")
+    ax1.axvline(vent_open_time * graph_timestep, linestyle="dashed", color="black")
     ax1.text(0, ylabelpos,'throw valve open', rotation=90, ha="center")
-    ax1.text(throw_close_time * timestep, ylabelpos,'throw valve close', rotation=90, ha="center")
-    ax1.text(vent_open_time * timestep, ylabelpos,'vent valve open', rotation=90, ha="center")
+    ax1.text(throw_close_time * graph_timestep, ylabelpos,'throw valve close', rotation=90, ha="center")
+    ax1.text(vent_open_time * graph_timestep, ylabelpos,'vent valve open', rotation=90, ha="center")
 
     # adjust major tick location
     ax1.yaxis.set_ticks(np.arange(0, angles.max() + 15, 15))
@@ -107,6 +107,8 @@ def stream_data(serial_device, baudrate):
                 angle, pressure = map(int, line[1:3])
                 angles.append(angle)
                 pressures.append(pressure)
+            else:
+                print "\t".join(line)
         except ValueError as err:
             print "\t".join(line)
             print err
