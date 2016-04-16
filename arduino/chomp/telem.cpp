@@ -6,7 +6,7 @@
 #include "pins.h"
 
 bool sendHealthSensorTelem(uint32_t loop_speed, uint16_t cmd_bitfield, int16_t pressure, uint16_t angle){
-  const uint16_t packet_len = 12;
+  const uint16_t packet_len = 13;
   const uint8_t start = 0x01;
   const uint16_t ending = 0x6666;
   char sensor_data[packet_len] = {0};
