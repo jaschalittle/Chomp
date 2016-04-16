@@ -124,9 +124,9 @@ LeddarState getState(unsigned int detection_count, Detection* detections){
     return HIT_ZONE;
   }
   
-//  if (leftApproach(16, min_detections) || rightApproach(16, min_detections)){ 
-//    return PREDICTIVE_HIT_ZONE; 
-//  }
+  if (leftApproach(16, min_detections) || rightApproach(16, min_detections)){ 
+    return PREDICTIVE_HIT_ZONE; 
+  }
 
   // For arming, only require that we detect a multi-segment object in the arm zone somewhere
   last_detected_segment = -1;

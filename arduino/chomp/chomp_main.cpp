@@ -100,6 +100,7 @@ void chompLoop() {
                 previous_leddar_state = current_leddar_state;
                 break;
             case HIT_ZONE:
+            case PREDICTIVE_HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
                     if (autofireEnabled(previous_rc_bitfield)){
                         fire( hammer_intensity );
