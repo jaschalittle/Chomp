@@ -154,7 +154,7 @@ void chompLoop() {
                 }
                 if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
                   if (current_rc_bitfield & DANGER_CTRL_BIT){
-                    noAngleRetract();
+                    gentleRetract(HAMMER_RETRACT_BIT);
                   } else {
                     retract();
                   }
@@ -163,7 +163,7 @@ void chompLoop() {
                     gentleFire();
                 }
                 if( (diff & GENTLE_HAM_R_BIT) && (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
-                    gentleRetract();
+                    gentleRetract(GENTLE_HAM_R_BIT);
                 }
                 if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
                     magOn();

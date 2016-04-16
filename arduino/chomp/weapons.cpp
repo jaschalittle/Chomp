@@ -8,7 +8,9 @@
 
 uint8_t MAX_SAFE_ANGLE = 50;
 uint8_t HAMMER_INTENSITIES_ANGLE[9] = { 3, 5, 10, 15, 20, 25, 30, 40, 50 };
-// uint8_t HAMMER_INTENSITIES_TIME[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 60 };
+
+uint8_t MAX_SAFE_TIME = 80;
+uint8_t HAMMER_INTENSITIES_TIME[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 60 };
 
 #define RELATIVE_TO_FORWARD 221  // offset of axle anfle from 180 when hammer forward on floor. actual angle read 221
 #define RELATIVE_TO_VERTICAL 32  // offset of axle angle from 90 when hammer arms vertical. actual angle read 122
@@ -221,32 +223,6 @@ void fire( uint16_t hammer_intensity ){
     }
 }
 
-void noAngleRetract(){
-    // Make sure we're vented
-    safeDigitalWrite(VENT_VALVE_DO, LOW);
-
-    DriveSerial.println("@05!G 100");  // start motor to aid meshing
-    safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
-    DriveSerial.println("@05!G 1000");
-    uint32_t inter_sbus_time = micros();
-    while (micros() - inter_sbus_time < 30000UL){
-        if (bufferSbusData()){
-            if (parseSbus()) {
-                char current_rc_bitfield = getRcBitfield();
-                if (!(current_rc_bitfield & HAMMER_RETRACT_BIT)){
-                    break;
-                }
-                inter_sbus_time = micros();
-            // continue retracting
-            } else {
-                break;
-            }
-      }
-    }
-    safeDigitalWrite(RETRACT_VALVE_DO, LOW);
-    DriveSerial.println("@05!G 0");
-}
-
 const uint16_t NO_ANGLE_THROW_DURATION = 35; // ms to leave throw valve open
 const uint16_t NO_ANGLE_SWING_DURATION = 200; // total estimated time in ms of a swing (to calculate vent time)
 void noAngleFire( uint16_t hammer_intensity ){
@@ -306,7 +282,7 @@ void gentleFire(){
     DriveSerial.println("@05!G 0");
 }
 
-void gentleRetract(){
+void gentleRetract( RCBitfield cmd_bit ){
     // Make sure we're vented
     safeDigitalWrite(VENT_VALVE_DO, LOW);
     safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
@@ -319,7 +295,7 @@ void gentleRetract(){
             if (!error) {
                 wdt_reset();
                 char current_rc_bitfield = getRcBitfield();
-                if (!(current_rc_bitfield & GENTLE_HAM_R_BIT)){
+                if (!(current_rc_bitfield & cmd_bit)){
                     break;
                 }
                 delay(5);
