@@ -22,9 +22,9 @@ int APPROACH_THRESHOLDS[16] = { 76, 76, 75, 74, 73, 72, 71, 70, 70, 71, 72, 73, 
 
 float bufferVelocity(int8_t* buf, int8_t curs, bool assert_pos){
   int16_t delta_sum = 0;
-  debug_print("{ ");
-  for(int i = curs; i < curs + APPROACH_BUFFER_SIZE; i++){debug_print(buf[i % APPROACH_BUFFER_SIZE]);debug_print(",");}
-  debug_print(" }");
+//  debug_print("{ ");
+//  for(int i = curs; i < curs + APPROACH_BUFFER_SIZE; i++){debug_print(buf[i % APPROACH_BUFFER_SIZE]);debug_print(",");}
+//  debug_print(" }");
   for(int i = curs + 1; i < curs + APPROACH_BUFFER_SIZE; i++){
     int16_t delta = buf[i % APPROACH_BUFFER_SIZE] - buf[(i - 1) % APPROACH_BUFFER_SIZE];
     delta_sum += delta;
@@ -56,16 +56,16 @@ bool leftApproach(uint16_t detection_count, Detection* detections){
   left_buffer_cursor = (left_buffer_cursor + 1) % APPROACH_BUFFER_SIZE;
 
   if (inner_contiguous_edge != -1){
-    debug_print("Left inner edge:");
-    debug_print(inner_contiguous_edge);
-    debug_print("\t");
+//    debug_print("Left inner edge:");
+//    debug_print(inner_contiguous_edge);
+//    debug_print("\t");
     float vel = bufferVelocity(left_buffer, left_buffer_cursor, true);
-    Debug.print(vel);
-    debug_print("\t");
+//    Debug.print(vel);
+//    debug_print("\t");
     int16_t predicted_seg = inner_contiguous_edge + (int16_t)(vel*10.0);
-    debug_println(predicted_seg);
+//    debug_println(predicted_seg);
     bool fire = predicted_seg >= CENTER_ZONE_FIRE_MAX;
-    if (fire){debug_println(" FIRE!");}
+//    if (fire){debug_println(" FIRE!");}
     return fire;
   }
   return false;
@@ -89,16 +89,16 @@ bool rightApproach(uint16_t detection_count, Detection* detections){
   right_buffer_cursor = (right_buffer_cursor + 1) % APPROACH_BUFFER_SIZE;
 
   if (inner_contiguous_edge != 16){
-    debug_print("Right inner edge:");
-    debug_print(inner_contiguous_edge);
-    debug_print("\t");
+//    debug_print("Right inner edge:");
+//    debug_print(inner_contiguous_edge);
+//    debug_print("\t");
     float vel = bufferVelocity(right_buffer, right_buffer_cursor, false);
-    Debug.print(vel);
-    debug_print("\t");
+//    Debug.print(vel);
+//    debug_print("\t");
     int16_t predicted_seg = inner_contiguous_edge + (int16_t)(vel*10.0);
-    debug_println(predicted_seg);
+//    debug_println(predicted_seg);
     bool fire = predicted_seg <= CENTER_ZONE_FIRE_MIN;
-    if (fire){debug_println(" FIRE!");}
+//    if (fire){debug_println(" FIRE!");}
     return fire;
   }
   return false;
