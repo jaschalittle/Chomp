@@ -85,19 +85,6 @@ void trackObject(uint8_t num_detections, Detection* detections, uint16_t distanc
             num_objects++;
         }
     }
-    
-#ifdef HARD_WIRED
-    // DEBUG PRINTS
-    for (uint8_t i = 0; i < num_objects; i++) {
-        Debug.print(objects[i].Distance); Debug.print(" ");
-        Debug.print(objects[i].Left_edge); Debug.print(" ");
-        Debug.print(objects[i].Right_edge); Debug.print(" ");
-        Debug.print(objects[i].Angle); Debug.print(" ");
-        Debug.print(objects[i].Size); Debug.print(" ");
-    }
-    Debug.println();
-    // DEBUG PRINTS
-#endif
 
     // if an object has been called, assign it to existing tracked object or to new one
     if (num_objects > 0) {
