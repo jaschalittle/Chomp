@@ -109,7 +109,10 @@ def stream_data(serial_device, baudrate):
                 angles.append(angle)
                 pressures.append(pressure)
             elif line[0] == "throw close crank angle":
-                throw_close_crank_angle = line[1];
+                throw_close_crank_angle = int(line[1]);
+                print "\t".join(line)
+            else:
+                print "\t".join(line)
         except ValueError as err:
             print "\t".join(line)
             print err
