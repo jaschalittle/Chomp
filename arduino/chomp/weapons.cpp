@@ -6,8 +6,8 @@
 #include "utils.h"
 #include <avr/wdt.h>
 
-uint8_t MAX_SAFE_ANGLE = 50;
-uint8_t HAMMER_INTENSITIES_ANGLE[9] = { 3, 5, 10, 15, 20, 25, 30, 40, 50 };
+uint8_t MAX_SAFE_ANGLE = 65;
+uint8_t HAMMER_INTENSITIES_ANGLE[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 65 };
 
 uint8_t MAX_SAFE_TIME = 80;
 uint8_t HAMMER_INTENSITIES_TIME[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 60 };
@@ -223,10 +223,12 @@ void fire( uint16_t hammer_intensity, bool flame_pulse ){
         debug_println(vent_open_timestep);
         debug_print("throw close crank angle\t");
         debug_println(throw_close_angle);
+        debug_print("start angle\t");
+        debug_println(start_angle);
     }
 }
 
-const uint16_t NO_ANGLE_THROW_DURATION = 35; // ms to leave throw valve open
+const uint16_t NO_ANGLE_THROW_DURATION = 25; // ms to leave throw valve open
 const uint16_t NO_ANGLE_SWING_DURATION = 200; // total estimated time in ms of a swing (to calculate vent time)
 void noAngleFire( uint16_t hammer_intensity ){
   if (weaponsEnabled()){
