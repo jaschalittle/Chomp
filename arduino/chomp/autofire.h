@@ -11,7 +11,7 @@ enum LeddarState {
   PREDICTIVE_HIT_ZONE
 };
 
-LeddarState getState(unsigned int detection_count, Detection* detections);
+LeddarState getState(unsigned int detection_count, Detection* detections, uint16_t range);
 LeddarState getStatePredictive(int16_t target_x_after_leadtime, int16_t target_y_after_leadtime);
 
 #endif  // AUTOFIRE_H
