@@ -105,7 +105,7 @@ bool rightApproach(uint16_t detection_count, Detection* detections){
   return false;
 }
 
-LeddarState getState(unsigned int detection_count, Detection* detections, uint8_t fire_threshold){
+LeddarState getState(unsigned int detection_count, Detection* detections, uint16_t fire_threshold){
   int last_detected_segment = -1; // Off the left edge
   int contiguous = 0;
   
