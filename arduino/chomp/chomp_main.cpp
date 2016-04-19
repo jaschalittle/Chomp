@@ -23,7 +23,6 @@ void safeState(){
 
 void enableState(){
    valveEnable();
-   flameEnable(); 
 }
 
 static volatile int WEAPONS_ENABLE_pwm_val = 500; // disabled
@@ -137,12 +136,19 @@ void chompLoop() {
             uint16_t diff = previous_rc_bitfield ^ current_rc_bitfield;
             hammer_intensity = getHammerIntensity();
             if (diff) {
+                if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
+                    flameSafe();
+                }
+                if( (diff & FLAME_PULSE_BIT) && (current_rc_bitfield & FLAME_PULSE_BIT) ){
+                    flameEnable();
+                }
                 // Flame on -> off
                 if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
                     flameEnd();
                 }
                 // Flame off -> on
                 if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
+                    flameEnable();
                     flameStart();
                 }
                 // Manual hammer fire
