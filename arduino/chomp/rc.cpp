@@ -165,7 +165,10 @@ bool getTargetingEnable() {
 
 #define GENTLE_HAM_F_THRESHOLD 500
 #define GENTLE_HAM_R_THRESHOLD 1500
+
+#define MAG_PULSE_THRESHOLD 500
 #define MAG_CTRL_THRESHOLD 1500
+
 #define DANGER_MODE_THRESHOLD 1500
 
 uint16_t getRcBitfield() {
@@ -195,8 +198,13 @@ uint16_t getRcBitfield() {
   if ( sbusChannels[GENTLE_HAM_CTRL] > GENTLE_HAM_R_THRESHOLD){
     bitfield |= GENTLE_HAM_R_BIT;
   }
+  // Full stick, magnets are always on
   if ( sbusChannels[MAG_CTRL] > MAG_CTRL_THRESHOLD){
     bitfield |= MAG_CTRL_BIT;
+  }
+  // Center position, pulse when firing
+  if ( sbusChannels[MAG_CTRL] > MAG_PULSE_THRESHOLD && sbusChannels[MAG_CTRL] < MAG_CTRL_THRESHOLD ){
+    bitfield |= MAG_PULSE_BIT;
   }
   if ( sbusChannels[DANGER_MODE] > DANGER_MODE_THRESHOLD){
     bitfield |= DANGER_CTRL_BIT;
@@ -214,9 +222,9 @@ uint16_t getHammerIntensity(){
 }
 
 // 30-90, 60 cm neutral
-uint8_t getRange() {
+uint16_t getRange() {
   uint16_t channel_val = sbusChannels[RANGE];
   if (channel_val < 172) { channel_val = 172; } else if (channel_val > 1811) { channel_val = 1811; }
-  uint8_t range = (channel_val - 172) / 27 + 30;
+  uint16_t range = (channel_val - 172) / 27 + 30;
   return range;
 }

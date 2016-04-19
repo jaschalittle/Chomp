@@ -93,7 +93,7 @@ void retract(){
     }
 }
 
-void fire( uint16_t hammer_intensity, bool flame_pulse ){
+void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -131,7 +131,9 @@ void fire( uint16_t hammer_intensity, bool flame_pulse ){
         uint16_t throw_close_angle = start_angle + throw_close_angle_diff;
         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
             
-            magOn();
+            if (mag_pulse){
+                magOn();
+            }
             if (flame_pulse){
                 flameStart();
             }
@@ -202,8 +204,12 @@ void fire( uint16_t hammer_intensity, bool flame_pulse ){
             // Open vent valve after 1 second even if target angle not achieved
             if (vent_closed) {vent_open_timestep = timestep;}
             safeDigitalWrite(VENT_VALVE_DO, LOW);
-            magOff();
-            flameEnd();
+            if (mag_pulse){
+                magOff();
+            }
+            if (flame_pulse) {
+                flameEnd();
+            }
         }
         
         debug_println("finished");

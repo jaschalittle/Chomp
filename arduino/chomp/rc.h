@@ -33,7 +33,8 @@ enum RCBitfield {
     GENTLE_HAM_F_BIT = 32,
     GENTLE_HAM_R_BIT = 64,
     MAG_CTRL_BIT = 128,
-    DANGER_CTRL_BIT = 256,
+    MAG_PULSE_BIT = 256,
+    DANGER_CTRL_BIT = 512,
 };
 
 bool bufferSbusData();
