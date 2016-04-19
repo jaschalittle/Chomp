@@ -91,7 +91,7 @@ void chompLoop() {
     if (bufferDetections()){
         uint8_t detection_count = parseDetections();
         last_request_time = micros();
-        LeddarState current_leddar_state = getState(detection_count, getDetections());
+        LeddarState current_leddar_state = getState(detection_count, getDetections(), getRange());
         switch (current_leddar_state){
             case FAR_ZONE:
                 previous_leddar_state = current_leddar_state;

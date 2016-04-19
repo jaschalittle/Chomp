@@ -14,7 +14,8 @@
 
 #define FACE_OFFSET 20
 #define ARM_THRESHOLD 150
-#define FIRE_THRESHOLD 70
+// 30-90, 60 cm neutral
+// #define FIRE_THRESHOLD 70
 #define CONTIG_THRESHOLD 2
 
 int APPROACH_THRESHOLDS[16] = { 76, 76, 75, 74, 73, 72, 71, 70, 70, 71, 72, 73, 74, 75, 76, 76 };
@@ -104,7 +105,7 @@ bool rightApproach(uint16_t detection_count, Detection* detections){
   return false;
 }
 
-LeddarState getState(unsigned int detection_count, Detection* detections){
+LeddarState getState(unsigned int detection_count, Detection* detections, uint8_t fire_threshold){
   int last_detected_segment = -1; // Off the left edge
   int contiguous = 0;
   
@@ -114,7 +115,7 @@ LeddarState getState(unsigned int detection_count, Detection* detections){
 
   // For firing, require that the entire center zone be occupied
   for (int i = CENTER_ZONE_FIRE_MIN; i < CENTER_ZONE_FIRE_MAX; i++){
-    if (min_detections[i].Distance - FACE_OFFSET < FIRE_THRESHOLD){
+    if (min_detections[i].Distance - FACE_OFFSET < fire_threshold){
       contiguous += 1;
     } else {
       break;

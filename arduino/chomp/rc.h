@@ -19,6 +19,7 @@ enum SBUSChannels {
     GENTLE_HAM_CTRL = 5,
     INTENSITY = 6,
     DANGER_MODE = 7,
+    RANGE = 8,
 };
 
 // Boolean values coming in over RC are stored in a bitfield for ease of comparison
@@ -50,6 +51,8 @@ int16_t getRightRc();
 bool getTargetingEnable();
 
 uint16_t getHammerIntensity();
+
+uint16_t getRange();
 
 uint16_t getRcBitfield();
 

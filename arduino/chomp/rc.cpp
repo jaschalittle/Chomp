@@ -209,7 +209,14 @@ uint16_t getHammerIntensity(){
   uint16_t channel_val = sbusChannels[INTENSITY];
   if (channel_val < 172) { channel_val = 172; } else if (channel_val > 1811) { channel_val = 1811; }
   // Taranis throttle has been tuned for linearity, 9 steps on throttle lines. intensity is 0-based, 0-8.
-  uint16_t intensity = (sbusChannels[INTENSITY] - 172 + 102) / 205;
+  uint16_t intensity = (channel_val - 172 + 102) / 205;
   return intensity;
 }
 
+// 30-90, 60 cm neutral
+uint8_t getRange() {
+  uint16_t channel_val = sbusChannels[RANGE];
+  if (channel_val < 172) { channel_val = 172; } else if (channel_val > 1811) { channel_val = 1811; }
+  uint8_t range = (channel_val - 172) / 27 + 30;
+  return range;
+}
