@@ -154,7 +154,7 @@ void chompLoop() {
                 // Manual hammer fire
                 if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
                     if (current_rc_bitfield & DANGER_CTRL_BIT){
-                      noAngleFire(hammer_intensity);
+                      noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
                     } else {
                       fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
                     }

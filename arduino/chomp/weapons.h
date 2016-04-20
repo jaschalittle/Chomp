@@ -10,7 +10,7 @@ void retract();
 
 void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse );
 
-void noAngleFire( uint16_t hammer_intensity );
+void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse );
 
 void gentleFire( );
 

@@ -9,8 +9,9 @@
 uint8_t MAX_SAFE_ANGLE = 65;
 uint8_t HAMMER_INTENSITIES_ANGLE[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 65 };
 
-uint8_t MAX_SAFE_TIME = 80;
-uint8_t HAMMER_INTENSITIES_TIME[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 60 };
+uint8_t MAX_SAFE_TIME = 125;
+//                                     3   5   10  15  20  30  40  50  65
+uint8_t HAMMER_INTENSITIES_TIME[9] = { 25, 35, 60, 70, 80, 95, 105, 115, 125 };
 
 #define RELATIVE_TO_FORWARD 221  // offset of axle anfle from 180 when hammer forward on floor. actual angle read 221
 #define RELATIVE_TO_VERTICAL 32  // offset of axle angle from 90 when hammer arms vertical. actual angle read 122
@@ -234,29 +235,40 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
     }
 }
 
-const uint16_t NO_ANGLE_THROW_DURATION = 25; // ms to leave throw valve open
-const uint16_t NO_ANGLE_SWING_DURATION = 200; // total estimated time in ms of a swing (to calculate vent time)
-void noAngleFire( uint16_t hammer_intensity ){
-  if (weaponsEnabled()){
-      magOn();
-      // Seal vent valve
-      safeDigitalWrite(VENT_VALVE_DO, HIGH);
-      // can we actually determine vent close time?
-      delay(10);
-      
-      // Open throw valve
-      safeDigitalWrite(THROW_VALVE_DO, HIGH);
-      delay(NO_ANGLE_THROW_DURATION);
-      safeDigitalWrite(THROW_VALVE_DO, LOW);
+const uint8_t NO_ANGLE_SWING_DURATION = 185; // total estimated time in ms of a swing (to calculate vent time)
+void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
+    if (weaponsEnabled()){
+        if (mag_pulse){
+            magOn();
+        }
+        if (flame_pulse){
+            flameStart();
+        }
+        uint8_t throw_duration = min(MAX_SAFE_TIME, HAMMER_INTENSITIES_TIME[hammer_intensity]);
+        // Seal vent valve
+        safeDigitalWrite(VENT_VALVE_DO, HIGH);
+        // can we actually determine vent close time?
+        delay(10);
+        
+        // Open throw valve
+        safeDigitalWrite(THROW_VALVE_DO, HIGH);
+        delay(throw_duration);
+        safeDigitalWrite(THROW_VALVE_DO, LOW);
 
-      // Wait the estimated remaining time in the swing and then vent
-      delay(NO_ANGLE_SWING_DURATION - NO_ANGLE_THROW_DURATION);
-      safeDigitalWrite(VENT_VALVE_DO, LOW);
+        // Wait the estimated remaining time in the swing and then vent
+        delay(NO_ANGLE_SWING_DURATION - throw_duration);
+        safeDigitalWrite(VENT_VALVE_DO, LOW);
 
-      magOff();
-  }
-  // Stay in this function for the full second to make sure we're not moving, before we allow the user to possibly retract
-  delay( 1000 - NO_ANGLE_SWING_DURATION );
+        if (mag_pulse){
+            magOff();
+        }
+        if (flame_pulse) {
+            flameEnd();
+        }
+        
+        // Stay in this function for the full second to make sure we're not moving, before we allow the user to possibly retract
+        delay( 500 - NO_ANGLE_SWING_DURATION );
+    }
 }
 
 // use retract motor to gently move hammer to forward position to safe it for approach
