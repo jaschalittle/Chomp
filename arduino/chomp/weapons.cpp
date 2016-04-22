@@ -28,7 +28,7 @@ bool autofireEnabled(char bitfield){
 // RETRACT CONSTANTS
 #define RETRACT_BEGIN_VEL_MAX 45.0f
 static const uint32_t RETRACT_TIMEOUT = 4000 * 1000L;  // in microseconds
-static const uint16_t RETRACT_COMPLETE_ANGLE = 53 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
+static const uint16_t RETRACT_COMPLETE_ANGLE = 10 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
 
 // HAMMER DATA BUFFERS
 #define MAX_DATAPOINTS 500
@@ -190,27 +190,21 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
             if (flame_pulse) {
                 flameEnd();
             }
+        } else {
+            noAngleFire(/* hammer intensity */1, false, false);
+            return;
         }
         
-        debug_println("finished");
-        // Send buffered throw data over serial
-        for (uint16_t i = 0; i < datapoints_collected; i++) {
-            debug_print("data");
-            debug_print("\t");
-            debug_print(angle_data[i]);
-            debug_print("\t");
-            debug_println(pressure_data[i]);
-        }
-        debug_print("timestep\t");
-        debug_println(DATA_COLLECT_TIMESTEP);
-        debug_print("throw_close_timestep\t");
-        debug_println(throw_close_timestep);
-        debug_print("vent_open_timestep\t");
-        debug_println(vent_open_timestep);
-        debug_print("throw close crank angle\t");
-        debug_println(throw_close_angle);
-        debug_print("start angle\t");
-        debug_println(start_angle);
+#ifdef HARD_WIRED
+        sendSwingData(datapoints_collected,
+                      angle_data,
+                      pressure_data,
+                      DATA_COLLECT_TIMESTEP,
+                      throw_close_timestep,
+                      vent_open_timestep,
+                      throw_close_angle,
+                      start_angle);
+#endif
     }
 }
 
