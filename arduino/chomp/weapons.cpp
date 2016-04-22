@@ -191,6 +191,9 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
             if (flame_pulse) {
                 flameEnd();
             }
+        } else {
+            noAngleFire(/* hammer intensity */1, false, false);
+            return;
         }
         
         debug_println("finished");
