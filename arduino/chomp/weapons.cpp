@@ -27,9 +27,9 @@ bool autofireEnabled(char bitfield){
 }
 
 // RETRACT CONSTANTS
-#define RETRACT_BEGIN_VEL_MAX 45.0f
-static const uint32_t RETRACT_TIMEOUT = 4000 * 1000L;  // in microseconds
-static const uint16_t RETRACT_COMPLETE_ANGLE = 10 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
+#define RETRACT_BEGIN_VEL_MAX 50.1f
+static const uint32_t RETRACT_TIMEOUT = 2000 * 1000L;  // in microseconds
+static const uint16_t RETRACT_COMPLETE_ANGLE = 20 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
 
 // HAMMER DATA BUFFERS
 #define MAX_DATAPOINTS 500
@@ -40,10 +40,11 @@ static int16_t pressure_data[MAX_DATAPOINTS];
 // #define THROW_CLOSE_ANGLE_DIFF 3  // angle distance between throw open and throw close
 #define VENT_OPEN_ANGLE 175
 #define DATA_COLLECT_TIMESTEP 2000  // timestep for data logging, in microseconds
-static const uint32_t SWING_TIMEOUT = 1000 * 1000L;  // in microseconds
+static const uint32_t SWING_TIMEOUT = 1500 * 1000L;  // in microseconds
 static const uint16_t THROW_BEGIN_ANGLE_MIN = RELATIVE_TO_BACK - 5;
 static const uint16_t THROW_BEGIN_ANGLE_MAX = RELATIVE_TO_BACK + 10;
 static const uint16_t THROW_COMPLETE_ANGLE = RELATIVE_TO_FORWARD;
+#define AUTO_RETRACT_MIN_ANGLE 160
 
 void retract( bool check_velocity ){
     uint16_t angle;
@@ -168,7 +169,7 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
                         // If the swing hasn't already ended, end it now
                         endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
                         // Since our final velocity is low enough, auto-retract
-                        retract( /*check_velocity*/ false );
+                        if (angle > AUTO_RETRACT_MIN_ANGLE) { retract( /*check_velocity*/ false ); }
                         break; // exit the while loop
                     }
                 }
