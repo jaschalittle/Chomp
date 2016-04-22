@@ -46,7 +46,7 @@ static const uint16_t THROW_BEGIN_ANGLE_MAX = RELATIVE_TO_BACK + 10;
 static const uint16_t THROW_COMPLETE_ANGLE = RELATIVE_TO_FORWARD;
 
 
-void retract(){
+void retract( bool check_velocity ){
     uint16_t start_angle;
     uint32_t sensor_read_time;
     uint32_t delay_time;
@@ -63,19 +63,22 @@ void retract(){
         }
     }
     uint16_t angle = start_angle;
-    float angular_velocity;
-    safeDigitalWrite(VENT_VALVE_DO, LOW);
     uint32_t retract_time;
     uint32_t angle_complete_time = 0;
     int16_t angle_traversed = 0;
-    // Consider inferring hammer velocity here and requiring that it be below some threshold
-    // Only retract if hammer is forward
-    bool velocity_read_ok = angularVelocity(&angular_velocity);
-    if (weaponsEnabled() && angle > RETRACT_COMPLETE_ANGLE && velocity_read_ok && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
-    // if (weaponsEnabled()) {
+    safeDigitalWrite(VENT_VALVE_DO, LOW);
+    
+    bool velocity_ok = true;
+    if (check_velocity){
+      float angular_velocity;
+      bool velocity_read_ok = angularVelocity(&angular_velocity);
+      velocity_ok = velocity_read_ok && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX;
+    }
+    
+    // Only retract if hammer is forward and not moving
+    if (weaponsEnabled() && angle > RETRACT_COMPLETE_ANGLE && velocity_ok) {
         retract_time = micros();
         while (micros() - retract_time < RETRACT_TIMEOUT && angle > RETRACT_COMPLETE_ANGLE) {
-        // while (micros() - retract_time < RETRACT_TIMEOUT) {
             sensor_read_time = micros();
             angle_read_ok = readAngle(&angle);
             DriveSerial.println("@05!G 100");  // start motor to aid meshing
@@ -90,8 +93,22 @@ void retract(){
         }
         safeDigitalWrite(RETRACT_VALVE_DO, LOW);
         DriveSerial.println("@05!G 0");
-        retract_time = micros() - retract_time;
     }
+}
+
+// Helper to end a swing in case of timeout or hammer obstruction (zero velocity)
+void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timestep, uint16_t& vent_open_timestep, uint16_t timestep ){
+  if (throw_open) {
+    throw_close_timestep = timestep;
+  }
+  safeDigitalWrite(THROW_VALVE_DO, LOW);
+  throw_open = false;
+  delay(10);
+  if (vent_closed) {
+    vent_open_timestep = timestep;
+  }
+  safeDigitalWrite(VENT_VALVE_DO, LOW);
+  vent_closed = false;  
 }
 
 void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
@@ -140,55 +157,48 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
             }
             // Seal vent (which is normally open)
             safeDigitalWrite(VENT_VALVE_DO, HIGH);
-            debug_println("vent close");
             vent_closed = true;
             // can we actually determine vent close time?
             delay(10);
             
             // Open throw valve
             safeDigitalWrite(THROW_VALVE_DO, HIGH);
-            debug_println("throw open");
             throw_open = true;
             fire_time = micros();
-            // In fighting form, should probably just turn on flamethrower here
-            // Wait until hammer swing complete, up to 1 second
-            while (swing_length < SWING_TIMEOUT && angle < THROW_COMPLETE_ANGLE) {
+            // Wait until hammer swing complete, up to timeout
+            while (swing_length < SWING_TIMEOUT) {
                 sensor_read_time = micros();
                 angle_read_ok = readAngle(&angle);
                 pressure_read_ok = readMlhPressure(&pressure);
-                // Keep throw valve open until 5 degrees
+
                 if (throw_open && angle > throw_close_angle) {
                     throw_close_timestep = timestep;
                     safeDigitalWrite(THROW_VALVE_DO, LOW);
-                    debug_println("throw close");
                     throw_open = false;
                 }
                 if (vent_closed && angle > VENT_OPEN_ANGLE) {
                     vent_open_timestep = timestep;
                     safeDigitalWrite(VENT_VALVE_DO, LOW);
-                    debug_println("vent open");
                     vent_closed = false;
-                }
-                // close throw, open vent if hammer velocity below threshold after THROW_CLOSE_ANGLE_DIFF degrees traversed
-                if (angle > (throw_close_angle)) {
-                    velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
-                    if (velocity_read_ok && abs(angular_velocity) < THROW_COMPLETE_VELOCITY) {
-                        if (throw_open) {throw_close_timestep = timestep;}
-                        safeDigitalWrite(THROW_VALVE_DO, LOW);
-                        debug_println("throw close");
-                        throw_open = false;
-                        delay(10);
-                        if (vent_closed) {vent_open_timestep = timestep;}
-                        safeDigitalWrite(VENT_VALVE_DO, LOW);
-                        debug_println("vent open");
-                        vent_closed = false;
-                    }
                 }
                 if (datapoints_collected < MAX_DATAPOINTS){
                     angle_data[datapoints_collected] = angle;
                     pressure_data[datapoints_collected] = pressure;
                     datapoints_collected++;
                 }
+                                
+                // Once past our throw close angle, start checking velocity 
+                if (angle > throw_close_angle) {
+                    velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
+                    if (velocity_read_ok && abs(angular_velocity) < THROW_COMPLETE_VELOCITY) {
+                        // If the swing hasn't already ended, end it now
+                        endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
+                        // Since our final velocity is low enough, auto-retract
+                        retract( /*check_velocity*/ false );
+                        break; // exit the while loop
+                    }
+                }
+
                 // Ensure that loop step takes 1 ms or more (without this it takes quite a bit less)
                 sensor_read_time = micros() - sensor_read_time;
                 delay_time = DATA_COLLECT_TIMESTEP - sensor_read_time;
@@ -197,14 +207,10 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
                 }
                 timestep++;
                 swing_length = micros() - fire_time;
-            }
-            // Close throw valve after 1 second even if target angle not achieved
-            if (throw_open) {throw_close_timestep = timestep;}
-            safeDigitalWrite(THROW_VALVE_DO, LOW);
-            delay(10);
-            // Open vent valve after 1 second even if target angle not achieved
-            if (vent_closed) {vent_open_timestep = timestep;}
-            safeDigitalWrite(VENT_VALVE_DO, LOW);
+            } // while
+            // If the swing hasn't already ended, end it now
+            endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
+            
             if (mag_pulse){
                 magOff();
             }

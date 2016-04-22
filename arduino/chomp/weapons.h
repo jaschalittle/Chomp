@@ -6,7 +6,7 @@ bool weaponsEnabled();
 
 bool autofireEnabled(char bitfield);
 
-void retract();
+void retract( bool check_velocity = true );
 
 void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse );
 
