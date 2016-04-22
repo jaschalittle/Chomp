@@ -45,42 +45,28 @@ static const uint16_t THROW_BEGIN_ANGLE_MIN = RELATIVE_TO_BACK - 5;
 static const uint16_t THROW_BEGIN_ANGLE_MAX = RELATIVE_TO_BACK + 10;
 static const uint16_t THROW_COMPLETE_ANGLE = RELATIVE_TO_FORWARD;
 
-
 void retract( bool check_velocity ){
-    uint16_t start_angle;
+    uint16_t angle;
     uint32_t sensor_read_time;
     uint32_t delay_time;
-    bool angle_read_ok = readAngle(&start_angle);
-
-    // if angle data isn't coming back, abort
-    while (!angle_read_ok) {
-        uint8_t start_attempts = 1;
-        if (start_attempts < 5) {
-            angle_read_ok = readAngle(&start_angle);
-            start_attempts++;
-        } else {
-            return;
-        }
-    }
-    uint16_t angle = start_angle;
     uint32_t retract_time;
-    uint32_t angle_complete_time = 0;
-    int16_t angle_traversed = 0;
-    safeDigitalWrite(VENT_VALVE_DO, LOW);
-    
+
     bool velocity_ok = true;
     if (check_velocity){
       float angular_velocity;
       bool velocity_read_ok = angularVelocity(&angular_velocity);
       velocity_ok = velocity_read_ok && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX;
     }
-    
+
+    bool angle_read_ok = readAngle(&angle);
     // Only retract if hammer is forward and not moving
-    if (weaponsEnabled() && angle > RETRACT_COMPLETE_ANGLE && velocity_ok) {
+    if (weaponsEnabled() && angle_read_ok && angle > RETRACT_COMPLETE_ANGLE && velocity_ok) {
         retract_time = micros();
+        // Should already be low, but just in case
+        safeDigitalWrite(VENT_VALVE_DO, LOW);
         while (micros() - retract_time < RETRACT_TIMEOUT && angle > RETRACT_COMPLETE_ANGLE) {
             sensor_read_time = micros();
-            angle_read_ok = readAngle(&angle);
+            readAngle(&angle);
             DriveSerial.println("@05!G 100");  // start motor to aid meshing
             safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
             DriveSerial.println("@05!G 1000");
@@ -124,24 +110,11 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
     uint32_t delay_time;
     uint16_t angle;
     uint16_t start_angle;
-    bool angle_read_ok;
     int16_t pressure;
     bool pressure_read_ok;
-    int16_t angular_velocity;
-    bool velocity_read_ok;
 
-    if (weaponsEnabled()){
-        bool angle_read_ok = readAngle(&angle);
-        // if angle data isn't coming back, abort
-        while (!angle_read_ok) {
-            uint8_t start_attempts = 1;
-            if (start_attempts < 5) {
-                angle_read_ok = readAngle(&angle);
-                start_attempts++;
-            } else {
-                return;
-            }
-        }
+    bool angle_read_ok = readAngle(&angle);
+    if (weaponsEnabled() && angle_read_ok){
         start_angle = angle;
         // Just in case a bug causes us to fall out of the hammer intensities array, do a last minute
         // sanity check before we actually command a throw.
@@ -189,7 +162,8 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
                                 
                 // Once past our throw close angle, start checking velocity 
                 if (angle > throw_close_angle) {
-                    velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
+                    int16_t angular_velocity;
+                    bool velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
                     if (velocity_read_ok && abs(angular_velocity) < THROW_COMPLETE_VELOCITY) {
                         // If the swing hasn't already ended, end it now
                         endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
