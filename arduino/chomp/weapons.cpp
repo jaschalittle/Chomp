@@ -4,6 +4,7 @@
 #include "sensors.h"
 #include "pins.h"
 #include "utils.h"
+#include "telem.h"
 #include <avr/wdt.h>
 
 uint8_t MAX_SAFE_ANGLE = 65;
