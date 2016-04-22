@@ -162,14 +162,14 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
                 }
                                 
                 // Once past our throw close angle, start checking velocity 
-                if (angle > throw_close_angle) {
+                if (angle > AUTO_RETRACT_MIN_ANGLE) {
                     float angular_velocity;
                     bool velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected, DATA_COLLECT_TIMESTEP/1000);
                     if (velocity_read_ok && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
                         // If the swing hasn't already ended, end it now
                         endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
                         // Since our final velocity is low enough, auto-retract
-                        if (angle > AUTO_RETRACT_MIN_ANGLE) { retract( /*check_velocity*/ false ); }
+                        retract( /*check_velocity*/ false );
                         break; // exit the while loop
                     }
                 }

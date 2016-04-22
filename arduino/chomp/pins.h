@@ -2,7 +2,7 @@
 #define PINS_H
 
 //------------------ DEFINES----------------
-// #define HARD_WIRED
+#define HARD_WIRED
 
 // ----------------- ANALOG ----------------- 
 // Sensors
