@@ -52,3 +52,42 @@ bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState stat
   return result;
 }
 
+void sendSwingData(uint16_t datapoints_collected, 
+                   uint16_t* angle_data, 
+                   int16_t* pressure_data, 
+                   uint16_t data_collect_timestep, 
+                   uint16_t throw_close_timestep, 
+                   uint16_t vent_open_timestep, 
+                   uint16_t throw_close_angle, 
+                   uint16_t start_angle) {
+    for (uint16_t i = 0; i < datapoints_collected; i++) {
+        String timestep_data = String("");
+        timestep_data += "d\t";
+        timestep_data += angle_data[i];
+        timestep_data += "\t";
+        timestep_data += pressure_data[i];
+        Debug.println(timestep_data);
+        delay(2);
+    }
+
+    Debug.print("timestep\t");
+    delay(50);
+    Debug.println(data_collect_timestep);
+    delay(50);
+    Debug.print("tc_tstep\t");
+    delay(50);
+    Debug.println(throw_close_timestep);
+    delay(50);
+    Debug.print("vo_tstep\t");
+    delay(50);
+    Debug.println(vent_open_timestep);
+    delay(50);
+    Debug.print("tc_angle\t");
+    delay(50);
+    Debug.println(throw_close_angle);
+    delay(50);
+    Debug.print("st_angle\t");
+    delay(50);
+    Debug.println(start_angle);
+    delay(50);
+}
