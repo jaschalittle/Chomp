@@ -97,29 +97,27 @@ bool angularVelocity (float* angular_velocity) {
     }
 }
 
-bool angularVelocityBuffered (int16_t* angular_velocity, const uint16_t* angle_data, uint16_t datapoints_buffered) {
-    const uint16_t DATAPOINTS_TO_AVERAGE = 20;
+// Returns absolute angular velocity in deg/sec
+bool angularVelocityBuffered (float* angular_velocity, const uint16_t* angle_data, uint16_t datapoints_buffered, uint16_t timestep_ms ) {
+    const uint32_t DATAPOINTS_TO_AVERAGE = 20;
     // do not report velocity if too few datapoints have been buffered
     if (datapoints_buffered < DATAPOINTS_TO_AVERAGE) {
         return false;
     }
-    int16_t angle_traversed = 0;
-    int16_t abs_angle_traversed = 0;
-    int16_t delta;
-    uint32_t read_time = micros();
-    for (uint16_t i = datapoints_buffered - DATAPOINTS_TO_AVERAGE + 1; i < datapoints_buffered; i++) {
-        delta = (int16_t) angle_data[i] - angle_data[i-1];
-        abs_angle_traversed += abs(delta);
-        angle_traversed += delta;
+    
+    uint32_t angle_min = 360;
+    uint32_t angle_max = 0;
+    for (uint16_t i = datapoints_buffered - DATAPOINTS_TO_AVERAGE; i < datapoints_buffered; i++) {
+        if (angle_data[i] < angle_min) { 
+           angle_min = angle_data[i];
+         }
+        if (angle_data[i] > angle_max) { 
+            angle_max = angle_data[i];
+          }
     }
-    // if angle data too noisy, do not return angular velocity
-    if (abs(angle_traversed) - angle_traversed < DATAPOINTS_TO_AVERAGE * 2) {
-        read_time = (micros() - read_time) / 1000;    // convert to milliseconds
-        *angular_velocity = angle_traversed * 1000 / read_time;  // degrees per second
-        return true;
-    } else {
-        return false;
-    }
+
+    *angular_velocity = (angle_max - angle_min) * 1000 / (DATAPOINTS_TO_AVERAGE * timestep_ms);
+    return true;
 }
 
 float getYaccel() {

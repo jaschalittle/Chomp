@@ -39,7 +39,6 @@ static int16_t pressure_data[MAX_DATAPOINTS];
 // #define THROW_CLOSE_ANGLE_DIFF 3  // angle distance between throw open and throw close
 #define VENT_OPEN_ANGLE 175
 #define DATA_COLLECT_TIMESTEP 2000  // timestep for data logging, in microseconds
-#define THROW_COMPLETE_VELOCITY 0
 static const uint32_t SWING_TIMEOUT = 1000 * 1000L;  // in microseconds
 static const uint16_t THROW_BEGIN_ANGLE_MIN = RELATIVE_TO_BACK - 5;
 static const uint16_t THROW_BEGIN_ANGLE_MAX = RELATIVE_TO_BACK + 10;
@@ -162,9 +161,9 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
                                 
                 // Once past our throw close angle, start checking velocity 
                 if (angle > throw_close_angle) {
-                    int16_t angular_velocity;
-                    bool velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected);
-                    if (velocity_read_ok && abs(angular_velocity) < THROW_COMPLETE_VELOCITY) {
+                    float angular_velocity;
+                    bool velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected, DATA_COLLECT_TIMESTEP/1000);
+                    if (velocity_read_ok && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
                         // If the swing hasn't already ended, end it now
                         endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
                         // Since our final velocity is low enough, auto-retract
