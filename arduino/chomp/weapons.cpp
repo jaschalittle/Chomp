@@ -256,7 +256,7 @@ void gentleFire(){
     safeDigitalWrite(VENT_VALVE_DO, LOW);
     safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
     delay(50);
-    DriveSerial.println("@05!G -500");
+    DriveSerial.println("@05!G -1000");
     uint32_t inter_sbus_time = micros();
     while ((micros() - inter_sbus_time) < 30000UL) {
         if (bufferSbusData()){
@@ -268,7 +268,7 @@ void gentleFire(){
                     break;
                 }
                 delay(5);
-                DriveSerial.println("@05!G -500");
+                DriveSerial.println("@05!G -1000");
                 inter_sbus_time = micros();
             // continue retracting
             } else {
