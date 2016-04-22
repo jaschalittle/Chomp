@@ -55,7 +55,7 @@ void chompSetup() {
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     wdt_enable(WDTO_4S);
 #ifdef HARD_WIRED
-    Debug.begin(115200);
+    Debug.begin(57600);
     Debug.println("STARTUP");
 #else
     xbeeInit();
