@@ -9,6 +9,7 @@
 
 // #define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
 #define P_COEFF 1800
+#define STEER_BIAS_CAP 500
 
 // 8 Leddar segments is 0.436332 rad
 #define SEGMENTS_TO_RAD 0.049087385f
@@ -156,7 +157,10 @@ int16_t pidSteer (unsigned int num_detections, Detection* detections, uint16_t d
         tracked_object.reset();
     }
     trackObject(num_detections, detections, distance_threshold);
-    *steer_bias = P_COEFF * tracked_object.Angle;
+    int16_t calculated_steer_bias = P_COEFF * tracked_object.Angle;
+    if (calculated_steer_bias > STEER_BIAS_CAP) { calculated_steer_bias = STEER_BIAS_CAP; }
+    if (calculated_steer_bias < -STEER_BIAS_CAP) { calculated_steer_bias = -STEER_BIAS_CAP; }
+    *steer_bias = calculated_steer_bias;
 }
 
 void Track::reset() {
