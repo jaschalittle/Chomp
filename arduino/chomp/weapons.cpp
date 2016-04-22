@@ -28,7 +28,7 @@ bool autofireEnabled(char bitfield){
 // RETRACT CONSTANTS
 #define RETRACT_BEGIN_VEL_MAX 45.0f
 static const uint32_t RETRACT_TIMEOUT = 4000 * 1000L;  // in microseconds
-static const uint16_t RETRACT_COMPLETE_ANGLE = 53 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
+static const uint16_t RETRACT_COMPLETE_ANGLE = 10 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
 
 // HAMMER DATA BUFFERS
 #define MAX_DATAPOINTS 500
