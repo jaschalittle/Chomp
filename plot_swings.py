@@ -91,10 +91,10 @@ def stream_data(serial_device, baudrate):
             if line[0] == "timestep":
                 timestep = int(line[1])
                 print "\t".join(line)
-            elif line[0] == "throw_close_timestep":
+            elif line[0] == "tc_tstep":
                 throw_close_time = int(line[1])
                 print "\t".join(line)
-            elif line[0] == "vent_open_timestep":
+            elif line[0] == "vo_tstep":
                 vent_open_time = int(line[1])
                 print "\t".join(line)
                 swing_num += 1
@@ -104,11 +104,11 @@ def stream_data(serial_device, baudrate):
             elif line[0] == "millis":
                 if int(line[1]) % 1000 == 0:
                     print "{} seconds".format(int(line[1]) // 1000)
-            elif line[0] == "data":
+            elif line[0] == "d":
                 angle, pressure = map(int, line[1:3])
                 angles.append(angle)
                 pressures.append(pressure)
-            elif line[0] == "throw close crank angle":
+            elif line[0] == "tc_angle":
                 throw_close_crank_angle = int(line[1]);
                 print "\t".join(line)
             else:
@@ -121,7 +121,7 @@ def main():
     try:
         serial_device, baudrate = sys.argv[1:]
         baudrate = int(baudrate)
-        assert baudrate in [9600, 14400, 19200, 28800, 38400, 56700, 115200], "Expected a common baudrate between 9600 and 115200, inclusive"
+        assert baudrate in [9600, 14400, 19200, 28800, 38400, 57600, 115200], "Expected a common baudrate between 9600 and 115200, inclusive"
     except IndexError:
         print "Should be called as follows:\nplot_swings.py <serial device> <baudrate>"
     except ValueError:
