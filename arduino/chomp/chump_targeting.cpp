@@ -26,7 +26,7 @@
 // Consider adding requirement that near objects must cover multiple segments
 static Track tracked_object;
 static uint32_t last_leddar_time = micros();
-void trackObject(uint8_t num_detections, Detection* detections, uint16_t distance_threshold) {
+void trackObject(uint8_t num_detections, Detection* detections, int16_t distance_threshold) {
     
     // only keep and analyze nearest detection in each segment
     Detection min_detections[16];
@@ -94,8 +94,8 @@ void trackObject(uint8_t num_detections, Detection* detections, uint16_t distanc
             Object best_match = objects[0];
             int16_t min_diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[0].Distance);
             for (uint8_t i = 1; i < num_objects; i++) {
-                uint16_t diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[i].Distance);  // difference between radial distances
-                uint16_t avg_distance = (tracked_object.Distance + objects[i].Distance) / 2;  // average radial distance of tracked_object and this object
+                int16_t diff_from_last = abs((int16_t) tracked_object.Distance - (int16_t) objects[i].Distance);  // difference between radial distances
+                int16_t avg_distance = (tracked_object.Distance + objects[i].Distance) / 2;  // average radial distance of tracked_object and this object
                 diff_from_last += sin(abs(tracked_object.Angle - objects[i].Angle) / 2) * avg_distance * 2;  // add estimate of lateral distance diff to radial distance diff
                 if (diff_from_last < min_diff_from_last) {
                     min_diff_from_last = diff_from_last;

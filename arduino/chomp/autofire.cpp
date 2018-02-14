@@ -44,7 +44,7 @@ static int8_t left_buffer_cursor = 0;
 bool leftApproach(uint16_t detection_count, Detection* detections){
   int16_t last_detected_segment = -1;
   int16_t inner_contiguous_edge = -1;
-  for (int i = 0; i < detection_count && detections[i].Segment < 8; i++){
+  for (uint8_t i = 0; i < detection_count && detections[i].Segment < 8; i++){
     if (detections[i].Distance - FACE_OFFSET < APPROACH_THRESHOLDS[detections[i].Segment]){
       if (detections[i].Segment - last_detected_segment == 1){
         inner_contiguous_edge = detections[i].Segment;
@@ -105,7 +105,7 @@ bool rightApproach(uint16_t detection_count, Detection* detections){
   return false;
 }
 
-LeddarState getState(unsigned int detection_count, Detection* detections, uint16_t fire_threshold){
+LeddarState getState(unsigned int detection_count, Detection* detections, int16_t fire_threshold){
   int last_detected_segment = -1; // Off the left edge
   int contiguous = 0;
   

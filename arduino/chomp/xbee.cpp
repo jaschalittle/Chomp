@@ -28,7 +28,7 @@ bool xbeeBufferData(char* data, unsigned int len){
    if ( len >= space()){
     return false;
    }
-   uint8_t firstCopyLen = min(len, BUFSIZE - head);
+   uint8_t firstCopyLen = min(len, (uint8_t)(BUFSIZE - head));
    memcpy(buf + head, data, firstCopyLen);
    head = (head + firstCopyLen) % BUFSIZE;
    // We only wrote up til the end of the ring

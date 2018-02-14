@@ -7,9 +7,9 @@
 struct Detection
 {
   uint8_t Segment;
-  uint16_t Distance;
-  uint16_t Amplitude;
-  
+  int16_t Distance;
+  int16_t Amplitude;
+
   // Default constructor
   Detection() : Segment(0), Distance(10000), Amplitude(0) { }
 };
