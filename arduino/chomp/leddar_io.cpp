@@ -61,9 +61,6 @@ void requestDetections(){
 }
 
 bool bufferDetections(){
-  uint16_t crc = 0xFFFF;
-  uint32_t startTime = millis();
-  
   uint16_t count = LeddarSerial.available();
   if (count > 0){
     LeddarSerial.readBytes(receivedData+len, count);

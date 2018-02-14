@@ -147,8 +147,6 @@ void trackObject(uint8_t num_detections, Detection* detections, int16_t distance
 
 #define ERROR_DELTA_BUFFER_LENGTH 5
 float error_delta_buffer[ERROR_DELTA_BUFFER_LENGTH];
-static float leddar_delta_ts[ERROR_DELTA_BUFFER_LENGTH];
-static uint8_t error_buffer_index = 0;
 float target_angular_vel = 0.0;
 float last_angle = 0.0;
 

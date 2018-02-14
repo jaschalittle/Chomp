@@ -42,7 +42,6 @@ bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState stat
   const uint64_t segments = 0xEFCDAB8967452301;
   memcpy(sensor_data + offset, &segments, sizeof(uint64_t));
   offset += sizeof(uint64_t);
-  uint16_t j = 0;
   for (uint16_t i = 0; i < 16; i++){
       memcpy(sensor_data + offset, &min_detections[i].Distance, sizeof(uint16_t));
       offset += sizeof(uint16_t);
