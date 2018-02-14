@@ -157,7 +157,11 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
                 }
                 if (datapoints_collected < MAX_DATAPOINTS){
                     angle_data[datapoints_collected] = angle;
-                    pressure_data[datapoints_collected] = pressure;
+                    if(pressure_read_ok) {
+                        pressure_data[datapoints_collected] = pressure;
+                    } else {
+                        pressure_data[datapoints_collected] = -1;
+                    }
                     datapoints_collected++;
                 }
                                 
