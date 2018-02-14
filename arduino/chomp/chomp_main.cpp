@@ -186,7 +186,7 @@ void chompLoop() {
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
     
-    if (newRc() || new_autodrive && getTargetingEnable()) {
+    if (newRc() || (new_autodrive && getTargetingEnable())) {
         drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
         new_autodrive = false;
     }
