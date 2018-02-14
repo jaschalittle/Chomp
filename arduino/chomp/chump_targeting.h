@@ -36,7 +36,7 @@ struct Track
     float Angular_velocity;
 
     // Default constructor
-    Track() : Num_obs(0), Angle(0.0), Size(0) { }
+    Track() : Size(0), Angle(0.0), Num_obs(0) { }
     void reset();
     void update(Object best_match, uint32_t inter_leddar_time);
     void countNoObs(uint32_t inter_leddar_time);
