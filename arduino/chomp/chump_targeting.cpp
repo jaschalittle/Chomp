@@ -150,7 +150,7 @@ float error_delta_buffer[ERROR_DELTA_BUFFER_LENGTH];
 float target_angular_vel = 0.0;
 float last_angle = 0.0;
 
-int16_t pidSteer (unsigned int num_detections, Detection* detections, uint16_t distance_threshold, int16_t *steer_bias, bool reset) {
+void pidSteer (unsigned int num_detections, Detection* detections, uint16_t distance_threshold, int16_t *steer_bias, bool reset) {
     if (reset) {
         tracked_object.reset();
     }

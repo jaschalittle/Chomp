@@ -45,6 +45,6 @@ struct Track
 
 // angle deltas over 5 times / total time = avg angular velocity per unit time
 
-int16_t pidSteer(unsigned int num_detections, Detection* detections, uint16_t threshold, int16_t* steer_bias, bool reset_targeting);
+void pidSteer(unsigned int num_detections, Detection* detections, uint16_t threshold, int16_t* steer_bias, bool reset_targeting);
 
 #endif  // CHUMP_TARGETING_H
