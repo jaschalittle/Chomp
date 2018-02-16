@@ -3,7 +3,8 @@
 #include "xbee.h"
 #include "pins.h"
 
-
+// MAX_DETECTIONS should be <255
+#define MAX_DETECTIONS 50
 #define AMPLITUDE_THRESHOLDING_RANGE 125
 #define LEDDAR_AMPLITUDE_THRESHOLD 50
 
@@ -117,28 +118,32 @@ bool bufferDetections(){
   return false;
 }
 
-Detection Detections[50];
+Detection Detections[MAX_DETECTIONS];
 uint8_t parseDetections(){
   if (!CRC16(receivedData, len-2, true)){
     return 0;
   }
-  uint16_t detection_count = receivedData[2];
+  uint8_t detection_count = min(MAX_DETECTIONS, receivedData[2]);
+  uint8_t good_detections=0;
   // Parse out detection info
   for ( uint16_t i = 0; i < detection_count; i++){
-    uint16_t offset = i * 5 + 3;
-    uint8_t segment = 15 - (receivedData[offset+4]/16);
-    uint16_t amplitude = ((float)receivedData[offset+3])*4+ ((float)receivedData[offset+2])/64;
-    uint16_t distance = ((uint16_t)receivedData[offset+1])*256 + receivedData[offset];
-    
+    uint8_t offset = 3 + 5*i;
+    uint16_t *current = (uint16_t*)(receivedData + offset);
+    uint16_t distance = __builtin_bswap16(current[0]);
+    uint16_t amplitude = __builtin_bswap16(current[1]);
+
     // filter near detections that are of insufficient amplitude
     if (distance > AMPLITUDE_THRESHOLDING_RANGE || amplitude > LEDDAR_AMPLITUDE_THRESHOLD) {
-      Detections[detection_count - 1 - i].Distance = distance;
-      Detections[detection_count - 1 - i].Amplitude = amplitude;
-      Detections[detection_count - 1 - i].Segment = segment; // flip the segment ID since we're upside down
+      // flip the segment ID since we're upside down
+      uint8_t segment = 15 - (receivedData[offset+4]/16);
+      Detections[good_detections].Distance = distance;
+      Detections[good_detections].Amplitude = amplitude;
+      Detections[good_detections].Segment = segment;
+      good_detections++;
     }
   }
-  
-  return detection_count;
+
+  return good_detections;
 }
 
 Detection* getDetections(){
