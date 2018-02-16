@@ -108,7 +108,7 @@ bool rightApproach(uint16_t detection_count, Detection* detections){
 LeddarState getState(unsigned int detection_count, Detection* detections, int16_t fire_threshold){
   int last_detected_segment = -1; // Off the left edge
   int contiguous = 0;
-  
+
   // only keep and analyze nearest detection in each segment
   Detection min_detections[16];
   getMinDetections(detection_count, detections, min_detections);
@@ -124,9 +124,9 @@ LeddarState getState(unsigned int detection_count, Detection* detections, int16_
   if (contiguous == CENTER_ZONE_FIRE_MAX - CENTER_ZONE_FIRE_MIN){
     return HIT_ZONE;
   }
-  
-  if (leftApproach(16, min_detections) || rightApproach(16, min_detections)){ 
-    return PREDICTIVE_HIT_ZONE; 
+
+  if (leftApproach(16, min_detections) || rightApproach(16, min_detections)){
+    return PREDICTIVE_HIT_ZONE;
   }
 
   // For arming, only require that we detect a multi-segment object in the arm zone somewhere

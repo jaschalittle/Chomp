@@ -94,7 +94,7 @@ void requestDetections(){
   }
   len = 0;
   memset(receivedData, 0, 256);
-  
+
   //send message on uart
   sendData[0] = 0x01; //SlaveAddress;
   sendData[1] = 0x41;

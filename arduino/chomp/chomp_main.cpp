@@ -82,14 +82,19 @@ static bool reset_targeting = false;
 
 void chompLoop() {
     uint32_t start_time = micros();
+
+    // If there has been no data from the LEDDAR for a while, ask again
     if (micros() - last_request_time > 100000UL){
         last_request_time = micros();
         requestDetections();
     }
-    
+
+    // Check if data is available from the LEDDAR
     if (bufferDetections()){
+        // extract detections from LEDDAR packet
         uint8_t detection_count = parseDetections();
         last_request_time = micros();
+        // check for detections in zones
         LeddarState current_leddar_state = getState(detection_count, getDetections(), getRange());
         switch (current_leddar_state){
             case FAR_ZONE:
@@ -182,10 +187,10 @@ void chompLoop() {
             previous_rc_bitfield = current_rc_bitfield;
         }
     }
-    
+
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
-    
+
     if (newRc() || (new_autodrive && getTargetingEnable())) {
         drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
         new_autodrive = false;
