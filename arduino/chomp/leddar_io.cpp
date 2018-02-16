@@ -155,8 +155,10 @@ Detection* getDetections(){
 // outputMinDetections should be a default-constructed array of size 16
 void getMinDetections(uint8_t detection_count, Detection* inputDetections, Detection* outputMinDetections){
   for (uint8_t i = 0; i < detection_count; i++) {
-    if (inputDetections[i].Distance < outputMinDetections[inputDetections[i].Segment].Distance && inputDetections[i].Distance > MIN_OBJECT_DISTANCE) {
-      outputMinDetections[inputDetections[i].Segment] = inputDetections[i];
+    uint8_t segment = inputDetections[i].Segment;
+    if (inputDetections[i].Distance < outputMinDetections[segment].Distance &&
+        inputDetections[i].Distance > MIN_OBJECT_DISTANCE) {
+      outputMinDetections[segment] = inputDetections[i];
     }
   }
 }
