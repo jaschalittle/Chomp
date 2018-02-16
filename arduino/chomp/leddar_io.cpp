@@ -85,7 +85,6 @@ bool CRC16(uint8_t *aBuffer, uint8_t aLength, bool aCheck)
 uint16_t len = 0;
 uint8_t receivedData[256] = {0};
 void requestDetections(){
-  uint16_t i = 0;
   uint8_t sendData[4] = {0};
   //clear serial buffer
   while (LeddarSerial.available())
@@ -99,12 +98,7 @@ void requestDetections(){
   sendData[0] = 0x01; //SlaveAddress;
   sendData[1] = 0x41;
   CRC16(sendData, 2, false);
-  for (i = 0; i<4; i++)
-  {
-    LeddarSerial.write(sendData[i]);
-  }
-  // this hangs if LeddarSerial not begun. could it hang in other scenarios?
-  LeddarSerial.flush();
+  LeddarSerial.write(sendData, 4);
 }
 
 bool bufferDetections(){
