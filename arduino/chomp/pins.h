@@ -1,5 +1,6 @@
 #ifndef PINS_H
 #define PINS_H
+#include "DMASerial.h"
 
 //------------------ DEFINES----------------
 // #define HARD_WIRED
@@ -38,8 +39,7 @@
 
 // ----------------- SERIAL ------------------
 // These are defined in chomp.ino
-extern HardwareSerial& Debug;
-extern HardwareSerial& Xbee;
+extern DMASerial& Xbee;
 extern HardwareSerial& LeddarSerial;
 extern HardwareSerial& Sbus;
 extern HardwareSerial& DriveSerial;

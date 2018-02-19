@@ -55,11 +55,11 @@ void chompSetup() {
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     wdt_enable(WDTO_4S);
 #ifdef HARD_WIRED
-    Debug.begin(57600);
-    Debug.println("STARTUP");
+    Xbee.begin(115200);
+    debug_print("STARTUP");
 #else
     xbeeInit();
-#endif    
+#endif
     Sbus.begin(100000);
     driveSetup();
     leddarWrapperInit();
@@ -210,10 +210,11 @@ void chompLoop() {
       readMlhPressure(&pressure);
       uint16_t angle = 0;
       readAngle(&angle);
-      bool success = sendHealthSensorTelem(loop_speed, previous_rc_bitfield, pressure, angle, leddar_overrun, sbus_overrun, leddar_crc_error);
+      bool success = sendSystemTelem(loop_speed, leddar_overrun, leddar_crc_error, sbus_overrun);
+      success |= sendSbusTelem(previous_rc_bitfield);
+      success |= sendSensorTelem(pressure, angle);
       if (success){
         last_telem_time = micros();
       }
     }
-   xbeePushData();
 }
