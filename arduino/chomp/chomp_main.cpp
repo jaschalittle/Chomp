@@ -210,9 +210,9 @@ void chompLoop() {
       readMlhPressure(&pressure);
       uint16_t angle = 0;
       readAngle(&angle);
-      bool success = sendSystemTelem(loop_speed, leddar_overrun, leddar_crc_error, sbus_overrun);
+      bool success = sendSensorTelem(pressure, angle);
+      success |= sendSystemTelem(loop_speed, leddar_overrun, leddar_crc_error, sbus_overrun);
       success |= sendSbusTelem(previous_rc_bitfield);
-      success |= sendSensorTelem(pressure, angle);
       if (success){
         last_telem_time = micros();
       }
