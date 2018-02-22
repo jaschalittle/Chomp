@@ -127,8 +127,8 @@ uint8_t parseDetections(){
   for ( uint16_t i = 0; i < detection_count; i++){
     uint8_t offset = 3 + 5*i;
     uint16_t *current = (uint16_t*)(receivedData + offset);
-    uint16_t distance = __builtin_bswap16(current[0]);
-    uint16_t amplitude = __builtin_bswap16(current[1]);
+    uint16_t distance = current[0];
+    uint16_t amplitude = current[1];
 
     // filter near detections that are of insufficient amplitude
     if (distance > AMPLITUDE_THRESHOLDING_RANGE || amplitude > LEDDAR_AMPLITUDE_THRESHOLD) {
