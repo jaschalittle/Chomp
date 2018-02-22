@@ -90,6 +90,7 @@ void debug_print(const String &msg){
 
 struct LeddarTelemetryInner {
     uint16_t state;
+    uint16_t count;
     const uint64_t segments = 0xEFCDAB8967452301;
     uint16_t beam[16];
 } __attribute__((packed));
@@ -102,6 +103,7 @@ bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState stat
   LeddarTelemetry tlm;
 
   tlm.inner.state = state;
+  tlm.inner.count = count;
   for (uint8_t i = 0; i < 16; i++){
       tlm.inner.beam[i] = min_detections[i].Distance;
   }
