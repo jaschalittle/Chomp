@@ -91,8 +91,8 @@ void debug_print(const String &msg){
 struct LeddarTelemetryInner {
     uint16_t state;
     uint16_t count;
-    const uint64_t segments = 0xEFCDAB8967452301;
-    uint16_t beam[16];
+    uint16_t range[16];
+    uint16_t amplitude[16];
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_LEDDAR, LeddarTelemetryInner> LeddarTelemetry;
 
@@ -105,7 +105,8 @@ bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState stat
   tlm.inner.state = state;
   tlm.inner.count = count;
   for (uint8_t i = 0; i < 16; i++){
-      tlm.inner.beam[i] = min_detections[i].Distance;
+      tlm.inner.range[i] = min_detections[i].Distance;
+      tlm.inner.amplitude[i] = min_detections[i].Amplitude;
   }
   return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
