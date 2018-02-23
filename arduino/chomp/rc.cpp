@@ -103,7 +103,10 @@ bool bufferSbusData() {
     return true;
   } else if (count > 25) {
     uint8_t trash[64];
-    Sbus.readBytes(trash, count);
+    while(count>0) {
+        Sbus.readBytes(trash, min(64, count));
+        count = Sbus.available();
+    }
     sbus_overrun++;
     return false;
   }
