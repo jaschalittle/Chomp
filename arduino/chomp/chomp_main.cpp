@@ -80,6 +80,9 @@ static bool targeting_enabled = false;
 static bool new_autodrive = false;
 static bool reset_targeting = false;
 
+extern uint16_t leddar_overrun;
+extern uint16_t sbus_overrun;
+
 void chompLoop() {
     uint32_t start_time = micros();
 
@@ -208,7 +211,7 @@ void chompLoop() {
       readMlhPressure(&pressure);
       uint16_t angle = 0;
       readAngle(&angle);
-      bool success = sendHealthSensorTelem(loop_speed, previous_rc_bitfield, pressure, angle);
+      bool success = sendHealthSensorTelem(loop_speed, previous_rc_bitfield, pressure, angle, leddar_overrun, sbus_overrun);
       if (success){
         last_telem_time = micros();
       }

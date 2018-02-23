@@ -93,6 +93,7 @@ bool newRc() {
     }
 }
 
+uint16_t sbus_overrun = 0;
 static uint8_t sbusData[25] = {0};
 bool bufferSbusData() {
   // returns number of bytes available for reading from serial receive buffer, which is 64 bytes
@@ -103,6 +104,7 @@ bool bufferSbusData() {
   } else if (count > 25) {
     uint8_t trash[64];
     Sbus.readBytes(trash, count);
+    sbus_overrun++;
     return false;
   }
   return false;

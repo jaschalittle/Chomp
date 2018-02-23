@@ -102,11 +102,15 @@ void requestDetections(){
   LeddarSerial.write(sendData, 4);
 }
 
+uint16_t leddar_overrun = 0;
 bool bufferDetections(){
   uint16_t count = LeddarSerial.available();
   if (count > 0){
     LeddarSerial.readBytes(receivedData+len, count);
     len += count;
+    if(len+count>=256) {
+      leddar_overrun++;
+    }
   }
   if (len > 3){
     uint8_t detection_count = receivedData[2];
