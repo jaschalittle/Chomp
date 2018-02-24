@@ -84,22 +84,24 @@ bool CRC16(uint8_t *aBuffer, uint8_t aLength, bool aCheck)
 }
 
 uint16_t len = 0;
-uint8_t receivedData[256] = {0};
+static const uint16_t MAX_LEDDAR_BUFFER=256;
+uint8_t receivedData[MAX_LEDDAR_BUFFER] = {0};
 void requestDetections(){
-  uint8_t sendData[4] = {0};
+  uint8_t data[64] = {0};
+  uint16_t count = LeddarSerial.available();
   //clear serial buffer
-  while (LeddarSerial.available())
+  while (count>0)
   {
-    LeddarSerial.read();
+    LeddarSerial.readBytes(data, min(64, count));
+    count = LeddarSerial.available();
   }
   len = 0;
-  memset(receivedData, 0, 256);
 
   //send message on uart
-  sendData[0] = 0x01; //SlaveAddress;
-  sendData[1] = 0x41;
-  CRC16(sendData, 2, false);
-  LeddarSerial.write(sendData, 4);
+  data[0] = 0x01; //SlaveAddress;
+  data[1] = 0x41;
+  CRC16(data, 2, false);
+  LeddarSerial.write(data, 4);
 }
 
 uint16_t leddar_overrun = 0;
@@ -107,9 +109,11 @@ uint16_t leddar_crc_error = 0;
 bool bufferDetections(){
   uint16_t count = LeddarSerial.available();
   if (count > 0){
-    LeddarSerial.readBytes(receivedData+len, count);
-    len += count;
-    if(len+count>=256) {
+    if(len+count<MAX_LEDDAR_BUFFER) {
+      LeddarSerial.readBytes(receivedData+len, count);
+      len += count;
+    } else {
+      len = 0;
       leddar_overrun++;
     }
   }
