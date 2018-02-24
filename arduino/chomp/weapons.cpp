@@ -250,11 +250,6 @@ void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
     }
 }
 
-// use retract motor to gently move hammer to forward position to safe it for approach
-#define GENTLE_THROW_BEGIN_ANGLE_MIN 20
-#define GENTLE_THROW_STOP_ANGLE 142
-#define GENTLE_THROW_COMPLETE_ANGLE 142
-#define GENTLE_THROW_TIMEOUT 500000L
 // use retract motor to gently move hammer
 void electricHammerMove(RCBitfield control, int16_t speed){
     // Make sure we're vented
