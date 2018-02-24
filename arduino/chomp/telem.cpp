@@ -5,8 +5,8 @@
 #include "autofire.h"
 #include "pins.h"
 
-bool sendHealthSensorTelem(uint32_t loop_speed, uint16_t cmd_bitfield, int16_t pressure, uint16_t angle, uint16_t leddar_overrun, uint16_t sbus_overrun){
-  const uint16_t packet_len = 17;
+bool sendHealthSensorTelem(uint32_t loop_speed, uint16_t cmd_bitfield, int16_t pressure, uint16_t angle, uint16_t leddar_overrun, uint16_t sbus_overrun, uint16_t leddar_crc_error){
+  const uint16_t packet_len = 19;
   const uint8_t start = 0x01;
   const uint16_t ending = 0x6666;
   char sensor_data[packet_len] = {0};
@@ -22,6 +22,8 @@ bool sendHealthSensorTelem(uint32_t loop_speed, uint16_t cmd_bitfield, int16_t p
   memcpy(sensor_data + offset, &angle, sizeof(uint16_t));
   offset += sizeof(uint16_t);
   memcpy(sensor_data + offset, &leddar_overrun, sizeof(uint16_t));
+  offset += sizeof(uint16_t);
+  memcpy(sensor_data + offset, &leddar_crc_error, sizeof(uint16_t));
   offset += sizeof(uint16_t);
   memcpy(sensor_data + offset, &sbus_overrun, sizeof(uint16_t));
   offset += sizeof(uint16_t);

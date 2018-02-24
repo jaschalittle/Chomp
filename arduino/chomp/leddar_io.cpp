@@ -103,6 +103,7 @@ void requestDetections(){
 }
 
 uint16_t leddar_overrun = 0;
+uint16_t leddar_crc_error = 0;
 bool bufferDetections(){
   uint16_t count = LeddarSerial.available();
   if (count > 0){
@@ -125,6 +126,7 @@ bool bufferDetections(){
 Detection Detections[MAX_DETECTIONS];
 uint8_t parseDetections(){
   if (!CRC16(receivedData, len-2, true)){
+    leddar_crc_error ++;
     return 0;
   }
   uint8_t detection_count = min(MAX_DETECTIONS, receivedData[2]);
