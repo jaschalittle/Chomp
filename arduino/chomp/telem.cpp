@@ -97,19 +97,19 @@ struct LeddarTelemetryInner {
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_LEDDARV2, LeddarTelemetryInner> LeddarTelemetry;
 
+static LeddarTelemetry leddar_tlm;
 bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState state){
   Detection min_detections[16];
   getMinDetections(count, detections, min_detections);
 
-  LeddarTelemetry tlm;
-
-  tlm.inner.state = state;
-  tlm.inner.count = count;
+  leddar_tlm.inner.state = state;
+  leddar_tlm.inner.count = count;
   for (uint8_t i = 0; i < 16; i++){
-      tlm.inner.range[i] = min_detections[i].Distance;
-      tlm.inner.amplitude[i] = min_detections[i].Amplitude;
+      leddar_tlm.inner.range[i] = min_detections[i].Distance;
+      leddar_tlm.inner.amplitude[i] = min_detections[i].Amplitude;
   }
-  return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+  return Xbee.enqueue((unsigned char *)&leddar_tlm, sizeof(leddar_tlm),
+                      NULL, NULL);
 }
 
 /*
