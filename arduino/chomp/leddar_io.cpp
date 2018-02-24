@@ -92,6 +92,8 @@ void requestDetections(){
   {
     LeddarSerial.read();
   }
+  len = 0;
+  memset(receivedData, 0, 256);
 
   //send message on uart
   sendData[0] = 0x01; //SlaveAddress;
@@ -140,9 +142,6 @@ uint8_t parseDetections(){
       good_detections++;
     }
   }
-
-  len = 0;
-  memset(receivedData, 0, 256);
 
   return good_detections;
 }
