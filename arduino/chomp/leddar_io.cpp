@@ -59,28 +59,19 @@ void leddarWrapperInit(){
   LeddarSerial.begin(115200);
 }
 
-bool CRC16(uint8_t *aBuffer, uint8_t aLength, bool aCheck) 
+uint16_t CRC16(uint8_t *aBuffer, uint8_t aLength)
 {
   uint8_t lCRCHi = 0xFF; // high byte of CRC initialized
   uint8_t lCRCLo = 0xFF; // low byte of CRC initialized
-  
-  for (uint16_t i = 0; i<aLength; ++i) 
+
+  for (uint16_t i = 0; i<aLength; ++i)
   {
     uint16_t lIndex = lCRCLo ^ aBuffer[i]; // calculate the CRC
     lCRCLo = lCRCHi ^ CRC_HI[lIndex];
     lCRCHi = CRC_LO[lIndex];
   }
-  
-  if (aCheck) 
-  {
-    return ( aBuffer[aLength] == lCRCLo ) && ( aBuffer[aLength+1] == lCRCHi );
-  }
-  else 
-  {
-    aBuffer[aLength] = lCRCLo;
-    aBuffer[aLength+1] = lCRCHi;
-    return true;
-  }
+
+  return (lCRCHi<<8) | lCRCLo;
 }
 
 uint16_t len = 0;
@@ -100,7 +91,7 @@ void requestDetections(){
   //send message on uart
   data[0] = 0x01; //SlaveAddress;
   data[1] = 0x41;
-  CRC16(data, 2, false);
+  *((uint16_t *)(data+2)) = CRC16(data, 2);
   LeddarSerial.write(data, 4);
 }
 
@@ -129,7 +120,7 @@ bool bufferDetections(){
 
 Detection Detections[MAX_DETECTIONS];
 uint8_t parseDetections(){
-  if (!CRC16(receivedData, len-2, true)){
+  if(CRC16(receivedData, len) != 0){
     leddar_crc_error ++;
     return 0;
   }
