@@ -150,49 +150,47 @@ void chompLoop() {
             uint16_t current_rc_bitfield = getRcBitfield();
             uint16_t diff = previous_rc_bitfield ^ current_rc_bitfield;
             hammer_intensity = getHammerIntensity();
-            if (diff) {
-                if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
-                    flameSafe();
+            if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
+                flameSafe();
+            }
+            if( (diff & FLAME_PULSE_BIT) && (current_rc_bitfield & FLAME_PULSE_BIT) ){
+                flameEnable();
+            }
+            // Flame on -> off
+            if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
+                flameEnd();
+            }
+            // Flame off -> on
+            if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
+                flameEnable();
+                flameStart();
+            }
+            // Manual hammer fire
+            if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
+                if (current_rc_bitfield & DANGER_CTRL_BIT){
+                  noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
+                } else {
+                  fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
                 }
-                if( (diff & FLAME_PULSE_BIT) && (current_rc_bitfield & FLAME_PULSE_BIT) ){
-                    flameEnable();
-                }
-                // Flame on -> off
-                if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
-                    flameEnd();
-                }
-                // Flame off -> on
-                if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
-                    flameEnable();
-                    flameStart();
-                }
-                // Manual hammer fire
-                if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-                    if (current_rc_bitfield & DANGER_CTRL_BIT){
-                      noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
-                    } else {
-                      fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
-                    }
-                }
-                if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
-                  if (current_rc_bitfield & DANGER_CTRL_BIT){
-                    gentleRetract(HAMMER_RETRACT_BIT);
-                  } else {
-                    retract();
-                  }
-                }
-                if( (diff & GENTLE_HAM_F_BIT) && (current_rc_bitfield & GENTLE_HAM_F_BIT)) {
-                    gentleFire(GENTLE_HAM_F_BIT);
-                }
-                if( (diff & GENTLE_HAM_R_BIT) && (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
-                    gentleRetract(GENTLE_HAM_R_BIT);
-                }
-                if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
-                    magOn();
-                }
-                if( (diff & MAG_CTRL_BIT) && !(current_rc_bitfield & MAG_CTRL_BIT)){
-                    magOff();
-                }
+            }
+            if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
+              if (current_rc_bitfield & DANGER_CTRL_BIT){
+                gentleRetract(HAMMER_RETRACT_BIT);
+              } else {
+                retract();
+              }
+            }
+            if( (current_rc_bitfield & GENTLE_HAM_F_BIT)) {
+                gentleFire(GENTLE_HAM_F_BIT);
+            }
+            if( (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
+                gentleRetract(GENTLE_HAM_R_BIT);
+            }
+            if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
+                magOn();
+            }
+            if( (diff & MAG_CTRL_BIT) && !(current_rc_bitfield & MAG_CTRL_BIT)){
+                magOff();
             }
             previous_rc_bitfield = current_rc_bitfield;
         }
