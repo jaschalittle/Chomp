@@ -76,6 +76,8 @@ uint16_t CRC16(uint8_t *aBuffer, uint8_t aLength)
 
 uint16_t len = 0;
 static const uint16_t MAX_LEDDAR_BUFFER=256;
+static const uint8_t LEDDAR_SLAVE_ID=0x01;
+static const uint8_t REQUEST_DETECTIONS_CMD=0x41;
 uint8_t receivedData[MAX_LEDDAR_BUFFER] = {0};
 void requestDetections(){
   uint8_t data[64] = {0};
@@ -89,8 +91,8 @@ void requestDetections(){
   len = 0;
 
   //send message on uart
-  data[0] = 0x01; //SlaveAddress;
-  data[1] = 0x41;
+  data[0] = LEDDAR_SLAVE_ID;
+  data[1] = REQUEST_DETECTIONS_CMD;
   *((uint16_t *)(data+2)) = CRC16(data, 2);
   LeddarSerial.write(data, 4);
 }
@@ -108,11 +110,15 @@ bool bufferDetections(){
       leddar_overrun++;
     }
   }
-  if (len > 3){
-    uint8_t detection_count = receivedData[2];
-    uint16_t target_len = detection_count * 5 + 11;
-    if (target_len == len){
-      return true; 
+  if (len > 2) {
+    if(receivedData[0] == LEDDAR_SLAVE_ID && receivedData[1] == REQUEST_DETECTIONS_CMD){
+        uint8_t detection_count = receivedData[2];
+        uint16_t target_len = detection_count * 5 + 11;
+        if (target_len == len){
+          return true;
+        }
+    } else {
+        len = 0;
     }
   }
   return false;
