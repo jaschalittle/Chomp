@@ -35,7 +35,8 @@ void DMASerial::_tx_udr_empty_irq(void)
       {
           Chunks[chunk_tail].complete(
               Chunks[chunk_tail].funcdata,
-              Chunks[chunk_tail].begin+Chunks[chunk_tail].length);
+              Chunks[chunk_tail].begin,
+              Chunks[chunk_tail].length);
       }
       chunk_tail = new_tail;
   }
@@ -67,7 +68,7 @@ void DMASerial::cts_interrupt()
 }
 
 bool DMASerial::enqueue(const unsigned char *begin, size_t length, void *funcdata,
-                        void (*complete)(void *funcdata, const unsigned char *end))
+                        transfer_complete_func complete)
 {
     _written = true;
     size_t next_spot = (chunk_head+1)%MAX_CHUNKS;
@@ -110,9 +111,9 @@ void DMASerial::advance_buffer_tail(const unsigned char *end)
     _tx_buffer_tail = end - &_tx_buffer[0];
 }
 
-void _advance_buffer_tail(void *funcdata, const unsigned char * end)
+void _advance_buffer_tail(void *funcdata, const unsigned char * begin, size_t length)
 {
-    ((DMASerial*)funcdata)->advance_buffer_tail(end);
+    ((DMASerial*)funcdata)->advance_buffer_tail(begin+length);
 }
 
 size_t DMASerial::write(const uint8_t *buffer, size_t size)
