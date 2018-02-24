@@ -8,6 +8,7 @@
 enum TelemetryPacketId {
     TLM_ID_HS=1,
     TLM_ID_LEDDAR=2,
+    TLM_ID_LEDDARV2=15,
     TLM_ID_SNS=10,
     TLM_ID_SYS=11,
     TLM_ID_SBS=12,
@@ -94,7 +95,7 @@ struct LeddarTelemetryInner {
     uint16_t range[16];
     uint16_t amplitude[16];
 } __attribute__((packed));
-typedef TelemetryPacket<TLM_ID_LEDDAR, LeddarTelemetryInner> LeddarTelemetry;
+typedef TelemetryPacket<TLM_ID_LEDDARV2, LeddarTelemetryInner> LeddarTelemetry;
 
 bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState state){
   Detection min_detections[16];
