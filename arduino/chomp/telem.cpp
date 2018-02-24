@@ -84,9 +84,7 @@ bool sendDebugMessageTelem(const char *msg){
 }
 
 void debug_print(const String &msg){
-#ifdef HARD_WIRED
     sendDebugMessageTelem(msg.c_str());
-#endif
 }
 
 struct LeddarTelemetryInner {

@@ -56,7 +56,6 @@ void chompSetup() {
     wdt_enable(WDTO_4S);
 #ifdef HARD_WIRED
     Xbee.begin(115200);
-    debug_print("STARTUP");
 #else
     xbeeInit();
 #endif
@@ -65,6 +64,7 @@ void chompSetup() {
     leddarWrapperInit();
     sensorSetup();
     attachRCInterrupts();
+    debug_print("STARTUP");
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
@@ -139,7 +139,6 @@ void chompLoop() {
             last_leddar_telem_time = micros();
           }
         }
-
     }
 
     if (bufferSbusData()){
