@@ -91,9 +91,14 @@ void chompLoop() {
 
     // Check if data is available from the LEDDAR
     if (bufferDetections()){
+
         // extract detections from LEDDAR packet
         uint8_t detection_count = parseDetections();
+
+        // request new detections
         last_request_time = micros();
+        requestDetections();
+
         // check for detections in zones
         LeddarState current_leddar_state = getState(detection_count, getDetections(), getRange());
         switch (current_leddar_state){
@@ -114,22 +119,23 @@ void chompLoop() {
                 }
                 break;
         }
+
+        // get targeting RC command. reset targeting if RC state changes.
+        reset_targeting = targeting_enabled ^ getTargetingEnable();
+        targeting_enabled = getTargetingEnable();
+
+        // auto centering code
+        pidSteer(detection_count, getDetections(), 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
+        new_autodrive = true;
+
         // Send subsampled leddar telem
         if (micros() - last_leddar_telem_time > 100000L){
           bool success = sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
           if (success){
             last_leddar_telem_time = micros();
           }
-        }      
-        requestDetections();
-        
-        // get targeting RC command. reset targeting if RC state changes.
-        reset_targeting = targeting_enabled ^ getTargetingEnable();
-        targeting_enabled = getTargetingEnable();
-        
-        // auto centering code
-        pidSteer(detection_count, getDetections(), 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
-        new_autodrive = true;
+        }
+
     }
 
     if (bufferSbusData()){
