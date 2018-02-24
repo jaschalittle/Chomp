@@ -182,7 +182,7 @@ void chompLoop() {
                   }
                 }
                 if( (diff & GENTLE_HAM_F_BIT) && (current_rc_bitfield & GENTLE_HAM_F_BIT)) {
-                    gentleFire();
+                    gentleFire(GENTLE_HAM_F_BIT);
                 }
                 if( (diff & GENTLE_HAM_R_BIT) && (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
                     gentleRetract(GENTLE_HAM_R_BIT);

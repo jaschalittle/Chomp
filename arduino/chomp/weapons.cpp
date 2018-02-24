@@ -255,12 +255,15 @@ void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
 #define GENTLE_THROW_STOP_ANGLE 142
 #define GENTLE_THROW_COMPLETE_ANGLE 142
 #define GENTLE_THROW_TIMEOUT 500000L
-void gentleFire(){
+// use retract motor to gently move hammer
+void electricHammerMove(RCBitfield control, int16_t speed){
     // Make sure we're vented
     safeDigitalWrite(VENT_VALVE_DO, LOW);
     safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
     delay(50);
-    DriveSerial.println("@05!G -1000");
+    String movecmd("@05!G ");
+    movecmd += speed;
+    DriveSerial.println(movecmd);
     uint32_t inter_sbus_time = micros();
     while ((micros() - inter_sbus_time) < 30000UL) {
         if (bufferSbusData()){
@@ -268,11 +271,11 @@ void gentleFire(){
             if (!error) {
                 wdt_reset();
                 char current_rc_bitfield = getRcBitfield();
-                if (!(current_rc_bitfield & GENTLE_HAM_F_BIT)){
+                if (!(current_rc_bitfield & control)){
                     break;
                 }
                 delay(5);
-                DriveSerial.println("@05!G -1000");
+                DriveSerial.println(movecmd);
                 inter_sbus_time = micros();
             // continue retracting
             } else {
@@ -284,33 +287,12 @@ void gentleFire(){
     DriveSerial.println("@05!G 0");
 }
 
-void gentleRetract( RCBitfield cmd_bit ){
-    // Make sure we're vented
-    safeDigitalWrite(VENT_VALVE_DO, LOW);
-    safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
-    delay(50);
-    DriveSerial.println("@05!G 1000");
-    uint32_t inter_sbus_time = micros();
-    while (micros() - inter_sbus_time < 30000UL){
-        if (bufferSbusData()){
-            bool error = parseSbus();
-            if (!error) {
-                wdt_reset();
-                char current_rc_bitfield = getRcBitfield();
-                if (!(current_rc_bitfield & cmd_bit)){
-                    break;
-                }
-                delay(5);
-                DriveSerial.println("@05!G 1000");
-                inter_sbus_time = micros();
-            // continue retracting
-            } else {
-                break;
-            }
-      }
-    }
-    safeDigitalWrite(RETRACT_VALVE_DO, LOW);
-    DriveSerial.println("@05!G 0");
+void gentleFire(RCBitfield control) {
+    electricHammerMove(control, -1000);
+}
+
+void gentleRetract(RCBitfield control) {
+    electricHammerMove(control,  1000);
 }
 
 void flameStart(){
