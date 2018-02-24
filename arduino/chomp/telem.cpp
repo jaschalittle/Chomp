@@ -26,6 +26,7 @@ template <uint8_t packet_id, typename packet_inner> struct TelemetryPacket{
 } __attribute__((packed));
 
 struct SystemTelemetryInner {
+    uint8_t  weapons_enabled:1;
     uint32_t loop_speed;
     uint16_t leddar_overrun;
     uint16_t leddar_crc_error;
@@ -36,6 +37,7 @@ typedef TelemetryPacket<TLM_ID_SYS, SystemTelemetryInner> SystemTelemetry;
 bool sendSystemTelem(uint32_t loop_speed, uint16_t leddar_overrun,
                      uint16_t leddar_crc_error, uint16_t sbus_overrun){
     SystemTelemetry tlm;
+    tlm.inner.weapons_enabled = g_enabled;
     tlm.inner.loop_speed = loop_speed;
     tlm.inner.leddar_overrun = leddar_overrun;
     tlm.inner.leddar_crc_error = leddar_crc_error;
