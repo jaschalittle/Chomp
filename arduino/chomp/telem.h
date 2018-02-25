@@ -20,5 +20,6 @@ bool sendSwingTelem(uint16_t datapoints_collected,
                     uint16_t vent_open_timestep,
                     uint16_t throw_close_angle,
                     uint16_t start_angle);
+bool sendPWMTelem(int16_t left_drive, int16_t right_drive);
 
 #endif //TELEM_H
