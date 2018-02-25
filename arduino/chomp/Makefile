@@ -10,7 +10,7 @@ BOARD_TAG     = mega
 BOARD_SUB     = atmega2560
 MONITOR_PORT  = /dev/ttyACM0
 
-CXXFLAGS      = -Wall
+CXXFLAGS      = -Wall -DSERIAL_TX_BUFFER_SIZE=256
 CXXFLAGS_STD  = -std=c++11
 
 include ${ARDMK_DIR}/Arduino.mk

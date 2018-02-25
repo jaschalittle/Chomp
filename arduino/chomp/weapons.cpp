@@ -202,7 +202,7 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
         }
         
 #ifdef HARD_WIRED
-        sendSwingData(datapoints_collected,
+        sendSwingTelem(datapoints_collected,
                       angle_data,
                       pressure_data,
                       DATA_COLLECT_TIMESTEP,

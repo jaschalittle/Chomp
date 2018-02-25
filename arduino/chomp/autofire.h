@@ -5,7 +5,7 @@
 struct Detection;
 
 enum LeddarState {
-  FAR_ZONE,
+  FAR_ZONE = 1,
   ARM_ZONE,
   HIT_ZONE,
   PREDICTIVE_HIT_ZONE
