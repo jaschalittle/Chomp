@@ -2,17 +2,7 @@
 #include "Arduino.h"
 #include "rc.h"
 #include "pins.h"
-
-
-// initialize PWM vals to neutral values
-static volatile uint16_t LEFT_RC_pwm_val = 1520;
-static volatile uint32_t LEFT_RC_prev_time = 0;
-static volatile uint16_t RIGHT_RC_pwm_val = 1520;
-static volatile uint32_t RIGHT_RC_prev_time = 0;
-static volatile uint16_t TARGETING_ENABLE_pwm_val = 1520;
-static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
-
-static volatile bool NEW_RC = false;
+#include <avr/interrupt.h>
 
 // values for converting Futaba 7C RC PWM to Roboteq drive control (-1000 to 1000)
 // CH1 922-2120 1522 neutral CH2 909-2106 1503 neutral
@@ -38,49 +28,66 @@ static volatile bool NEW_RC = false;
 // #define RIGHT_DEADBAND_MIN 1500
 // #define RIGHT_DEADBAND_MAX 1560
 
+// initialize PWM vals to neutral values
+static volatile uint16_t LEFT_RC_pwm_val = 1520;
+static volatile uint32_t LEFT_RC_prev_time = 0;
+static volatile uint16_t RIGHT_RC_pwm_val = 1520;
+static volatile uint32_t RIGHT_RC_prev_time = 0;
+static volatile uint16_t TARGETING_ENABLE_pwm_val = 1520;
+static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
+
+
+static volatile uint8_t PBLAST = 0; // TODO - what is the appropriate startup state?
+static volatile bool NEW_RC = false;
+
+
+ISR(PCINT0_vect)
+{
+    uint8_t PBNOW = PINB ^ PBLAST;
+    PBLAST = PINB;
+    uint8_t right_rc_bit = 1 << PINB6;
+    uint8_t target_enable_bit = 1 << PINB7;
+    if(PBNOW & right_rc_bit){
+        if (PINB & right_rc_bit){// Rising
+            RIGHT_RC_prev_time = micros();
+        }
+        else{
+            RIGHT_RC_pwm_val = micros() - RIGHT_RC_prev_time;
+        }
+    } else if (PBNOW & target_enable_bit){
+        if (PINB & target_enable_bit) { // Rising
+            TARGETING_ENABLE_prev_time = micros();
+        }
+        else{
+            TARGETING_ENABLE_pwm_val = micros() - TARGETING_ENABLE_prev_time;
+            NEW_RC = true;
+        }
+    }
+}
+
+
 void LEFT_RC_rising();
 void LEFT_RC_falling();
-void RIGHT_RC_rising();
-void RIGHT_RC_falling();
-// void TARGETING_ENABLE_rising();
-void TARGETING_ENABLE_falling();
 
-void TARGETING_ENABLE_rising() {
-    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_falling, FALLING);
-    TARGETING_ENABLE_prev_time = micros();
+void LEFT_RC_rising() {
+    attachInterrupt(LEFT_RC, LEFT_RC_falling, FALLING);
+    LEFT_RC_prev_time = micros();
 }
-void TARGETING_ENABLE_falling() {
-    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
-    TARGETING_ENABLE_pwm_val = micros() - TARGETING_ENABLE_prev_time;
-    NEW_RC = true;
+void LEFT_RC_falling() {
+    attachInterrupt(LEFT_RC, LEFT_RC_rising, RISING);
+    LEFT_RC_pwm_val = micros() - LEFT_RC_prev_time;
 }
-
-// Forgive me, I know not what I do.
-#define CREATE_RISING_ISR( rc_interrupt )\
-void rc_interrupt ## _rising() {\
-  attachInterrupt(rc_interrupt, rc_interrupt ## _falling, FALLING);\
-  rc_interrupt ## _prev_time = micros();\
-}
-
-#define CREATE_FALLING_ISR( rc_interrupt )\
-void rc_interrupt ## _falling() {\
-  attachInterrupt(rc_interrupt, rc_interrupt ## _rising, RISING);\
-  rc_interrupt ## _pwm_val = micros() - rc_interrupt ## _prev_time;\
-}
-
-CREATE_FALLING_ISR(LEFT_RC);
-CREATE_RISING_ISR(LEFT_RC);
-CREATE_FALLING_ISR(RIGHT_RC);
-CREATE_RISING_ISR(RIGHT_RC);
 
 // Set up all RC interrupts
 void attachRCInterrupts(){
     pinMode(FUTABA_CH1_PIN, INPUT_PULLUP);
-    pinMode(FUTABA_CH2_PIN, INPUT_PULLUP);
-    pinMode(FUTABA_CH5_PIN, INPUT_PULLUP);
+    
+    cli();
     attachInterrupt(LEFT_RC, LEFT_RC_rising, RISING);
-    attachInterrupt(RIGHT_RC, RIGHT_RC_rising, RISING);
-    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
+
+    PCICR |= 0b00000001; // Enables Ports B Pin Change Interrupts
+    PCMSK0 |= 0b11000000; // Mask interrupts to PCINT6 and PCINT7
+    sei();
 }
 
 // test whether there is new unused RC drive command
@@ -154,11 +161,12 @@ int16_t getRightRc() {
     if (RIGHT_RC_pwm_val > RIGHT_DEADBAND_MAX || RIGHT_RC_pwm_val < RIGHT_DEADBAND_MIN) {
         drive_value = ((int16_t) RIGHT_RC_pwm_val - RIGHT_PWM_NEUTRAL) * 1000L / RIGHT_PWM_RANGE;
     }
-    return drive_value;
+    return TARGETING_ENABLE_pwm_val;//drive_value;
 }
 
 bool getTargetingEnable() {
-    return TARGETING_ENABLE_pwm_val > 1700;
+    return false;
+    //return TARGETING_ENABLE_pwm_val > 1700;
 }
 
 #define AUTO_HAMMER_THRESHOLD 1000 // (190 down - 1800 up)
