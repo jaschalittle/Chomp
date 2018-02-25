@@ -46,7 +46,7 @@ ISR(PCINT0_vect)
     uint8_t PBNOW = PINB ^ PBLAST;
     PBLAST = PINB;
     uint8_t right_rc_bit = 1 << PINB6;
-    uint8_t target_enable_bit = 1 << PINB7;
+    uint8_t left_rc_bit = 1 << PINB7;
     if(PBNOW & right_rc_bit){
         if (PINB & right_rc_bit){// Rising
             RIGHT_RC_prev_time = micros();
@@ -54,36 +54,37 @@ ISR(PCINT0_vect)
         else{
             RIGHT_RC_pwm_val = micros() - RIGHT_RC_prev_time;
         }
-    } else if (PBNOW & target_enable_bit){
-        if (PINB & target_enable_bit) { // Rising
-            TARGETING_ENABLE_prev_time = micros();
+    }
+    if(PBNOW & left_rc_bit){
+        if (PINB & left_rc_bit) { // Rising
+            LEFT_RC_prev_time = micros();
         }
         else{
-            TARGETING_ENABLE_pwm_val = micros() - TARGETING_ENABLE_prev_time;
-            NEW_RC = true;
+            LEFT_RC_pwm_val = micros() - LEFT_RC_prev_time;
         }
     }
 }
 
+void TARGETING_ENABLE_falling(); // forward decl
 
-void LEFT_RC_rising();
-void LEFT_RC_falling();
-
-void LEFT_RC_rising() {
-    attachInterrupt(LEFT_RC, LEFT_RC_falling, FALLING);
-    LEFT_RC_prev_time = micros();
+void TARGETING_ENABLE_rising() {
+    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_falling, FALLING);
+    TARGETING_ENABLE_prev_time = micros();
 }
-void LEFT_RC_falling() {
-    attachInterrupt(LEFT_RC, LEFT_RC_rising, RISING);
-    LEFT_RC_pwm_val = micros() - LEFT_RC_prev_time;
+void TARGETING_ENABLE_falling() {
+    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
+    TARGETING_ENABLE_pwm_val = micros() - TARGETING_ENABLE_prev_time;
+    NEW_RC = true;
 }
 
 // Set up all RC interrupts
 void attachRCInterrupts(){
     pinMode(FUTABA_CH1_PIN, INPUT_PULLUP);
+    pinMode(FUTABA_CH2_PIN, INPUT_PULLUP);
+    pinMode(FUTABA_CH5_PIN, INPUT_PULLUP);
     
     cli();
-    attachInterrupt(LEFT_RC, LEFT_RC_rising, RISING);
+    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
 
     PCICR |= 0b00000001; // Enables Ports B Pin Change Interrupts
     PCMSK0 |= 0b11000000; // Mask interrupts to PCINT6 and PCINT7
@@ -153,7 +154,7 @@ int16_t getLeftRc() {
     if (LEFT_RC_pwm_val > LEFT_DEADBAND_MAX || LEFT_RC_pwm_val < LEFT_DEADBAND_MIN) {
         drive_value = ((int16_t) LEFT_RC_pwm_val - LEFT_PWM_NEUTRAL) * 1000L / LEFT_PWM_RANGE;
     }
-    return drive_value;
+    return LEFT_RC_pwm_val;//drive_value;
 }
 
 int16_t getRightRc() {
@@ -161,7 +162,7 @@ int16_t getRightRc() {
     if (RIGHT_RC_pwm_val > RIGHT_DEADBAND_MAX || RIGHT_RC_pwm_val < RIGHT_DEADBAND_MIN) {
         drive_value = ((int16_t) RIGHT_RC_pwm_val - RIGHT_PWM_NEUTRAL) * 1000L / RIGHT_PWM_RANGE;
     }
-    return TARGETING_ENABLE_pwm_val;//drive_value;
+    return RIGHT_RC_pwm_val;//drive_value;
 }
 
 bool getTargetingEnable() {

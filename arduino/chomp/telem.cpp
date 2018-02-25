@@ -14,7 +14,7 @@ enum TelemetryPacketId {
     TLM_ID_DBGM=13,
     TLM_ID_SWG=14,
     TLM_ID_LEDDARV2=15,
-    TLM_ID_PWM=18,
+    TLM_ID_PWM=16,
 };
 
 const uint16_t TLM_TERMINATOR=0x6666;

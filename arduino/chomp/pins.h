@@ -30,9 +30,9 @@
 // Drive RC input
 // Mega2560 digital interrupt pins:
 // 2 (int.0), 3 (int.1), 18 (int.5), 19 (int.4), 20 (int.3), 21 (int.2)
-#define FUTABA_CH1_PIN 3
-//#define FUTABA_CH2_PIN 20
-//#define FUTABA_CH5_PIN 21
+#define FUTABA_CH1_PIN 12
+#define FUTABA_CH2_PIN 13
+#define FUTABA_CH5_PIN 3
 
 // Drive control output (for CAN testing)
 // #define CHIP_SELECT_PIN 19
