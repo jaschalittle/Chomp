@@ -1,46 +1,50 @@
+GIT
+  remote: https://github.com/contradict/COSMOS.git
+  revision: 8daa0f43e850f4f7837d321290d703a6f07252ae
+  branch: array_telemetry_plot
+  specs:
+    cosmos (0.0.0)
+      bundler (~> 1.3)
+      httpclient (~> 2.8)
+      json (>= 1.5, < 3)
+      nokogiri (~> 1.6)
+      opengl (~> 0.10)
+      pry (~> 0.9)
+      pry-doc (~> 0.5)
+      puma (~> 3.10)
+      qtbindings (~> 4.8.6, >= 4.8.6.2)
+      rack (~> 2.0)
+      rake (>= 10.0)
+      rdoc (>= 4, < 6)
+      rubyzip (~> 1.2)
+      snmp (~> 1.0)
+      uuidtools (~> 2.1)
+      yard (~> 0.8)
+
 GEM
   remote: https://rubygems.org/
   specs:
     coderay (1.1.2)
-    cosmos (4.1.1)
-      bundler (~> 1.3)
-      httpclient (~> 2.8.3)
-      json (>= 1.5, < 1.9)
-      nokogiri (~> 1.6)
-      opengl (~> 0.10)
-      pry (>= 0.9, < 0.11)
-      pry-doc (>= 0.5, < 0.7)
-      puma (~> 3.10.0)
-      qtbindings (~> 4.8.6, >= 4.8.6.2)
-      rack (~> 2.0.3)
-      rake (>= 0, < 13)
-      rdoc (>= 3, < 5)
-      rubyzip (~> 1.2.1)
-      snmp (~> 1.0)
-      uuidtools (~> 2.1.0)
-      yard (>= 0.8, < 0.10)
     httpclient (2.8.3)
-    json (1.8.6)
-    method_source (0.8.2)
+    json (2.1.0)
+    method_source (0.9.0)
     mini_portile2 (2.3.0)
     nokogiri (1.8.2)
       mini_portile2 (~> 2.3.0)
     opengl (0.10.0)
-    pry (0.10.4)
+    pry (0.11.3)
       coderay (~> 1.1.0)
-      method_source (~> 0.8.1)
-      slop (~> 3.4)
-    pry-doc (0.6.0)
-      pry (~> 0.9)
-      yard (~> 0.8)
-    puma (3.10.0)
+      method_source (~> 0.9.0)
+    pry-doc (0.13.1)
+      pry (~> 0.11)
+      yard (~> 0.9.11)
+    puma (3.11.2)
     qtbindings (4.8.6.4)
     rack (2.0.4)
     rake (12.3.0)
-    rdoc (4.3.0)
+    rdoc (5.1.0)
     ruby-termios (0.9.6)
     rubyzip (1.2.1)
-    slop (3.6.0)
     snmp (1.2.0)
     uuidtools (2.1.5)
     yard (0.9.12)
@@ -49,7 +53,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  cosmos
+  cosmos!
   ruby-termios (~> 0.9)
 
 BUNDLED WITH

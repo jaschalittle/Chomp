@@ -6,5 +6,5 @@ gem 'ruby-termios', '~> 0.9' if RbConfig::CONFIG['target_os'] !~ /mswin|mingw|cy
 if ENV['COSMOS_DEVEL']
   gem 'cosmos', :path => ENV['COSMOS_DEVEL']
 else
-  gem 'cosmos'
+  gem 'cosmos', :git => 'https://github.com/contradict/COSMOS.git', :branch => 'array_telemetry_plot'
 end
