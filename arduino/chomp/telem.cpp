@@ -99,9 +99,7 @@ struct LeddarTelemetryInner {
 typedef TelemetryPacket<TLM_ID_LEDDARV2, LeddarTelemetryInner> LeddarTelemetry;
 
 static LeddarTelemetry leddar_tlm;
-bool sendLeddarTelem(Detection* detections, unsigned int count, LeddarState state){
-  Detection min_detections[16];
-  getMinDetections(count, detections, min_detections);
+bool sendLeddarTelem(const Detection (&min_detections)[LEDDAR_SEGMENTS], unsigned int count, LeddarState state){
 
   leddar_tlm.inner.state = state;
   leddar_tlm.inner.count = count;

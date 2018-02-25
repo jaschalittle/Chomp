@@ -97,14 +97,18 @@ void chompLoop() {
     if (bufferDetections()){
 
         // extract detections from LEDDAR packet
-        uint8_t detection_count = parseDetections();
+        uint8_t raw_detection_count = parseDetections();
 
         // request new detections
         last_request_time = micros();
         requestDetections();
 
+        calculateMinimumDetections();
+        Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
+        getMinimumDetections(minDetections);
+
         // check for detections in zones
-        LeddarState current_leddar_state = getState(detection_count, getDetections(), getRange());
+        LeddarState current_leddar_state = getState(*minDetections, getRange());
         switch (current_leddar_state){
             case FAR_ZONE:
                 previous_leddar_state = current_leddar_state;
@@ -129,12 +133,12 @@ void chompLoop() {
         targeting_enabled = getTargetingEnable();
 
         // auto centering code
-        pidSteer(detection_count, getDetections(), 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
+        pidSteer(*minDetections, 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
         new_autodrive = true;
 
         // Send subsampled leddar telem
         if (micros() - last_leddar_telem_time > 100000L){
-          bool success = sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
+          bool success = sendLeddarTelem(*minDetections, raw_detection_count, current_leddar_state);
           if (success){
             last_leddar_telem_time = micros();
           }

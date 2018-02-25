@@ -18,7 +18,8 @@
 // #define FIRE_THRESHOLD 70
 #define CONTIG_THRESHOLD 2
 
-int APPROACH_THRESHOLDS[16] = { 76, 76, 75, 74, 73, 72, 71, 70, 70, 71, 72, 73, 74, 75, 76, 76 };
+int APPROACH_THRESHOLDS[LEDDAR_SEGMENTS] = { 76, 76, 75, 74, 73, 72, 71, 70, 70, 71, 72, 73, 74, 75, 76, 76 };
+static const size_t center_segment = (LEDDAR_SEGMENTS/2);
 #define APPROACH_BUFFER_SIZE 4
 
 float bufferVelocity(int8_t* buf, int8_t curs, bool assert_pos){
@@ -48,10 +49,10 @@ float bufferVelocity(int8_t* buf, int8_t curs, bool assert_pos){
 
 static int8_t left_buffer[APPROACH_BUFFER_SIZE];
 static int8_t left_buffer_cursor = 0;
-bool leftApproach(uint16_t detection_count, Detection* detections){
+bool leftApproach(const Detection (&detections)[LEDDAR_SEGMENTS]){
   int16_t last_detected_segment = -1;
   int16_t inner_contiguous_edge = -1;
-  for (uint8_t i = 0; i < detection_count && detections[i].Segment < 8; i++){
+  for (uint8_t i = 0; i < LEDDAR_SEGMENTS && detections[i].Segment < center_segment; i++){
     if (detections[i].Distance - FACE_OFFSET < APPROACH_THRESHOLDS[detections[i].Segment]){
       if (detections[i].Segment - last_detected_segment == 1){
         inner_contiguous_edge = detections[i].Segment;
@@ -84,10 +85,10 @@ bool leftApproach(uint16_t detection_count, Detection* detections){
 
 static int8_t right_buffer[APPROACH_BUFFER_SIZE];
 static int8_t right_buffer_cursor = 0;
-bool rightApproach(uint16_t detection_count, Detection* detections){
-  int16_t last_detected_segment = 16;
-  int16_t inner_contiguous_edge = 16;
-  for (int i = detection_count - 1; i >=0 && detections[i].Segment >= 8; i--){
+bool rightApproach(const Detection (&detections)[LEDDAR_SEGMENTS]){
+  int16_t last_detected_segment = LEDDAR_SEGMENTS;
+  int16_t inner_contiguous_edge = LEDDAR_SEGMENTS;
+  for (int i = LEDDAR_SEGMENTS - 1; i >=0 && detections[i].Segment >= center_segment; i--){
     if (detections[i].Distance - FACE_OFFSET < APPROACH_THRESHOLDS[detections[i].Segment]){
       if (last_detected_segment - detections[i].Segment  == 1){
         inner_contiguous_edge = detections[i].Segment;
@@ -99,7 +100,7 @@ bool rightApproach(uint16_t detection_count, Detection* detections){
   right_buffer[right_buffer_cursor] = inner_contiguous_edge;
   right_buffer_cursor = (right_buffer_cursor + 1) % APPROACH_BUFFER_SIZE;
 
-  if (inner_contiguous_edge != 16){
+  if (inner_contiguous_edge != LEDDAR_SEGMENTS){
     float vel = bufferVelocity(right_buffer, right_buffer_cursor, false);
     int16_t predicted_seg = inner_contiguous_edge + (int16_t)(vel*10.0);
     bool fire = predicted_seg <= CENTER_ZONE_FIRE_MIN;
@@ -118,13 +119,9 @@ bool rightApproach(uint16_t detection_count, Detection* detections){
   return false;
 }
 
-LeddarState getState(unsigned int detection_count, Detection* detections, int16_t fire_threshold){
+LeddarState getState(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t fire_threshold){
   int last_detected_segment = -1; // Off the left edge
   int contiguous = 0;
-
-  // only keep and analyze nearest detection in each segment
-  Detection min_detections[16];
-  getMinDetections(detection_count, detections, min_detections);
 
   // For firing, require that the entire center zone be occupied
   for (int i = CENTER_ZONE_FIRE_MIN; i < CENTER_ZONE_FIRE_MAX; i++){
@@ -138,14 +135,14 @@ LeddarState getState(unsigned int detection_count, Detection* detections, int16_
     return HIT_ZONE;
   }
 
-  if (leftApproach(16, min_detections) || rightApproach(16, min_detections)){
+  if (leftApproach(min_detections) || rightApproach(min_detections)){
     return PREDICTIVE_HIT_ZONE;
   }
 
   // For arming, only require that we detect a multi-segment object in the arm zone somewhere
   last_detected_segment = -1;
   contiguous = 0;
-  for (int i = 0; i < 16; i++){
+  for (int i = 0; i < LEDDAR_SEGMENTS; i++){
     if ( min_detections[i].Distance - FACE_OFFSET < ARM_THRESHOLD){
       if (min_detections[i].Segment - last_detected_segment == 1){
         contiguous += 1;
