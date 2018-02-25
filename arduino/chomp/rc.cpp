@@ -3,6 +3,7 @@
 #include "rc.h"
 #include "pins.h"
 #include <avr/interrupt.h>
+#include <util/atomic.h>
 
 // values for converting Futaba 7C RC PWM to Roboteq drive control (-1000 to 1000)
 // CH1 LEFT 1116-1932 1522 neutral CH2 RIGHT 1100-1920 1512 neutral
@@ -84,13 +85,13 @@ void attachRCInterrupts(){
     pinMode(LEFT_RC_PIN, INPUT_PULLUP);
     pinMode(RIGHT_RC_PIN, INPUT_PULLUP);
     pinMode(TARGETING_ENABLE_PIN, INPUT_PULLUP);
-    
-    cli();
-    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
 
-    PCICR |= 0b00000001; // Enables Ports B Pin Change Interrupts
-    PCMSK0 |= 0b11000000; // Mask interrupts to PCINT6 and PCINT7
-    sei();
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
+
+        PCICR |= 0b00000001; // Enables Ports B Pin Change Interrupts
+        PCMSK0 |= 0b11000000; // Mask interrupts to PCINT6 and PCINT7
+    }
 }
 
 // test whether there is new unused RC drive command
