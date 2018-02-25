@@ -8,12 +8,13 @@
 enum TelemetryPacketId {
     TLM_ID_HS=1,
     TLM_ID_LEDDAR=2,
-    TLM_ID_LEDDARV2=15,
     TLM_ID_SNS=10,
     TLM_ID_SYS=11,
     TLM_ID_SBS=12,
     TLM_ID_DBGM=13,
-    TLM_ID_SWG=14
+    TLM_ID_SWG=14,
+    TLM_ID_LEDDARV2=15,
+    TLM_ID_PWM=16,
 };
 
 const uint16_t TLM_TERMINATOR=0x6666;
@@ -190,4 +191,16 @@ bool sendSwingTelem(uint16_t datapoints_collected,
     success &= Xbee.write((uint8_t *)&tlm.terminator, sizeof(tlm.terminator));
 
     return success;
+}
+struct PWMTelemInner {
+    int16_t left_drive;
+    int16_t right_drive;
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_PWM, PWMTelemInner> PWMTelemetry;
+
+bool sendPWMTelem(int16_t left_drive, int16_t right_drive) {
+    PWMTelemetry tlm;
+    tlm.inner.left_drive = left_drive;
+    tlm.inner.right_drive = right_drive;
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }

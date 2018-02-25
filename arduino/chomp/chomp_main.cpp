@@ -212,6 +212,7 @@ void chompLoop() {
       bool success = sendSensorTelem(pressure, angle);
       success |= sendSystemTelem(loop_speed, leddar_overrun, leddar_crc_error, sbus_overrun);
       success |= sendSbusTelem(previous_rc_bitfield);
+      success |= sendPWMTelem(left_drive_value, right_drive_value);
       if (success){
         last_telem_time = micros();
       }
