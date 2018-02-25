@@ -195,8 +195,8 @@ void chompLoop() {
         }
     }
 
-    left_drive_value = 0; //getLeftRc();
-    right_drive_value = 0;//getRightRc();
+    left_drive_value = getLeftRc();
+    right_drive_value = getRightRc();
 
     if (newRc() || (new_autodrive && getTargetingEnable())) {
         drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
@@ -212,7 +212,7 @@ void chompLoop() {
       bool success = sendSensorTelem(pressure, angle);
       success |= sendSystemTelem(loop_speed, leddar_overrun, leddar_crc_error, sbus_overrun);
       success |= sendSbusTelem(previous_rc_bitfield);
-      success |= sendPWMTelem(getLeftRc(), getRightRc());
+      success |= sendPWMTelem(left_drive_value, right_drive_value);
       if (success){
         last_telem_time = micros();
       }

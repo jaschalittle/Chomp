@@ -5,16 +5,19 @@
 #include <avr/interrupt.h>
 
 // values for converting Futaba 7C RC PWM to Roboteq drive control (-1000 to 1000)
-// CH1 922-2120 1522 neutral CH2 909-2106 1503 neutral
+// CH1 LEFT 1116-1932 1522 neutral CH2 RIGHT 1100-1920 1512 neutral
+// Note - left and right rc have different polarities! When you throttle forwards,
+// expect to see left rc go low and right rc go high.
+
 #define LEFT_PWM_NEUTRAL 1522
-#define LEFT_PWM_RANGE 599
-#define RIGHT_PWM_NEUTRAL 1503
-#define RIGHT_PWM_RANGE 599
-// deadband is 60 wide, 5%
-#define LEFT_DEADBAND_MIN 1492
-#define LEFT_DEADBAND_MAX 1552
-#define RIGHT_DEADBAND_MIN 1473
-#define RIGHT_DEADBAND_MAX 1533
+#define LEFT_PWM_RANGE 410
+#define RIGHT_PWM_NEUTRAL 1512
+#define RIGHT_PWM_RANGE 410
+// deadband is 40 wide, 5%
+#define LEFT_DEADBAND_MIN 1502
+#define LEFT_DEADBAND_MAX 1542
+#define RIGHT_DEADBAND_MIN 1492
+#define RIGHT_DEADBAND_MAX 1532
 
 // values for converting Futaba 9C RC PWM to Roboteq drive control (-1000 to 1000)
 // CH1 922-2120 1522 neutral CH2 909-2106 1503 neutral
@@ -45,22 +48,22 @@ ISR(PCINT0_vect)
 {
     uint8_t PBNOW = PINB ^ PBLAST;
     PBLAST = PINB;
-    uint8_t right_rc_bit = 1 << PINB6;
-    uint8_t left_rc_bit = 1 << PINB7;
-    if(PBNOW & right_rc_bit){
-        if (PINB & right_rc_bit){// Rising
-            RIGHT_RC_prev_time = micros();
-        }
-        else{
-            RIGHT_RC_pwm_val = micros() - RIGHT_RC_prev_time;
-        }
-    }
+    uint8_t left_rc_bit = 1 << PINB6;
+    uint8_t right_rc_bit = 1 << PINB7;
     if(PBNOW & left_rc_bit){
         if (PINB & left_rc_bit) { // Rising
             LEFT_RC_prev_time = micros();
         }
         else{
             LEFT_RC_pwm_val = micros() - LEFT_RC_prev_time;
+        }
+    }
+    if(PBNOW & right_rc_bit){
+        if (PINB & right_rc_bit){// Rising
+            RIGHT_RC_prev_time = micros();
+        }
+        else{
+            RIGHT_RC_pwm_val = micros() - RIGHT_RC_prev_time;
         }
     }
 }
@@ -154,7 +157,7 @@ int16_t getLeftRc() {
     if (LEFT_RC_pwm_val > LEFT_DEADBAND_MAX || LEFT_RC_pwm_val < LEFT_DEADBAND_MIN) {
         drive_value = ((int16_t) LEFT_RC_pwm_val - LEFT_PWM_NEUTRAL) * 1000L / LEFT_PWM_RANGE;
     }
-    return LEFT_RC_pwm_val;//drive_value;
+    return drive_value;
 }
 
 int16_t getRightRc() {
@@ -162,7 +165,7 @@ int16_t getRightRc() {
     if (RIGHT_RC_pwm_val > RIGHT_DEADBAND_MAX || RIGHT_RC_pwm_val < RIGHT_DEADBAND_MIN) {
         drive_value = ((int16_t) RIGHT_RC_pwm_val - RIGHT_PWM_NEUTRAL) * 1000L / RIGHT_PWM_RANGE;
     }
-    return RIGHT_RC_pwm_val;//drive_value;
+    return drive_value;
 }
 
 bool getTargetingEnable() {
