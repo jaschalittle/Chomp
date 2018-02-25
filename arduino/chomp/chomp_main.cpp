@@ -199,13 +199,21 @@ void chompLoop() {
         }
     }
 
+    // always sent in telemetry
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
-
-    if (newRc() || (new_autodrive && getTargetingEnable())) {
-        drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
+    bool new_rc = newRc();
+    if(new_autodrive || new_rc) {
+        if(getTargetingEnable()) {
+            left_drive_value -= steer_bias;
+            right_drive_value -= steer_bias;
+            drive(left_drive_value, right_drive_value);
+            updateDriveHistory(left_drive_value, right_drive_value);
+        } else if(new_rc) {
+            updateDriveHistory(left_drive_value, right_drive_value);
+        }
         new_autodrive = false;
-    }
+   }
 
    if (micros() - last_telem_time > 50000L){
       uint32_t loop_speed = micros() - start_time;
