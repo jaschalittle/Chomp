@@ -184,8 +184,8 @@ bool sendSwingTelem(uint16_t datapoints_collected,
     bool success = Xbee.write((unsigned char *)&tlm, sizeof(tlm)-sizeof(TLM_TERMINATOR));
     if(success)
     {
-        success &= Xbee.enqueue((uint8_t *)angle_data, sizeof(uint16_t)*125, NULL, NULL);
-        success &= Xbee.enqueue((uint8_t *)pressure_data, sizeof(uint16_t)*125, NULL, NULL);
+        success &= Xbee.enqueue((uint8_t *)angle_data, sizeof(uint16_t)*256, NULL, NULL);
+        success &= Xbee.enqueue((uint8_t *)pressure_data, sizeof(int16_t)*256, NULL, NULL);
     }
     success &= Xbee.write((uint8_t *)&tlm.terminator, sizeof(tlm.terminator));
 
