@@ -39,32 +39,29 @@ static volatile uint32_t RIGHT_RC_prev_time = 0;
 static volatile uint16_t TARGETING_ENABLE_pwm_val = 1520;
 static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
 
-
-static volatile uint8_t PBLAST = 0; // TODO - what is the appropriate startup state?
+static volatile uint8_t PBLAST = 0; // 0 so that we detect rising interrupts first.
 static volatile bool NEW_RC = false;
 
-
-ISR(PCINT0_vect)
-{
+ISR(PCINT0_vect) {
     uint8_t PBNOW = PINB ^ PBLAST;
     PBLAST = PINB;
     uint8_t left_rc_bit = 1 << PINB6;
     uint8_t right_rc_bit = 1 << PINB7;
     
     // These can come in simultaneously so don't make this an if/else.
-    if(PBNOW & left_rc_bit){
+    if (PBNOW & left_rc_bit) {
         if (PINB & left_rc_bit) { // Rising
             LEFT_RC_prev_time = micros();
         }
-        else{
+        else {
             LEFT_RC_pwm_val = micros() - LEFT_RC_prev_time;
         }
     }
-    if(PBNOW & right_rc_bit){
-        if (PINB & right_rc_bit){// Rising
+    if (PBNOW & right_rc_bit) {
+        if (PINB & right_rc_bit) { // Rising
             RIGHT_RC_prev_time = micros();
         }
-        else{
+        else {
             RIGHT_RC_pwm_val = micros() - RIGHT_RC_prev_time;
         }
     }
