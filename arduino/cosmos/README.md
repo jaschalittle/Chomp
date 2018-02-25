@@ -5,10 +5,13 @@
 
     PATH=~/.rbenv/shims:$PATH
 
-* Checkout our custom version of [COSMOS](https://github.com/contradict/COSMOS)
+* Checkout our custom version of [COSMOS](https://github.com/contradict/COSMOS) and build the extensions
 
     $ cd ~/src
     $ git clone https://github.com/contradict/COSMOS.git
+    $ cd COSMOS
+    $ git checkout -b array_telemetry_plot origin/array_telemetry_plot
+    $ rake build
 
 * Set the environment variable `COSMOS_DEVEL` to the full path to the checkout location
 
