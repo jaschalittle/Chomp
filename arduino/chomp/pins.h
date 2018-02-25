@@ -3,7 +3,7 @@
 #include "DMASerial.h"
 
 //------------------ DEFINES----------------
-#define HARD_WIRED
+// #define HARD_WIRED
 
 // ----------------- ANALOG ----------------- 
 // Sensors
