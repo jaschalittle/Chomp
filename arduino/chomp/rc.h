@@ -5,7 +5,7 @@
 
 enum RCinterrupts {
     WEAPONS_ENABLE = digitalPinToInterrupt(WEAPONS_ENABLE_PIN),
-    TARGETING_ENABLE = digitalPinToInterrupt(FUTABA_CH5_PIN),
+    TARGETING_ENABLE = digitalPinToInterrupt(TARGETING_ENABLE_PIN),
 };
 
 enum SBUSChannels {

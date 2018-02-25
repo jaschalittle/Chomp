@@ -50,6 +50,8 @@ ISR(PCINT0_vect)
     PBLAST = PINB;
     uint8_t left_rc_bit = 1 << PINB6;
     uint8_t right_rc_bit = 1 << PINB7;
+    
+    // These can come in simultaneously so don't make this an if/else.
     if(PBNOW & left_rc_bit){
         if (PINB & left_rc_bit) { // Rising
             LEFT_RC_prev_time = micros();
@@ -82,9 +84,9 @@ void TARGETING_ENABLE_falling() {
 
 // Set up all RC interrupts
 void attachRCInterrupts(){
-    pinMode(FUTABA_CH1_PIN, INPUT_PULLUP);
-    pinMode(FUTABA_CH2_PIN, INPUT_PULLUP);
-    pinMode(FUTABA_CH5_PIN, INPUT_PULLUP);
+    pinMode(LEFT_RC_PIN, INPUT_PULLUP);
+    pinMode(RIGHT_RC_PIN, INPUT_PULLUP);
+    pinMode(TARGETING_ENABLE_PIN, INPUT_PULLUP);
     
     cli();
     attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
@@ -169,8 +171,7 @@ int16_t getRightRc() {
 }
 
 bool getTargetingEnable() {
-    return false;
-    //return TARGETING_ENABLE_pwm_val > 1700;
+    return TARGETING_ENABLE_pwm_val > 1700;
 }
 
 #define AUTO_HAMMER_THRESHOLD 1000 // (190 down - 1800 up)
