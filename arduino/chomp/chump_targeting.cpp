@@ -26,11 +26,7 @@
 // Consider adding requirement that near objects must cover multiple segments
 static Track tracked_object;
 static uint32_t last_leddar_time = micros();
-void trackObject(uint8_t num_detections, Detection* detections, int16_t distance_threshold) {
-    
-    // only keep and analyze nearest detection in each segment
-    Detection min_detections[16];
-    getMinDetections(num_detections, detections, min_detections);
+void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t distance_threshold) {
     
     // call all objects in frame by detecting edges
     int16_t last_seg_distance = min_detections[0].Distance;
@@ -150,11 +146,11 @@ float error_delta_buffer[ERROR_DELTA_BUFFER_LENGTH];
 float target_angular_vel = 0.0;
 float last_angle = 0.0;
 
-void pidSteer (unsigned int num_detections, Detection* detections, uint16_t distance_threshold, int16_t *steer_bias, bool reset) {
+void pidSteer (const Detection (&detections)[LEDDAR_SEGMENTS], uint16_t distance_threshold, int16_t *steer_bias, bool reset) {
     if (reset) {
         tracked_object.reset();
     }
-    trackObject(num_detections, detections, distance_threshold);
+    trackObject(detections, distance_threshold);
     int16_t calculated_steer_bias = P_COEFF * tracked_object.Angle;
     if (calculated_steer_bias > STEER_BIAS_CAP) { calculated_steer_bias = STEER_BIAS_CAP; }
     if (calculated_steer_bias < -STEER_BIAS_CAP) { calculated_steer_bias = -STEER_BIAS_CAP; }

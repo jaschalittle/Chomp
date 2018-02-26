@@ -9,7 +9,7 @@
 #define LEDDAR_AMPLITUDE_THRESHOLD 50
 
 // Table of CRC values for highorder byte
-static uint8_t CRC_HI[] =
+static const uint8_t CRC_HI[] =
 {
     0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
     0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0,
@@ -32,7 +32,7 @@ static uint8_t CRC_HI[] =
 };
 
 // Table of CRC values for loworder byte
-static uint8_t CRC_LO[] =
+static const uint8_t CRC_LO[] =
 {
     0x00, 0xC0, 0xC1, 0x01, 0xC3, 0x03, 0x02, 0xC2, 0xC6, 0x06, 0x07, 0xC7, 0x05, 0xC5, 0xC4,
     0x04, 0xCC, 0x0C, 0x0D, 0xCD, 0x0F, 0xCF, 0xCE, 0x0E, 0x0A, 0xCA, 0xCB, 0x0B, 0xC9, 0x09,
@@ -54,8 +54,14 @@ static uint8_t CRC_LO[] =
     0x40
 };
 
+static Detection RawDetections[MAX_DETECTIONS];
+static uint8_t good_detections;
+static Detection MinimumDetections[LEDDAR_SEGMENTS];
 
 void leddarWrapperInit(){
+  for(size_t i=0; i<LEDDAR_SEGMENTS; i++) {
+    MinimumDetections[i].Segment = i;
+  }
   LeddarSerial.begin(115200);
 }
 
@@ -79,6 +85,8 @@ static const uint16_t MAX_LEDDAR_BUFFER=256;
 static const uint8_t LEDDAR_SLAVE_ID=0x01;
 static const uint8_t REQUEST_DETECTIONS_CMD=0x41;
 uint8_t receivedData[MAX_LEDDAR_BUFFER] = {0};
+uint16_t leddar_overrun = 0;
+uint16_t leddar_crc_error = 0;
 void requestDetections(){
   uint8_t data[64] = {0};
   uint16_t count = LeddarSerial.available();
@@ -97,8 +105,6 @@ void requestDetections(){
   LeddarSerial.write(data, 4);
 }
 
-uint16_t leddar_overrun = 0;
-uint16_t leddar_crc_error = 0;
 bool bufferDetections(){
   uint16_t count = LeddarSerial.available();
   if (count > 0){
@@ -124,14 +130,13 @@ bool bufferDetections(){
   return false;
 }
 
-Detection Detections[MAX_DETECTIONS];
 uint8_t parseDetections(){
   if(CRC16(receivedData, len) != 0){
     leddar_crc_error ++;
     return 0;
   }
   uint8_t detection_count = min(MAX_DETECTIONS, receivedData[2]);
-  uint8_t good_detections=0;
+  good_detections = 0;
   // Parse out detection info
   for ( uint16_t i = 0; i < detection_count; i++){
     uint8_t offset = 3 + 5*i;
@@ -142,10 +147,10 @@ uint8_t parseDetections(){
     // filter near detections that are of insufficient amplitude
     if (distance > AMPLITUDE_THRESHOLDING_RANGE || amplitude > LEDDAR_AMPLITUDE_THRESHOLD) {
       // flip the segment ID since we're upside down
-      uint8_t segment = 15 - (receivedData[offset+4]/16);
-      Detections[good_detections].Distance = distance;
-      Detections[good_detections].Amplitude = amplitude;
-      Detections[good_detections].Segment = segment;
+      uint8_t segment = (LEDDAR_SEGMENTS-1) - (receivedData[offset+4]/LEDDAR_SEGMENTS);
+      RawDetections[good_detections].Distance = distance;
+      RawDetections[good_detections].Amplitude = amplitude;
+      RawDetections[good_detections].Segment = segment;
       good_detections++;
     }
   }
@@ -153,19 +158,26 @@ uint8_t parseDetections(){
   return good_detections;
 }
 
-Detection* getDetections(){
-  return Detections;
+size_t getRawDetections(const Detection **detections) {
+  *detections = RawDetections;
+  return good_detections;
 }
 
 #define MIN_OBJECT_DISTANCE 30
-// outputMinDetections should be a default-constructed array of size 16
-void getMinDetections(uint8_t detection_count, Detection* inputDetections, Detection* outputMinDetections){
-  for (uint8_t i = 0; i < detection_count; i++) {
-    uint8_t segment = inputDetections[i].Segment;
-    if (inputDetections[i].Distance < outputMinDetections[segment].Distance &&
-        inputDetections[i].Distance > MIN_OBJECT_DISTANCE) {
-      outputMinDetections[segment] = inputDetections[i];
+void calculateMinimumDetections() {
+  for (size_t i=0; i < LEDDAR_SEGMENTS; i++) {
+    MinimumDetections[i].reset();
+  }
+  for (uint8_t i = 0; i < LEDDAR_SEGMENTS; i++) {
+    uint8_t segment = RawDetections[i].Segment;
+    if (RawDetections[i].Distance < MinimumDetections[segment].Distance &&
+        RawDetections[i].Distance > MIN_OBJECT_DISTANCE) {
+      MinimumDetections[segment] = RawDetections[i];
     }
   }
 }
 
+size_t getMinimumDetections(const Detection (*detections)[LEDDAR_SEGMENTS]) {
+ detections = &MinimumDetections;
+ return LEDDAR_SEGMENTS;
+}

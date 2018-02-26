@@ -97,14 +97,18 @@ void chompLoop() {
     if (bufferDetections()){
 
         // extract detections from LEDDAR packet
-        uint8_t detection_count = parseDetections();
+        uint8_t raw_detection_count = parseDetections();
 
         // request new detections
         last_request_time = micros();
         requestDetections();
 
+        calculateMinimumDetections();
+        Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
+        getMinimumDetections(minDetections);
+
         // check for detections in zones
-        LeddarState current_leddar_state = getState(detection_count, getDetections(), getRange());
+        LeddarState current_leddar_state = getState(*minDetections, getRange());
         switch (current_leddar_state){
             case FAR_ZONE:
                 previous_leddar_state = current_leddar_state;
@@ -129,12 +133,12 @@ void chompLoop() {
         targeting_enabled = getTargetingEnable();
 
         // auto centering code
-        pidSteer(detection_count, getDetections(), 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
+        pidSteer(*minDetections, 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
         new_autodrive = true;
 
         // Send subsampled leddar telem
         if (micros() - last_leddar_telem_time > 100000L){
-          bool success = sendLeddarTelem(getDetections(), detection_count, current_leddar_state);
+          bool success = sendLeddarTelem(*minDetections, raw_detection_count, current_leddar_state);
           if (success){
             last_leddar_telem_time = micros();
           }
@@ -195,13 +199,22 @@ void chompLoop() {
         }
     }
 
+    // always sent in telemetry
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
-
-    if (newRc() || (new_autodrive && getTargetingEnable())) {
-        drive(left_drive_value - steer_bias, right_drive_value - steer_bias, getTargetingEnable());
+    bool new_rc = newRc();
+    if(new_autodrive || new_rc) {
+        if(getTargetingEnable()) {
+            left_drive_value -= steer_bias;
+            right_drive_value -= steer_bias;
+            // values passed by reference to capture clamping
+            drive(left_drive_value, right_drive_value);
+            updateDriveHistory(left_drive_value, right_drive_value);
+        } else if(new_rc) {
+            updateDriveHistory(left_drive_value, right_drive_value);
+        }
         new_autodrive = false;
-    }
+   }
 
    if (micros() - last_telem_time > 50000L){
       uint32_t loop_speed = micros() - start_time;
