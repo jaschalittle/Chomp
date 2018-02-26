@@ -207,6 +207,7 @@ void chompLoop() {
         if(getTargetingEnable()) {
             left_drive_value -= steer_bias;
             right_drive_value -= steer_bias;
+            // values passed by reference to capture clamping
             drive(left_drive_value, right_drive_value);
             updateDriveHistory(left_drive_value, right_drive_value);
         } else if(new_rc) {
