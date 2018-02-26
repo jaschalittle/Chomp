@@ -10,15 +10,20 @@
 // Note - left and right rc have different polarities! When you throttle forwards,
 // expect to see left rc go low and right rc go high.
 
-#define LEFT_PWM_NEUTRAL 1522
-#define LEFT_PWM_RANGE 410
-#define RIGHT_PWM_NEUTRAL 1512
-#define RIGHT_PWM_RANGE 410
-// deadband is 40 wide, 5%
-#define LEFT_DEADBAND_MIN 1502
-#define LEFT_DEADBAND_MAX 1542
-#define RIGHT_DEADBAND_MIN 1492
-#define RIGHT_DEADBAND_MAX 1532
+// These constants are copied from the Roboteq manual
+// https://www.roboteq.com/index.php/docman/motor-controllers-documents-and-files/documentation/user-manual/272-roboteq-controllers-user-manual-v17/file
+// page 76
+// We want to convert from PWM->percent speed with the same coefficients
+// as the Roboteq so driving behaviour really doesn't depend on command source
+#define LEFT_PWM_NEUTRAL 1500
+#define LEFT_PWM_RANGE 500
+#define RIGHT_PWM_NEUTRAL 1500
+#define RIGHT_PWM_RANGE 500
+// deadband is 50 wide, 5% either way of zero
+#define LEFT_DEADBAND_MIN 1475
+#define LEFT_DEADBAND_MAX 1525
+#define RIGHT_DEADBAND_MIN 1475
+#define RIGHT_DEADBAND_MAX 1525
 
 // values for converting Futaba 9C RC PWM to Roboteq drive control (-1000 to 1000)
 // CH1 922-2120 1522 neutral CH2 909-2106 1503 neutral
@@ -33,11 +38,11 @@
 // #define RIGHT_DEADBAND_MAX 1560
 
 // initialize PWM vals to neutral values
-static volatile uint16_t LEFT_RC_pwm_val = 1520;
+static volatile uint16_t LEFT_RC_pwm_val = 1500;
 static volatile uint32_t LEFT_RC_prev_time = 0;
-static volatile uint16_t RIGHT_RC_pwm_val = 1520;
+static volatile uint16_t RIGHT_RC_pwm_val = 1500;
 static volatile uint32_t RIGHT_RC_prev_time = 0;
-static volatile uint16_t TARGETING_ENABLE_pwm_val = 1520;
+static volatile uint16_t TARGETING_ENABLE_pwm_val = 1500;
 static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
 
 static volatile uint8_t PBLAST = 0; // 0 so that we detect rising interrupts first.
