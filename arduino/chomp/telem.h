@@ -30,7 +30,7 @@ bool sendSystemTelem(uint32_t loop_speed, uint16_t leddar_overrun,
                      uint16_t invalid_command);
 bool sendSensorTelem(int16_t pressure, uint16_t angle);
 bool sendSbusTelem(uint16_t cmd_bitfield);
-bool sendDebugMessageTelem(char *msg);
+bool sendDebugMessageTelem(const char *msg);
 void debug_print(const String &msg);
 bool sendLeddarTelem(const Detection (&detections)[LEDDAR_SEGMENTS], unsigned int count, LeddarState state);
 bool sendSwingTelem(uint16_t datapoints_collected,
