@@ -98,7 +98,7 @@ void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timest
   vent_closed = false;  
 }
 
-void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
+void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool autofire ){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -196,7 +196,10 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
             if (flame_pulse) {
                 flameEnd();
             }
-        } else {
+        } else if (!autofire) {
+            // If we're *not* in autochomp mode, and the hammer is at a funny angle, it probably
+            // means we're in a weird spot and maybe want to unstick ourselves with a
+            // minimum-intensity danger fire.
             noAngleFire(/* hammer intensity */1, false, false);
             return;
         }

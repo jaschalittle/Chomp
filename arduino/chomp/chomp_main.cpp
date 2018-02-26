@@ -120,7 +120,7 @@ void chompLoop() {
             case PREDICTIVE_HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
                     if (autofireEnabled(previous_rc_bitfield)){
-                        fire( hammer_intensity, previous_rc_bitfield & FLAME_PULSE_BIT, previous_rc_bitfield & MAG_PULSE_BIT );
+                        fire( hammer_intensity, previous_rc_bitfield & FLAME_PULSE_BIT, previous_rc_bitfield & MAG_PULSE_BIT, true /*autofire*/ );
                     }
                 } else {
                     previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
@@ -173,7 +173,7 @@ void chompLoop() {
                 if (current_rc_bitfield & DANGER_CTRL_BIT){
                   noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
                 } else {
-                  fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
+                  fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT, false /*autofire*/);
                 }
             }
             if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
