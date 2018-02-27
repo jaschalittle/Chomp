@@ -178,3 +178,24 @@ bool sendPWMTelem(int16_t left_drive, int16_t right_drive) {
     tlm.inner.right_drive = right_drive;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
+
+
+struct IMUTelemInner {
+    int16_t a[3];
+    int16_t g[3];
+    int16_t m[3];
+    int16_t t;
+};
+typedef TelemetryPacket<TLM_ID_IMU, IMUTelemInner> IMUTelemetry;
+
+bool sendIMUTelem(int16_t (&a)[3], int16_t (&g)[3], int16_t (&m)[3], int16_t t)
+{
+    IMUTelemetry tlm;
+    for(size_t i=0;i<3;i++) {
+        tlm.inner.a[i] = a[i];
+        tlm.inner.g[i] = g[i];
+        tlm.inner.m[i] = m[i];
+    }
+    tlm.inner.t = t;
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
