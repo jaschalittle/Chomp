@@ -25,6 +25,7 @@ template <uint8_t packet_id, typename packet_inner> struct TelemetryPacket{
     TelemetryPacket() : pkt_id(packet_id), terminator(TLM_TERMINATOR) {};
 } __attribute__((packed));
 
+
 struct SystemTelemetryInner {
     uint8_t  weapons_enabled:1;
     uint32_t loop_speed;
@@ -82,6 +83,7 @@ bool sendSbusTelem(uint16_t cmd_bitfield){
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 
+
 const size_t MAX_DEBUG_MSG_LENGTH=128;
 bool sendDebugMessageTelem(const char *msg){
     CHECK_ENABLED(TLM_ID_DBGM);
@@ -100,6 +102,7 @@ bool sendDebugMessageTelem(const char *msg){
 void debug_print(const String &msg){
     sendDebugMessageTelem(msg.c_str());
 }
+
 
 struct LeddarTelemetryInner {
     uint16_t state;
@@ -123,49 +126,6 @@ bool sendLeddarTelem(const Detection (&min_detections)[LEDDAR_SEGMENTS], unsigne
                       NULL, NULL);
 }
 
-/*
-extern DMASerial& Debug;
-
-void sendSwingData(uint16_t datapoints_collected, 
-                   uint16_t* angle_data, 
-                   int16_t* pressure_data, 
-                   uint16_t data_collect_timestep, 
-                   uint16_t throw_close_timestep, 
-                   uint16_t vent_open_timestep, 
-                   uint16_t throw_close_angle, 
-                   uint16_t start_angle) {
-    for (uint16_t i = 0; i < datapoints_collected; i++) {
-        String timestep_data = String("");
-        timestep_data += "d\t";
-        timestep_data += angle_data[i];
-        timestep_data += "\t";
-        timestep_data += pressure_data[i];
-        Debug.println(timestep_data);
-        delay(2);
-    }
-
-    Debug.print("timestep\t");
-    delay(50);
-    Debug.println(data_collect_timestep);
-    delay(50);
-    Debug.print("tc_tstep\t");
-    delay(50);
-    Debug.println(throw_close_timestep);
-    delay(50);
-    Debug.print("vo_tstep\t");
-    delay(50);
-    Debug.println(vent_open_timestep);
-    delay(50);
-    Debug.print("tc_angle\t");
-    delay(50);
-    Debug.println(throw_close_angle);
-    delay(50);
-    Debug.print("st_angle\t");
-    delay(50);
-    Debug.println(start_angle);
-    delay(50);
-}
-*/
 
 struct SwingTelemInner {
     uint16_t sample_period;
@@ -203,6 +163,8 @@ bool sendSwingTelem(uint16_t datapoints_collected,
 
     return success;
 }
+
+
 struct PWMTelemInner {
     int16_t left_drive;
     int16_t right_drive;
