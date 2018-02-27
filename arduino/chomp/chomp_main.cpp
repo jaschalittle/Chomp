@@ -13,6 +13,9 @@
 #include "chump_targeting.h"
 #include <avr/wdt.h>
 #include "command.h"
+#include "I2C.h"
+#include "MPU6050.h"
+#include "telem_message_stream.h"
 
 
 // SAFETY CODE ----------------------------------------------------
@@ -49,6 +52,9 @@ void weaponsEnableFalling(){
     }
 }
 // -----------------------------------------------------------------
+//TelemetryMessageStream telemetry_stream;
+//
+MPU6050 IMU;
 
 void chompSetup() {
     // Come up safely
@@ -62,6 +68,10 @@ void chompSetup() {
     sensorSetup();
     attachRCInterrupts();
     debug_print("STARTUP");
+    //I2c.scan(telemetry_stream);
+    IMU.initialize();
+    bool IMUcheck = IMU.testConnection();
+    debug_print(String("IMU.initialize() = " + IMUcheck));
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
