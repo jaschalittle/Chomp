@@ -1,5 +1,9 @@
 ## How I got this to work
 
+* Install some build dependencies
+
+    # apt-get install -y build-essential libssl-dev libreadline-dev zlib1g-dev libqt4-dev
+
 * Install [rbenv](https://github.com/rbenv/rbenv#basic-github-checkout)
 
     $ git clone https://github.com/rbenv/rbenv.git ~/.rbenv
@@ -28,5 +32,8 @@
 
     $ gem install bundler
 
-* run `bundle install` in this directory
-* run `ruby ./Launcher` in this directory
+* Install this package
+
+    $ bundle install
+
+* run `ruby ./Launcher` in this directory to start COSMOS
