@@ -54,11 +54,7 @@ void chompSetup() {
     safeState();
     attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     wdt_enable(WDTO_4S);
-#ifdef HARD_WIRED
-    Xbee.begin(115200);
-#else
     xbeeInit();
-#endif
     Sbus.begin(100000);
     driveSetup();
     leddarWrapperInit();
