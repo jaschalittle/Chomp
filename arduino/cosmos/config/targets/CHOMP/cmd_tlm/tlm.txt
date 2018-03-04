@@ -11,7 +11,7 @@ TELEMETRY CHOMP PWM LITTLE_ENDIAN "PWM"
         UNITS "PWM" "pwm"
     APPEND_ITEM RIGHT_RC 16 INT "Target Enable"
         UNITS "PWM" "pwm"
-        
+
 TELEMETRY CHOMP_HARDWIRED SYS LITTLE_ENDIAN "System"
     APPEND_ID_ITEM PKTID 8 UINT 11 "Packet ID which must be 11"
     APPEND_ITEM WEAPONS_ENABLED 1 UINT "Weapons enabled"
@@ -21,6 +21,9 @@ TELEMETRY CHOMP_HARDWIRED SYS LITTLE_ENDIAN "System"
     APPEND_ITEM LEDDAR_OVERRUN 16 UINT "LEDDAR buffer overruns"
     APPEND_ITEM LEDDAR_CRC 16 UINT "LEDDAR CRC errors"
     APPEND_ITEM SBUS_OVERRUN 16 UINT "S.Bus buffer overruns"
+    APPEND_ITEM LAST_COMMAND 8 UINT "Last received command"
+    APPEND_ITEM COMMAND_OVERRUN 16 UINT "Command buffer overruns"
+    APPEND_ITEM INVALID_COMMAND 16 UINT "Invalid commands"
 
 TELEMETRY CHOMP SBS LITTLE_ENDIAN "S.Bus"
     APPEND_ID_ITEM PKTID 8 UINT 12 "Packet ID which must be 12"
@@ -126,3 +129,25 @@ TELEMETRY CHOMP SWING LITTLE_ENDIAN "Swing Data"
         UNITS "Degrees" "deg"
     APPEND_ARRAY_ITEM PRE 16 INT 4096 "Pressure data"
         UNITS "Pounds per Square Inch" "PSI"
+
+COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
+    APPEND_ID_PARAMETER CMDID 8 UINT 10 10 10 "Command ID which must be 10"
+    APPEND_PARAMETER SPERIOD 32 UINT 10000 30000000 50000 "Interval between small telemetry transmissions"
+        UNITS "microseconds" "us"
+    APPEND_PARAMETER LPERIOD 32 UINT 10000 30000000 100000 "Interval between LEDDAR telemetry transmissions"
+        UNITS "microseconds" "us"
+    APPEND_PARAMETER PADDING03 4 UINT 0 0 0
+    APPEND_PARAMETER EN_DBGM_AUTOFIRE 1 UINT 0 1 0 "Enable Autofire debug messages"
+    APPEND_PARAMETER EN_LEDDAR 1 UINT 0 1 0 "Enable LEDDAR telemetry packet"
+    APPEND_PARAMETER EN_HS 1 UINT 0 1 0 "Enable HS telemetry packet"
+    APPEND_PARAMETER PADDING00 1 UINT 0 0 0
+    APPEND_PARAMETER EN_LEDDARV2 1 UINT 0 1 1 "Enable LEDDARV2 telemetry packet"
+    APPEND_PARAMETER EN_SWG 1 UINT 0 1 1 "Enable SWG telemetry packet"
+    APPEND_PARAMETER EN_DBGM 1 UINT 0 1 1 "Enable DBGM telemetry packet"
+    APPEND_PARAMETER EN_SBS 1 UINT 0 1 1 "Enable SBS telemetry packet"
+    APPEND_PARAMETER EN_SYS 1 UINT 0 1 1 "Enable SYS telemetry packet"
+    APPEND_PARAMETER EN_SNS 1 UINT 0 1 1 "Enable SNS telemetry packet"
+    APPEND_PARAMETER PADDING10 2 UINT 0 0 0
+    APPEND_PARAMETER PADDING21 7 UINT 0 0 0
+    APPEND_PARAMETER EN_PWM 1 UINT 0 1 1 "Enable PWM telemetry packet"
+    APPEND_PARAMETER PADDING30 8 UINT 0 0 0
