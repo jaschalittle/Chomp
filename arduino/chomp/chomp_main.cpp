@@ -104,7 +104,7 @@ void chompLoop() {
         requestDetections();
 
         calculateMinimumDetections(raw_detection_count);
-        Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
+        const Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
         getMinimumDetections(&minDetections);
 
         // check for detections in zones
