@@ -80,7 +80,7 @@ DMASerial::DMASerial(
 
 // Function that can be weakly referenced by serialEventRun to prevent
 // pulling in this file if it's not otherwise used.
-bool DSerial0_available() {
+bool Serial0_available() {
   return DSerial.available();
 }
 
