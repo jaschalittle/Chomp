@@ -1,4 +1,5 @@
-#include "Arduino.h"
+#include <stdint.h>
+#include <HardwareSerial.h>
 
 class DMASerial : public HardwareSerial {
     volatile bool cts_state;
