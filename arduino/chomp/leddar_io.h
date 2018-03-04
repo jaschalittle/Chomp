@@ -23,9 +23,9 @@ void leddarWrapperInit();
 void requestDetections();
 bool bufferDetections();
 uint8_t parseDetections();
-void calculateMinimumDetections();
+void calculateMinimumDetections(size_t good_detections);
 
 size_t getRawDetections(const Detection **detections);
-size_t getMinimumDetections(const Detection (*detections)[LEDDAR_SEGMENTS]);
+size_t getMinimumDetections(const Detection (**detections)[LEDDAR_SEGMENTS]);
 
 #endif  // LEDDAR_IO_H

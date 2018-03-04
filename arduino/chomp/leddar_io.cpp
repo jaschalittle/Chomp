@@ -164,11 +164,11 @@ size_t getRawDetections(const Detection **detections) {
 }
 
 #define MIN_OBJECT_DISTANCE 30
-void calculateMinimumDetections() {
+void calculateMinimumDetections(size_t good_detections) {
   for (size_t i=0; i < LEDDAR_SEGMENTS; i++) {
     MinimumDetections[i].reset();
   }
-  for (uint8_t i = 0; i < LEDDAR_SEGMENTS; i++) {
+  for (uint8_t i = 0; i < good_detections; i++) {
     uint8_t segment = RawDetections[i].Segment;
     if (RawDetections[i].Distance < MinimumDetections[segment].Distance &&
         RawDetections[i].Distance > MIN_OBJECT_DISTANCE) {
@@ -177,7 +177,7 @@ void calculateMinimumDetections() {
   }
 }
 
-size_t getMinimumDetections(const Detection (*detections)[LEDDAR_SEGMENTS]) {
- detections = &MinimumDetections;
+size_t getMinimumDetections(const Detection (**detections)[LEDDAR_SEGMENTS]) {
+ *detections = &MinimumDetections;
  return LEDDAR_SEGMENTS;
 }

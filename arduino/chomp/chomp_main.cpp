@@ -103,9 +103,9 @@ void chompLoop() {
         last_request_time = micros();
         requestDetections();
 
-        calculateMinimumDetections();
+        calculateMinimumDetections(raw_detection_count);
         Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
-        getMinimumDetections(minDetections);
+        getMinimumDetections(&minDetections);
 
         // check for detections in zones
         LeddarState current_leddar_state = getState(*minDetections, getRange());
