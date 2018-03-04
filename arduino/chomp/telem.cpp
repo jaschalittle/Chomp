@@ -5,19 +5,18 @@
 #include "autofire.h"
 #include "pins.h"
 
-enum TelemetryPacketId {
-    TLM_ID_HS=1,
-    TLM_ID_LEDDAR=2,
-    TLM_ID_SNS=10,
-    TLM_ID_SYS=11,
-    TLM_ID_SBS=12,
-    TLM_ID_DBGM=13,
-    TLM_ID_SWG=14,
-    TLM_ID_LEDDARV2=15,
-    TLM_ID_PWM=16,
-};
-
 const uint16_t TLM_TERMINATOR=0x6666;
+
+#define CHECK_ENABLED(TLM_ID) if(!(enabled_telemetry & _LBV(TLM_ID))) return false;
+
+uint32_t enabled_telemetry=(
+    _LBV(TLM_ID_SNS)|
+    _LBV(TLM_ID_SYS)|
+    _LBV(TLM_ID_SBS)|
+    _LBV(TLM_ID_DBGM)|
+    _LBV(TLM_ID_LEDDARV2)|
+    _LBV(TLM_ID_PWM));
+
 
 template <uint8_t packet_id, typename packet_inner> struct TelemetryPacket{
     uint8_t pkt_id;
@@ -32,17 +31,26 @@ struct SystemTelemetryInner {
     uint16_t leddar_overrun;
     uint16_t leddar_crc_error;
     uint16_t sbus_overrun;
+    uint8_t last_command;
+    uint16_t command_overrun;
+    uint16_t invalid_command;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_SYS, SystemTelemetryInner> SystemTelemetry;
 
 bool sendSystemTelem(uint32_t loop_speed, uint16_t leddar_overrun,
-                     uint16_t leddar_crc_error, uint16_t sbus_overrun){
+                     uint16_t leddar_crc_error, uint16_t sbus_overrun,
+                     uint8_t last_command, uint16_t command_overrun,
+                     uint16_t invalid_command){
+    CHECK_ENABLED(TLM_ID_SYS);
     SystemTelemetry tlm;
     tlm.inner.weapons_enabled = g_enabled;
     tlm.inner.loop_speed = loop_speed;
     tlm.inner.leddar_overrun = leddar_overrun;
     tlm.inner.leddar_crc_error = leddar_crc_error;
     tlm.inner.sbus_overrun = sbus_overrun;
+    tlm.inner.last_command = last_command;
+    tlm.inner.command_overrun = command_overrun;
+    tlm.inner.invalid_command = invalid_command;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 
@@ -54,6 +62,7 @@ struct SensorTelemetryInner {
 typedef TelemetryPacket<TLM_ID_SNS, SensorTelemetryInner> SensorTelemetry;
 
 bool sendSensorTelem(int16_t pressure, uint16_t angle){
+    CHECK_ENABLED(TLM_ID_SNS);
     SensorTelemetry tlm;
     tlm.inner.pressure = pressure;
     tlm.inner.angle = angle;
@@ -67,6 +76,7 @@ struct SBusTelemetryInner {
 typedef TelemetryPacket<TLM_ID_SBS, SBusTelemetryInner> SBusTelemetry;
 
 bool sendSbusTelem(uint16_t cmd_bitfield){
+    CHECK_ENABLED(TLM_ID_SBS);
     SBusTelemetry tlm;
     tlm.inner.bitfield = cmd_bitfield;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
@@ -74,6 +84,7 @@ bool sendSbusTelem(uint16_t cmd_bitfield){
 
 const size_t MAX_DEBUG_MSG_LENGTH=128;
 bool sendDebugMessageTelem(const char *msg){
+    CHECK_ENABLED(TLM_ID_DBGM);
     unsigned char pkt[1+MAX_DEBUG_MSG_LENGTH+2]={0};
     pkt[0] = TLM_ID_DBGM;
     size_t copied = 0;
@@ -101,6 +112,7 @@ typedef TelemetryPacket<TLM_ID_LEDDARV2, LeddarTelemetryInner> LeddarTelemetry;
 static LeddarTelemetry leddar_tlm;
 bool sendLeddarTelem(const Detection (&min_detections)[LEDDAR_SEGMENTS], unsigned int count, LeddarState state){
 
+  CHECK_ENABLED(TLM_ID_LEDDARV2);
   leddar_tlm.inner.state = state;
   leddar_tlm.inner.count = count;
   for (uint8_t i = 0; i < 16; i++){
@@ -173,6 +185,7 @@ bool sendSwingTelem(uint16_t datapoints_collected,
                     uint16_t vent_open_timestep,
                     uint16_t throw_close_angle,
                     uint16_t start_angle) {
+    CHECK_ENABLED(TLM_ID_SWG);
     SwingTelemetry tlm;
     tlm.inner.sample_period = data_collect_timestep;
     tlm.inner.throw_close = throw_close_timestep;
@@ -197,6 +210,7 @@ struct PWMTelemInner {
 typedef TelemetryPacket<TLM_ID_PWM, PWMTelemInner> PWMTelemetry;
 
 bool sendPWMTelem(int16_t left_drive, int16_t right_drive) {
+    CHECK_ENABLED(TLM_ID_PWM);
     PWMTelemetry tlm;
     tlm.inner.left_drive = left_drive;
     tlm.inner.right_drive = right_drive;

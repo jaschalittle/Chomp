@@ -24,16 +24,16 @@ static const size_t center_segment = (LEDDAR_SEGMENTS/2);
 
 float bufferVelocity(int8_t* buf, int8_t curs, bool assert_pos){
   int16_t delta_sum = 0;
-#ifdef HARD_WIRED
-  String msg("{ ");
-  for(int i = curs; i < curs + APPROACH_BUFFER_SIZE; i++)
-  {
-    msg += buf[i % APPROACH_BUFFER_SIZE];
-    msg += ", ";
+  if(IS_TLM_ENABLED(TLM_DBGM_AUTOFIRE)) {
+    String msg("{ ");
+    for(int i = curs; i < curs + APPROACH_BUFFER_SIZE; i++)
+    {
+      msg += buf[i % APPROACH_BUFFER_SIZE];
+      msg += ", ";
+    }
+    msg += " }";
+    debug_print(msg);
   }
-  msg += " }";
-  debug_print(msg);
-#endif
   for(int i = curs + 1; i < curs + APPROACH_BUFFER_SIZE; i++){
     int16_t delta = buf[i % APPROACH_BUFFER_SIZE] - buf[(i - 1) % APPROACH_BUFFER_SIZE];
     delta_sum += delta;
@@ -68,16 +68,16 @@ bool leftApproach(const Detection (&detections)[LEDDAR_SEGMENTS]){
     float vel = bufferVelocity(left_buffer, left_buffer_cursor, true);
     int16_t predicted_seg = inner_contiguous_edge + (int16_t)(vel*10.0);
     bool fire = predicted_seg >= CENTER_ZONE_FIRE_MAX;
-#ifdef HARD_WIRED
-    String msg("Left inner edge: ");
-    msg += inner_contiguous_edge;
-    msg += "\t";
-    msg += vel;
-    msg += "\t";
-    msg += predicted_seg;
-    debug_print(msg);
-    if (fire){debug_print(" FIRE!");}
-#endif
+    if(IS_TLM_ENABLED(TLM_DBGM_AUTOFIRE)) {
+      String msg("Left inner edge: ");
+      msg += inner_contiguous_edge;
+      msg += "\t";
+      msg += vel;
+      msg += "\t";
+      msg += predicted_seg;
+      debug_print(msg);
+      if (fire){debug_print(" FIRE!");}
+    }
     return fire;
   }
   return false;
@@ -104,16 +104,16 @@ bool rightApproach(const Detection (&detections)[LEDDAR_SEGMENTS]){
     float vel = bufferVelocity(right_buffer, right_buffer_cursor, false);
     int16_t predicted_seg = inner_contiguous_edge + (int16_t)(vel*10.0);
     bool fire = predicted_seg <= CENTER_ZONE_FIRE_MIN;
-#ifdef HARD_WIRED
-    String msg("Right inner edge: ");
-    msg += inner_contiguous_edge;
-    msg += "\t";
-    msg += vel;
-    msg += "\t";
-    msg += predicted_seg;
-    debug_print(msg);
-    if (fire){debug_print(" FIRE!");}
-#endif
+    if(IS_TLM_ENABLED(TLM_DBGM_AUTOFIRE)) {
+      String msg("Right inner edge: ");
+      msg += inner_contiguous_edge;
+      msg += "\t";
+      msg += vel;
+      msg += "\t";
+      msg += predicted_seg;
+      debug_print(msg);
+      if (fire){debug_print(" FIRE!");}
+    }
     return fire;
   }
   return false;

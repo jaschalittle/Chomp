@@ -203,8 +203,7 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
             noAngleFire(/* hammer intensity */1, false, false);
             return;
         }
-        
-#ifdef HARD_WIRED
+
         sendSwingTelem(datapoints_collected,
                       angle_data,
                       pressure_data,
@@ -213,7 +212,6 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
                       vent_open_timestep,
                       throw_close_angle,
                       start_angle);
-#endif
     }
 }
 

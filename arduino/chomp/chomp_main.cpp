@@ -5,13 +5,14 @@
 #include "autofire.h"
 #include "sensors.h"
 #include "xbee.h"
-#include "telem.h" 
+#include "telem.h"
 #include "pins.h"
 #include "drive.h"
 #include "weapons.h"
 #include "utils.h"
 #include "chump_targeting.h"
 #include <avr/wdt.h>
+#include "command.h"
 
 
 // SAFETY CODE ----------------------------------------------------
@@ -80,6 +81,9 @@ extern uint16_t leddar_overrun;
 extern uint16_t leddar_crc_error;
 extern uint16_t sbus_overrun;
 
+uint32_t telemetry_interval=50000L;
+uint32_t leddar_telemetry_interval=100000L;
+
 void chompLoop() {
     uint32_t start_time = micros();
 
@@ -133,7 +137,7 @@ void chompLoop() {
         new_autodrive = true;
 
         // Send subsampled leddar telem
-        if (micros() - last_leddar_telem_time > 100000L){
+        if (micros() - last_leddar_telem_time > leddar_telemetry_interval){
           bool success = sendLeddarTelem(*minDetections, raw_detection_count, current_leddar_state);
           if (success){
             last_leddar_telem_time = micros();
@@ -212,18 +216,24 @@ void chompLoop() {
         new_autodrive = false;
    }
 
-   if (micros() - last_telem_time > 50000L){
+  if (micros() - last_telem_time > telemetry_interval){
       uint32_t loop_speed = micros() - start_time;
       int16_t pressure = 0;
       readMlhPressure(&pressure);
       uint16_t angle = 0;
       readAngle(&angle);
-      bool success = sendSensorTelem(pressure, angle);
-      success |= sendSystemTelem(loop_speed, leddar_overrun, leddar_crc_error, sbus_overrun);
-      success |= sendSbusTelem(previous_rc_bitfield);
-      success |= sendPWMTelem(left_drive_value, right_drive_value);
-      if (success){
-        last_telem_time = micros();
-      }
-    }
+      sendSensorTelem(pressure, angle);
+      sendSystemTelem(loop_speed,
+                      leddar_overrun,
+                      leddar_crc_error,
+                      sbus_overrun,
+                      last_command,
+                      command_overrun,
+                      invalid_command);
+      sendSbusTelem(previous_rc_bitfield);
+      sendPWMTelem(left_drive_value, right_drive_value);
+      last_telem_time = micros();
+  }
+
+  handle_commands();
 }
