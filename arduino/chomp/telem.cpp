@@ -199,3 +199,25 @@ bool sendIMUTelem(int16_t (&a)[3], int16_t (&g)[3], int16_t (&m)[3], int16_t t)
     tlm.inner.t = t;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
+
+
+struct DMPTelemInner {
+    uint16_t fifoCount;
+    uint8_t intStatus;
+    float qw, qx, qy, qz;
+};
+typedef TelemetryPacket<TLM_ID_DMP, DMPTelemInner> DMPTelemetry;
+
+bool sendDMPTelem(size_t fifoCount, uint8_t intStatus, float w, float x, float y, float z)
+{
+    CHECK_ENABLED(TLM_ID_DMP);
+    DMPTelemetry tlm;
+    tlm.inner.fifoCount = fifoCount;
+    tlm.inner.intStatus = intStatus;
+    tlm.inner.qw = w;
+    tlm.inner.qx = x;
+    tlm.inner.qy = y;
+    tlm.inner.qz = z;
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+
