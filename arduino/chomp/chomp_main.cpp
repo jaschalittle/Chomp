@@ -71,7 +71,8 @@ void chompSetup() {
     //I2c.scan(telemetry_stream);
     IMU.initialize();
     bool IMUcheck = IMU.testConnection();
-    debug_print(String("IMU.initialize() = ") + IMUcheck);
+    debug_print(String("IMU.getDeviceID() = ") + IMU.getDeviceID());
+    debug_print(String("IMU.testConnection() = ") + IMUcheck);
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
