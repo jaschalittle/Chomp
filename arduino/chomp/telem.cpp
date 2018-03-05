@@ -10,12 +10,9 @@ const uint16_t TLM_TERMINATOR=0x6666;
 #define CHECK_ENABLED(TLM_ID) if(!(enabled_telemetry & _LBV(TLM_ID))) return false;
 
 uint32_t enabled_telemetry=(
-    _LBV(TLM_ID_SNS)|
     _LBV(TLM_ID_SYS)|
     _LBV(TLM_ID_SBS)|
-    _LBV(TLM_ID_DBGM)|
-    _LBV(TLM_ID_LEDDARV2)|
-    _LBV(TLM_ID_PWM));
+    _LBV(TLM_ID_DBGM));
 
 
 template <uint8_t packet_id, typename packet_inner> struct TelemetryPacket{
