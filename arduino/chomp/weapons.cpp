@@ -98,7 +98,7 @@ void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timest
   vent_closed = false;  
 }
 
-void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool autofire ){
+void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -123,9 +123,6 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
         uint16_t throw_close_angle = start_angle + throw_close_angle_diff;
         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
             
-            if (mag_pulse){
-                magOn();
-            }
             if (flame_pulse){
                 flameStart();
             }
@@ -190,9 +187,6 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
             // If the swing hasn't already ended, end it now
             endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
             
-            if (mag_pulse){
-                magOff();
-            }
             if (flame_pulse) {
                 flameEnd();
             }
@@ -200,7 +194,7 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
             // If we're *not* in autochomp mode, and the hammer is at a funny angle, it probably
             // means we're in a weird spot and maybe want to unstick ourselves with a
             // minimum-intensity danger fire.
-            noAngleFire(/* hammer intensity */1, false, false);
+            noAngleFire(/* hammer intensity */1, false);
             return;
         }
 
@@ -216,11 +210,8 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
 }
 
 const uint8_t NO_ANGLE_SWING_DURATION = 185; // total estimated time in ms of a swing (to calculate vent time)
-void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
+void noAngleFire( uint16_t hammer_intensity, bool flame_pulse){
     if (weaponsEnabled()){
-        if (mag_pulse){
-            magOn();
-        }
         if (flame_pulse){
             flameStart();
         }
@@ -239,9 +230,6 @@ void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
         delay(NO_ANGLE_SWING_DURATION - throw_duration);
         safeDigitalWrite(VENT_VALVE_DO, LOW);
 
-        if (mag_pulse){
-            magOff();
-        }
         if (flame_pulse) {
             flameEnd();
         }
@@ -300,18 +288,6 @@ void flameEnd(){
     digitalWrite(PROPANE_DO, LOW);
 }
 
-void magOn(){
-    if (weaponsEnabled()){
-        safeDigitalWrite(MAG1_DO, HIGH);
-        safeDigitalWrite(MAG2_DO, HIGH);
-    }
-}
-
-void magOff(){
-    digitalWrite(MAG1_DO, LOW);
-    digitalWrite(MAG2_DO, LOW);
-}
-
 void valveSafe(){
     // Safing code deliberately does not use safeDigitalWrite since it should always go through.
     digitalWrite(ENABLE_VALVE_DO, LOW);
@@ -339,11 +315,5 @@ void flameSafe(){
 void flameEnable(){
     // Assumes safe() has already been called beforehand, to set pin modes.
     safeDigitalWrite(IGNITER_DO, HIGH);
-}
-void magnetSafe(){
-    digitalWrite(MAG1_DO, LOW);
-    digitalWrite(MAG2_DO, LOW);
-    pinMode(MAG1_DO, OUTPUT);
-    pinMode(MAG2_DO, OUTPUT);
 }
 

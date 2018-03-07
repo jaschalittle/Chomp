@@ -14,12 +14,13 @@
 #include <avr/wdt.h>
 #include "command.h"
 #include "imu.h"
+#include "selfright.h"
 
 // SAFETY CODE ----------------------------------------------------
 void safeState(){
     valveSafe();
     flameSafe();
-    magnetSafe();
+    selfRightSafe();
 }
 
 void enableState(){
@@ -122,7 +123,7 @@ void chompLoop() {
             case PREDICTIVE_HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
                     if (autofireEnabled(previous_rc_bitfield)){
-                        fire( hammer_intensity, previous_rc_bitfield & FLAME_PULSE_BIT, previous_rc_bitfield & MAG_PULSE_BIT, true /*autofire*/ );
+                        fire( hammer_intensity, previous_rc_bitfield & FLAME_PULSE_BIT, true /*autofire*/ );
                     }
                 } else {
                     previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
@@ -173,9 +174,9 @@ void chompLoop() {
             // Manual hammer fire
             if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
                 if (current_rc_bitfield & DANGER_CTRL_BIT){
-                  noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
+                  noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
                 } else {
-                  fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT, false /*autofire*/);
+                  fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/);
                 }
             }
             if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
@@ -191,11 +192,15 @@ void chompLoop() {
             if( (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
                 gentleRetract(GENTLE_HAM_R_BIT);
             }
-            if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
-                magOn();
+            if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
+                selfRightLeft();
             }
-            if( (diff & MAG_CTRL_BIT) && !(current_rc_bitfield & MAG_CTRL_BIT)){
-                magOff();
+            if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
+                selfRightRight();
+            }
+            if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
+               !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
+                selfRightOff();
             }
             previous_rc_bitfield = current_rc_bitfield;
         }
