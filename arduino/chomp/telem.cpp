@@ -218,16 +218,20 @@ bool sendDMPTelem(size_t fifoCount, uint8_t intStatus, float w, float x, float y
 
 
 struct ORNTelemInner {
-    uint8_t stationary:1;
-    uint8_t orientation:4;
     uint8_t padding:3;
+    uint8_t orientation:4;
+    uint8_t stationary:1;
+    int32_t best_accum;
+    int32_t sum_angular_rate;
 };
 typedef TelemetryPacket<TLM_ID_ORN, ORNTelemInner> ORNTelemetry;
-bool sendORNTelem(bool stationary, uint8_t orientation)
+bool sendORNTelem(bool stationary, uint8_t orientation, int32_t best_accum, int32_t sum_angular_rate)
 {
     CHECK_ENABLED(TLM_ID_ORN);
     ORNTelemetry tlm;
     tlm.inner.stationary = stationary;
     tlm.inner.orientation = orientation;
+    tlm.inner.best_accum = best_accum;
+    tlm.inner.sum_angular_rate = sum_angular_rate;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }

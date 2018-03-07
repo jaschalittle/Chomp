@@ -23,6 +23,8 @@ uint32_t imu_period=100000;
 int32_t stationary_threshold=100;
 bool stationary;
 size_t best_orientation=NUM_STABLE_ORIENTATIONS;
+int32_t best_accum;
+int32_t sum_angular_rate;
 
 
 void initializeIMU(void) {
@@ -46,10 +48,10 @@ void processIMU(void) {
         temperature = IMU.getTemperature();
         IMU.getMotion6(&acceleration[0], &acceleration[1], &acceleration[2],
                        &angular_rate[0], &angular_rate[1], &angular_rate[2]);
-        int32_t sum_angular_rate = labs(angular_rate[0]) + labs(angular_rate[1]) + labs(angular_rate[2]);
+        sum_angular_rate = labs(angular_rate[0]) + labs(angular_rate[1]) + labs(angular_rate[2]);
         stationary = sum_angular_rate<stationary_threshold;
-        int32_t best_accum = 0;
         if(stationary) {
+            best_accum = 0;
             for(size_t i=0;i<NUM_STABLE_ORIENTATIONS;i++) {
                 int32_t accum = 0;
                 for(uint8_t j=0;j<3;i++) {
@@ -69,5 +71,5 @@ void processIMU(void) {
 
 void telemetryIMU(void) {
     sendIMUTelem(acceleration, angular_rate, temperature);
-    sendORNTelem(stationary, best_orientation);
+    sendORNTelem(stationary, best_orientation, best_accum, sum_angular_rate);
 }

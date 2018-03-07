@@ -158,6 +158,8 @@ TELEMETRY CHOMP ORN LITTLE_ENDIAN "Orientation Status"
         STATE TOP 5 YELLOW
         STATE UNKNOWN 8 RED
     APPEND_ITEM PAD 3 UINT
+    APPEND_ITEM ACCUM 32 INT "Best Accumulator value"
+    APPEND_ITEM SAR 32 INT "Sum of angular rates"
 
 TELEMETRY CHOMP DMP LITTLE_ENDIAN "DMP orientation results"
     APPEND_ID_ITEM PKTID 8 UINT 18 "Packet ID which must be 18"
