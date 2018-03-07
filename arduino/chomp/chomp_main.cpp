@@ -13,10 +13,7 @@
 #include "chump_targeting.h"
 #include <avr/wdt.h>
 #include "command.h"
-#include "I2C.h"
-#include "MPU6050.h"
-#include "telem_message_stream.h"
-
+#include "imu.h"
 
 // SAFETY CODE ----------------------------------------------------
 void safeState(){
@@ -52,9 +49,7 @@ void weaponsEnableFalling(){
     }
 }
 // -----------------------------------------------------------------
-//TelemetryMessageStream telemetry_stream;
-//
-MPU6050 IMU;
+
 
 void chompSetup() {
     // Come up safely
@@ -67,12 +62,8 @@ void chompSetup() {
     leddarWrapperInit();
     sensorSetup();
     attachRCInterrupts();
+    initializeIMU();
     debug_print("STARTUP");
-    //I2c.scan(telemetry_stream);
-    IMU.initialize();
-    bool IMUcheck = IMU.testConnection();
-    debug_print(String("IMU.getDeviceID() = ") + IMU.getDeviceID());
-    debug_print(String("IMU.testConnection() = ") + IMUcheck);
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
@@ -225,37 +216,30 @@ void chompLoop() {
             updateDriveHistory(left_drive_value, right_drive_value);
         }
         new_autodrive = false;
-   }
+    }
 
-  int16_t acceleration[3], angular_rate[3], magnetic_field[3];
-  int16_t temperature;
-  temperature = IMU.getTemperature();
-  /*
-  IMU.getAcceleration(&acceleration[0], &acceleration[1], &acceleration[2]);
-  IMU.getRotation(&angular_rate[0], &angular_rate[1], &angular_rate[2]);
-  */
-  IMU.getMotion9(&acceleration[0], &acceleration[1], &acceleration[2],
-                 &angular_rate[0], &angular_rate[1], &angular_rate[2],
-                 &magnetic_field[0], &magnetic_field[1], &magnetic_field[2]);
-  if (micros() - last_telem_time > telemetry_interval){
-      uint32_t loop_speed = micros() - start_time;
-      int16_t pressure = 0;
-      readMlhPressure(&pressure);
-      uint16_t angle = 0;
-      readAngle(&angle);
-      sendSensorTelem(pressure, angle);
-      sendSystemTelem(loop_speed,
-                      leddar_overrun,
-                      leddar_crc_error,
-                      sbus_overrun,
-                      last_command,
-                      command_overrun,
-                      invalid_command);
-      sendSbusTelem(previous_rc_bitfield);
-      sendPWMTelem(left_drive_value, right_drive_value);
-      sendIMUTelem(acceleration, angular_rate, magnetic_field, temperature);
-      last_telem_time = micros();
-  }
 
-  handle_commands();
+    processIMU();
+
+    if (micros() - last_telem_time > telemetry_interval){
+        uint32_t loop_speed = micros() - start_time;
+        int16_t pressure = 0;
+        readMlhPressure(&pressure);
+        uint16_t angle = 0;
+        readAngle(&angle);
+        sendSensorTelem(pressure, angle);
+        sendSystemTelem(loop_speed,
+                        leddar_overrun,
+                        leddar_crc_error,
+                        sbus_overrun,
+                        last_command,
+                        command_overrun,
+                        invalid_command);
+        sendSbusTelem(previous_rc_bitfield);
+        sendPWMTelem(left_drive_value, right_drive_value);
+        telemetryIMU();
+        last_telem_time = micros();
+    }
+
+    handle_commands();
 }
