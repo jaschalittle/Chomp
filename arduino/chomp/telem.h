@@ -15,6 +15,7 @@ enum TelemetryPacketId {
     TLM_ID_PWM=16,
     TLM_ID_IMU=17,
     TLM_ID_DMP=18,
+    TLM_ID_ORN=19,
 };
 
 extern uint32_t enabled_telemetry;
@@ -45,5 +46,6 @@ bool sendSwingTelem(uint16_t datapoints_collected,
                     uint16_t start_angle);
 bool sendPWMTelem(int16_t left_drive, int16_t right_drive);
 bool sendIMUTelem(int16_t (&a)[3], int16_t (&g)[3], int16_t temperature);
+bool sendORNTelem(bool stationary, uint8_t orientation);
 bool sendDMPTelem(size_t fifoCount, uint8_t intStatus, float w, float x, float y, float z);
 #endif //TELEM_H
