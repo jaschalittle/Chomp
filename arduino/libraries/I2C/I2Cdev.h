@@ -18,7 +18,7 @@ namespace I2Cdev {
         int8_t err;
         I2c.timeOut(timeout);
         err = I2c.read(devAddr, regAddr, 1, data);
-        *data >>= (bitStart-length-1);
+        *data >>= (bitStart-length+1);
         *data &= (_BV(length+1)-1);
         return err;
     }
@@ -53,8 +53,8 @@ namespace I2Cdev {
     {
         uint8_t tmp, mask;
         readByte(devAddr, regAddr, &tmp);
-        mask = (_BV(length+1)-1)<<(bitStart-length-1);
-        data <<= bitStart-length-1;
+        mask = (_BV(length+1)-1)<<(bitStart-length+1);
+        data <<= (bitStart-length+1);
         data &= mask;
         tmp &= ~mask;
         tmp |= data;
