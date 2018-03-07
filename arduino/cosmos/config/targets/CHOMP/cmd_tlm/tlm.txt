@@ -138,8 +138,6 @@ TELEMETRY CHOMP IMU LITTLE_ENDIAN "Raw IMU measurements"
     APPEND_ARRAY_ITEM ANGULAR_RATE 16 INT 48 "Angular rate"
         UNITS "degrees/second" "deg/s"
         POLY_READ_CONVERSION 0.0 0.060976
-    APPEND_ARRAY_ITEM MAGNETIC_FIELD 16 INT 48 "Magnetic field"
-        UNITS "tesla" "T"
     APPEND_ITEM TEMPERATURE 16 INT "Temperature"
         UNITS "celcius" "C"
         POLY_READ_CONVERSION 0.0 0.01
