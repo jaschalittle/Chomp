@@ -20,7 +20,8 @@ int16_t acceleration[3], angular_rate[3];
 int16_t temperature;
 uint32_t last_imu_process;
 uint32_t imu_period=100000;
-int32_t stationary_threshold=100;
+int32_t stationary_threshold=50;
+int32_t min_accum = 100;
 bool stationary;
 size_t best_orientation=NUM_STABLE_ORIENTATIONS;
 int32_t best_accum;
@@ -48,16 +49,20 @@ void processIMU(void) {
         temperature = IMU.getTemperature();
         IMU.getMotion6(&acceleration[0], &acceleration[1], &acceleration[2],
                        &angular_rate[0], &angular_rate[1], &angular_rate[2]);
-        sum_angular_rate = labs(angular_rate[0]) + labs(angular_rate[1]) + labs(angular_rate[2]);
+        sum_angular_rate = (abs(angular_rate[0]) +
+                            abs(angular_rate[1]) +
+                            abs(angular_rate[2]));
         stationary = sum_angular_rate<stationary_threshold;
         if(stationary) {
-            best_accum = 0;
+            best_accum = min_accum;
+            best_orientation = NUM_STABLE_ORIENTATIONS;
             for(size_t i=0;i<NUM_STABLE_ORIENTATIONS;i++) {
                 int32_t accum = 0;
-                for(uint8_t j=0;j<3;i++) {
-                    accum += acceleration[j]*stable_orientation[i][j];
+                for(uint8_t j=0;j<3;j++) {
+                    accum += (((int32_t)acceleration[j])*
+                              ((int32_t)stable_orientation[i][j]));
                 }
-                if(accum>best_accum) {
+                if(abs(accum)>abs(best_accum)) {
                     best_accum = accum;
                     best_orientation = i;
                 }
