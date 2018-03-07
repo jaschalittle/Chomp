@@ -13,4 +13,7 @@ MONITOR_PORT  = /dev/ttyACM0
 CXXFLAGS      = -Wall -DSERIAL_TX_BUFFER_SIZE=256
 CXXFLAGS_STD  = -std=c++11
 
+ARDUINO_LIBS = I2C MPU6050
+USER_LIB_PATH := $(realpath ../libraries)
+
 include ${ARDMK_DIR}/Arduino.mk

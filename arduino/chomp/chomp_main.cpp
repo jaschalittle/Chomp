@@ -13,7 +13,7 @@
 #include "chump_targeting.h"
 #include <avr/wdt.h>
 #include "command.h"
-
+#include "imu.h"
 
 // SAFETY CODE ----------------------------------------------------
 void safeState(){
@@ -50,6 +50,7 @@ void weaponsEnableFalling(){
 }
 // -----------------------------------------------------------------
 
+
 void chompSetup() {
     // Come up safely
     safeState();
@@ -61,6 +62,7 @@ void chompSetup() {
     leddarWrapperInit();
     sensorSetup();
     attachRCInterrupts();
+    initializeIMU();
     debug_print("STARTUP");
 }
 
@@ -214,26 +216,30 @@ void chompLoop() {
             updateDriveHistory(left_drive_value, right_drive_value);
         }
         new_autodrive = false;
-   }
+    }
 
-  if (micros() - last_telem_time > telemetry_interval){
-      uint32_t loop_speed = micros() - start_time;
-      int16_t pressure = 0;
-      readMlhPressure(&pressure);
-      uint16_t angle = 0;
-      readAngle(&angle);
-      sendSensorTelem(pressure, angle);
-      sendSystemTelem(loop_speed,
-                      leddar_overrun,
-                      leddar_crc_error,
-                      sbus_overrun,
-                      last_command,
-                      command_overrun,
-                      invalid_command);
-      sendSbusTelem(previous_rc_bitfield);
-      sendPWMTelem(left_drive_value, right_drive_value);
-      last_telem_time = micros();
-  }
 
-  handle_commands();
+    processIMU();
+
+    if (micros() - last_telem_time > telemetry_interval){
+        uint32_t loop_speed = micros() - start_time;
+        int16_t pressure = 0;
+        readMlhPressure(&pressure);
+        uint16_t angle = 0;
+        readAngle(&angle);
+        sendSensorTelem(pressure, angle);
+        sendSystemTelem(loop_speed,
+                        leddar_overrun,
+                        leddar_crc_error,
+                        sbus_overrun,
+                        last_command,
+                        command_overrun,
+                        invalid_command);
+        sendSbusTelem(previous_rc_bitfield);
+        sendPWMTelem(left_drive_value, right_drive_value);
+        telemetryIMU();
+        last_telem_time = micros();
+    }
+
+    handle_commands();
 }
