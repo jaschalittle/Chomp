@@ -179,16 +179,16 @@ COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
     APPEND_PARAMETER EN_LEDDAR 1 UINT 0 1 0 "Enable LEDDAR telemetry packet"
     APPEND_PARAMETER EN_HS 1 UINT 0 1 0 "Enable HS telemetry packet"
     APPEND_PARAMETER PADDING00 1 UINT 0 0 0
-    APPEND_PARAMETER EN_LEDDARV2 1 UINT 0 1 1 "Enable LEDDARV2 telemetry packet"
-    APPEND_PARAMETER EN_SWG 1 UINT 0 1 1 "Enable SWG telemetry packet"
+    APPEND_PARAMETER EN_LEDDARV2 1 UINT 0 1 0 "Enable LEDDARV2 telemetry packet"
+    APPEND_PARAMETER EN_SWG 1 UINT 0 1 0 "Enable SWG telemetry packet"
     APPEND_PARAMETER EN_DBGM 1 UINT 0 1 1 "Enable DBGM telemetry packet"
     APPEND_PARAMETER EN_SBS 1 UINT 0 1 1 "Enable SBS telemetry packet"
     APPEND_PARAMETER EN_SYS 1 UINT 0 1 1 "Enable SYS telemetry packet"
-    APPEND_PARAMETER EN_SNS 1 UINT 0 1 1 "Enable SNS telemetry packet"
+    APPEND_PARAMETER EN_SNS 1 UINT 0 1 0 "Enable SNS telemetry packet"
     APPEND_PARAMETER PADDING11 2 UINT 0 0 0
     APPEND_PARAMETER PADDING27 4 UINT 0 0 0
-    APPEND_PARAMETER EN_ORN 1 UINT 0 1 1 "Enable ORN telemetry packet"
-    APPEND_PARAMETER EN_DMP 1 UINT 0 1 1 "Enable DMP telemetry packet"
-    APPEND_PARAMETER EN_IMU 1 UINT 0 1 1 "Enable IMU telemetry packet"
-    APPEND_PARAMETER EN_PWM 1 UINT 0 1 1 "Enable PWM telemetry packet"
+    APPEND_PARAMETER EN_ORN 1 UINT 0 1 0 "Enable ORN telemetry packet"
+    APPEND_PARAMETER EN_DMP 1 UINT 0 1 0 "Enable DMP telemetry packet"
+    APPEND_PARAMETER EN_IMU 1 UINT 0 1 0 "Enable IMU telemetry packet"
+    APPEND_PARAMETER EN_PWM 1 UINT 0 1 0 "Enable PWM telemetry packet"
     APPEND_PARAMETER PADDING30 8 UINT 0 0 0
