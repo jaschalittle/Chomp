@@ -7,13 +7,15 @@
 * Install [rbenv](https://github.com/rbenv/rbenv#basic-github-checkout)
 
     $ git clone https://github.com/rbenv/rbenv.git ~/.rbenv
-    $ cd ~/.rbenv && src/configure && make -C src
+    $ cd ~/.rbenv && src/configure && make -C src && cd -
 
 * Add `~/.rbenv/bin` to your `$PATH` for access to the `rbenv` command-line utility.
 
-    $ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
+    $ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile && . ~/.bash_profile
 
 * Run `~/.rbenv/bin/rbenv init` and follow the instructions to set up rbenv integration with your shell.
+
+    $ eval "$(rbenv init -)"
 
 * Install [ruby-build](https://github.com/rbenv/ruby-build#installation), which provides the rbenv install command that simplifies the process of installing new Ruby versions.
 
