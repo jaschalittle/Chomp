@@ -1,9 +1,9 @@
 #include "I2C.h"
 #include "telem_message_stream.h"
 #include "MPU6050.h"
+#include "imu.h"
 
 //TelemetryMessageStream telemetry_stream;
-#define NUM_STABLE_ORIENTATIONS 8
 static const int16_t stable_orientation[NUM_STABLE_ORIENTATIONS][3] = {
     {    0,     0,  2048},
     { 2037,     0,   205},
@@ -77,4 +77,9 @@ void processIMU(void) {
 void telemetryIMU(void) {
     sendIMUTelem(acceleration, angular_rate, temperature);
     sendORNTelem(stationary, best_orientation, best_accum, sum_angular_rate);
+}
+
+
+enum Orientation getOrientation(void) {
+    return (enum Orientation)best_orientation;
 }
