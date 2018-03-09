@@ -88,6 +88,7 @@ extern uint16_t sbus_overrun;
 uint32_t telemetry_interval=50000L;
 uint32_t leddar_telemetry_interval=100000L;
 uint32_t sensor_period=5000L;
+uint32_t leddar_max_request_period=100000L;
 
 void chompLoop() {
     uint32_t start_time = micros();
@@ -98,7 +99,7 @@ void chompLoop() {
     }
 
     // If there has been no data from the LEDDAR for a while, ask again
-    if (micros() - last_request_time > 100000UL){
+    if (micros() - last_request_time > leddar_max_request_period){
         last_request_time = micros();
         requestDetections();
     }
