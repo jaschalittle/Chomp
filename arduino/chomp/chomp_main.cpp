@@ -73,6 +73,7 @@ static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
 static uint32_t last_telem_time = micros();
 static uint32_t last_leddar_telem_time = micros();
+static uint32_t last_sensor_time = micros();
 static int16_t left_drive_value = 0;
 static int16_t right_drive_value = 0;
 static int16_t steer_bias = 0; // positive turns right, negative turns left
@@ -86,9 +87,15 @@ extern uint16_t sbus_overrun;
 
 uint32_t telemetry_interval=50000L;
 uint32_t leddar_telemetry_interval=100000L;
+uint32_t sensor_period=5000L;
 
 void chompLoop() {
     uint32_t start_time = micros();
+
+    if(micros() - last_sensor_time>sensor_period) {
+        readSensors();
+        last_sensor_time = micros();
+    }
 
     // If there has been no data from the LEDDAR for a while, ask again
     if (micros() - last_request_time > 100000UL){
@@ -228,11 +235,7 @@ void chompLoop() {
 
     if (micros() - last_telem_time > telemetry_interval){
         uint32_t loop_speed = micros() - start_time;
-        int16_t pressure = 0;
-        readMlhPressure(&pressure);
-        uint16_t angle = 0;
-        readAngle(&angle);
-        sendSensorTelem(pressure, angle);
+        sendSensorTelem(getPressure(), getAngle());
         sendSystemTelem(loop_speed,
                         leddar_overrun,
                         leddar_crc_error,
