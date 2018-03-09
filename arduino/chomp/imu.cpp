@@ -21,7 +21,7 @@ int16_t temperature;
 uint32_t last_imu_process;
 uint32_t imu_period=100000;
 int32_t stationary_threshold=50;
-int32_t min_accum = 100;
+int32_t min_valid_accum = 100;
 bool stationary;
 size_t best_orientation=NUM_STABLE_ORIENTATIONS;
 int32_t best_accum;
@@ -42,7 +42,37 @@ void initializeIMU(void) {
 }
 
 
+// State machine to distribute compute over several cycles
 void processIMU(void) {
+    // current orientation value to test
+    // NUM_STABLE_ORIENTATIONS when all have been tested
+    static uint8_t imu_step = NUM_STABLE_ORIENTATIONS;
+    // maximum dot product seen so far
+    static int32_t max_accum = min_valid_accum;
+    // corresponding orientation
+    static uint8_t max_orientation = ORN_UNKNOWN;
+
+    // First, check to see if the step is non-zero.
+    // If so, we are in the middle of checking
+    if(imu_step<NUM_STABLE_ORIENTATIONS && stationary) {
+        // Compute the current dot product
+        int32_t accum = 0;
+        for(uint8_t j=0;j<3;j++) {
+            accum += (((int32_t)acceleration[j])*
+                      ((int32_t)stable_orientation[imu_step][j]));
+        }
+        // If this is a new highest, write it down
+        if(abs(accum)>abs(best_accum)) {
+            max_accum = accum;
+            max_orientation = imu_step;
+        }
+        // if this was the last one, record the best result
+        if(++imu_step == NUM_STABLE_ORIENTATIONS) {
+            best_accum = max_accum;
+            best_orientation = max_orientation;
+        }
+    }
+    // if enough time has passed, read the IMU
     uint32_t now = micros();
     if(now-last_imu_process > imu_period) {
         last_imu_process = now;
@@ -53,22 +83,15 @@ void processIMU(void) {
                             abs(angular_rate[1]) +
                             abs(angular_rate[2]));
         stationary = sum_angular_rate<stationary_threshold;
+        // if stationary, trigger a new orientation calculation
+        // on the next call
         if(stationary) {
-            best_accum = min_accum;
-            best_orientation = NUM_STABLE_ORIENTATIONS;
-            for(size_t i=0;i<NUM_STABLE_ORIENTATIONS;i++) {
-                int32_t accum = 0;
-                for(uint8_t j=0;j<3;j++) {
-                    accum += (((int32_t)acceleration[j])*
-                              ((int32_t)stable_orientation[i][j]));
-                }
-                if(abs(accum)>abs(best_accum)) {
-                    best_accum = accum;
-                    best_orientation = i;
-                }
-            }
+            imu_step = 0;
+            max_accum = min_valid_accum;
+            max_orientation = ORN_UNKNOWN;
         } else {
-            best_orientation = NUM_STABLE_ORIENTATIONS;
+            // if not stationary, refuse to guess
+            best_orientation = ORN_UNKNOWN;
         }
     }
 }
