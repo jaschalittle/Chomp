@@ -215,10 +215,12 @@ void chompLoop() {
         }
     }
 
-    // always sent in telemetry
+    // always sent in telemetry, cache values here
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
+    // newRc is destructive, make sure to only call it once
     bool new_rc = newRc();
+    // check for autodrive
     if(new_autodrive || new_rc) {
         if(getTargetingEnable()) {
             left_drive_value -= steer_bias;
@@ -233,8 +235,10 @@ void chompLoop() {
     }
 
 
+    // read IMU and compute orientation
     processIMU();
 
+    // send telemetry
     if (micros() - last_telem_time > telemetry_interval){
         uint32_t loop_speed = micros() - start_time;
         sendSensorTelem(getPressure(), getAngle());
