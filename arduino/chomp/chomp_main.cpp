@@ -68,7 +68,7 @@ void chompSetup() {
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
-static uint16_t previous_rc_bitfield = 0;
+static uint16_t current_rc_bitfield = 0, previous_rc_bitfield = 0;
 static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
 static uint32_t last_telem_time = micros();
@@ -155,12 +155,13 @@ void chompLoop() {
         }
     }
 
+    // check for data from weapons radio
     if (bufferSbusData()){
         bool in_failsafe_state = parseSbus();
         if (!in_failsafe_state) {
             wdt_reset();
             // React to RC state changes
-            uint16_t current_rc_bitfield = getRcBitfield();
+            current_rc_bitfield = getRcBitfield();
             uint16_t diff = previous_rc_bitfield ^ current_rc_bitfield;
             hammer_intensity = getHammerIntensity();
             if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
@@ -243,7 +244,7 @@ void chompLoop() {
                         last_command,
                         command_overrun,
                         invalid_command);
-        sendSbusTelem(previous_rc_bitfield);
+        sendSbusTelem(current_rc_bitfield);
         sendPWMTelem(left_drive_value, right_drive_value);
         telemetryIMU();
         last_telem_time = micros();
