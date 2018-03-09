@@ -238,6 +238,13 @@ void chompLoop() {
     // read IMU and compute orientation
     processIMU();
 
+
+    // if enabled, make sure robot is right-side-up
+    if(current_rc_bitfield && AUTO_SELF_RIGHT_BIT) {
+        autoSelfRight();
+    }
+
+
     // send telemetry
     if (micros() - last_telem_time > telemetry_interval){
         uint32_t loop_speed = micros() - start_time;
