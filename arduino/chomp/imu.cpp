@@ -20,9 +20,10 @@ int16_t acceleration[3], angular_rate[3];
 int16_t temperature;
 uint32_t last_imu_process;
 uint32_t imu_period=100000;
-int32_t stationary_threshold=50;
-int32_t min_valid_accum = 100;
-bool stationary;
+int32_t stationary_threshold=200;
+int32_t min_valid_accum = 4000000;
+int32_t max_valid_accum = 6000000;
+bool possibly_stationary, stationary;
 size_t best_orientation=NUM_STABLE_ORIENTATIONS;
 int32_t best_accum;
 int32_t sum_angular_rate;
@@ -54,7 +55,7 @@ void processIMU(void) {
 
     // First, check to see if the step is non-zero.
     // If so, we are in the middle of checking
-    if(imu_step<NUM_STABLE_ORIENTATIONS && stationary) {
+    if(imu_step<NUM_STABLE_ORIENTATIONS && possibly_stationary) {
         // Compute the current dot product
         int32_t accum = 0;
         for(uint8_t j=0;j<3;j++) {
@@ -69,7 +70,13 @@ void processIMU(void) {
         // if this was the last one, record the best result
         if(++imu_step == NUM_STABLE_ORIENTATIONS) {
             best_accum = max_accum;
-            best_orientation = max_orientation;
+            if(max_accum<max_valid_accum) {
+                best_orientation = max_orientation;
+                stationary = true;
+            } else {
+                best_orientation = ORN_UNKNOWN;
+                stationary = false;
+            }
         }
     }
     // if enough time has passed, read the IMU
@@ -82,16 +89,18 @@ void processIMU(void) {
         sum_angular_rate = (abs(angular_rate[0]) +
                             abs(angular_rate[1]) +
                             abs(angular_rate[2]));
-        stationary = sum_angular_rate<stationary_threshold;
-        // if stationary, trigger a new orientation calculation
+        // still might have large acceleration and small angular rates
+        possibly_stationary = sum_angular_rate<stationary_threshold;
+        // if possibly stationary, trigger a new orientation calculation
         // on the next call
-        if(stationary) {
+        if(possibly_stationary) {
             imu_step = 0;
             max_accum = min_valid_accum;
             max_orientation = ORN_UNKNOWN;
         } else {
             // if not stationary, refuse to guess
             best_orientation = ORN_UNKNOWN;
+            stationary = false;
         }
     }
 }
