@@ -5,14 +5,14 @@
 
 //TelemetryMessageStream telemetry_stream;
 static const int16_t stable_orientation[NUM_STABLE_ORIENTATIONS][3] = {
-    {    0,     0,  2048},
-    { 2037,     0,   205},
-    {-2027,     0,   287},
-    {    0, -1925,  -614},
-    {    0,   205, -2037},
-    { 1966,   409,  -614},
-    {-1966,   409,  -614},
-    {  163,  1925,   614},
+    {    0,     0,  2048},  // upright
+    { 2037,     0,   205},  // left
+    {-2027,     0,   287},  // right
+    {    0, -1925,  -614},  // front
+    {    0,   205, -2037},  // top
+    { 1966,   409,  -614},  // top right
+    {-1966,   409,  -614},  // top left 
+    {  163,  1925,   614},  // tail
 };
 
 MPU6050 IMU;
