@@ -186,6 +186,7 @@ typedef TelemetryPacket<TLM_ID_IMU, IMUTelemInner> IMUTelemetry;
 
 bool sendIMUTelem(int16_t (&a)[3], int16_t (&g)[3], int16_t t)
 {
+    CHECK_ENABLED(TLM_ID_IMU);
     IMUTelemetry tlm;
     for(size_t i=0;i<3;i++) {
         tlm.inner.a[i] = a[i];
