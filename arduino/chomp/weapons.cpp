@@ -234,7 +234,9 @@ String startElectricHammerMove(int16_t speed) {
     DriveSerial.println("@05!G 100");  // start motor to aid meshing
     // Make sure we're vented
     safeDigitalWrite(VENT_VALVE_DO, LOW);
+    // engage drive wheel
     safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
+    // wait for engagement
     delay(50);
     String movecmd("@05!G ");
     movecmd += speed;
