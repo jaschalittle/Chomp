@@ -1,9 +1,9 @@
 TELEMETRY CHOMP SNS LITTLE_ENDIAN "Sensor"
     APPEND_ID_ITEM PKTID 8 UINT 10 "Packet ID which must be 10"
     APPEND_ITEM PRESSURE 16 INT "Pressure"
-        UNITS "Degrees" "deg"
-    APPEND_ITEM ANGLE 16 UINT "Angle"
         UNITS "Pounds per Square Inch" "PSI"
+    APPEND_ITEM ANGLE 16 UINT "Angle"
+        UNITS "Degrees" "deg"
 
 TELEMETRY CHOMP PWM LITTLE_ENDIAN "PWM"
     APPEND_ID_ITEM PKTID 8 UINT 16 "Packet ID which must be 18"
