@@ -4,6 +4,7 @@
 #include "utils.h"   // safeDigitalWrite
 #include "imu.h"
 #include "sensors.h"
+#include "telem.h"
 
 void selfRightLeft(){
     if (weaponsEnabled()){
@@ -241,4 +242,9 @@ void autoSelfRight(void) {
             self_right_state = UPRIGHT;
             break;
     }
+}
+
+
+void telemetrySelfRight() {
+    sendSelfRightTelem(self_right_state);
 }

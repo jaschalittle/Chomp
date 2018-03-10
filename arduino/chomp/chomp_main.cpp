@@ -259,6 +259,7 @@ void chompLoop() {
         sendSbusTelem(current_rc_bitfield);
         sendPWMTelem(left_drive_value, right_drive_value);
         telemetryIMU();
+        telemetrySelfRight();
         last_telem_time = micros();
     }
 

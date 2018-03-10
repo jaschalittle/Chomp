@@ -235,3 +235,16 @@ bool sendORNTelem(bool stationary, uint8_t orientation, int32_t best_accum, int3
     tlm.inner.sum_angular_rate = sum_angular_rate;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
+
+
+struct SelfRightTelemInner {
+    uint8_t state;
+};
+typedef TelemetryPacket<TLM_ID_SRT, SelfRightTelemInner> SRTTelemetry;
+bool sendSelfRightTelem(uint8_t state) {
+    CHECK_ENABLED(TLM_ID_SRT);
+    SRTTelemetry tlm;
+    tlm.inner.state = state;
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+

@@ -172,6 +172,16 @@ TELEMETRY CHOMP DMP LITTLE_ENDIAN "DMP orientation results"
     APPEND_ITEM QY 32 FLOAT "Quaternion y"
     APPEND_ITEM QZ 32 FLOAT "Quaternion z"
 
+TELEMETRY CHOMP SRT LITTLE_ENDIAN "Self Righting"
+    APPEND_ID_ITEM PKTID 8 UINT 20 "Packet ID which must be 20"
+    APPEND_ITEM STATE 8 UINT "Self Right State"
+        STATE UPRIGHT             0
+        STATE MOVE_HAMMER_FORWARD 1
+        STATE WAIT_STABLE         2
+        STATE LOCK_OUT            3
+        STATE HAMMER_RETRACT      4
+        STATE WAIT_UPRIGHT        5
+
 COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
     APPEND_ID_PARAMETER CMDID 8 UINT 10 10 10 "Command ID which must be 10"
     APPEND_PARAMETER SPERIOD 32 UINT 10000 30000000 50000 "Interval between small telemetry transmissions"
@@ -190,7 +200,8 @@ COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
     APPEND_PARAMETER EN_SYS 1 UINT 0 1 1 "Enable SYS telemetry packet"
     APPEND_PARAMETER EN_SNS 1 UINT 0 1 0 "Enable SNS telemetry packet"
     APPEND_PARAMETER PADDING11 2 UINT 0 0 0
-    APPEND_PARAMETER PADDING27 4 UINT 0 0 0
+    APPEND_PARAMETER PADDING27 3 UINT 0 0 0
+    APPEND_PARAMETER EN_SRT 1 UINT 0 1 0 "Enable SRT telemetry packet"
     APPEND_PARAMETER EN_ORN 1 UINT 0 1 0 "Enable ORN telemetry packet"
     APPEND_PARAMETER EN_DMP 1 UINT 0 1 0 "Enable DMP telemetry packet"
     APPEND_PARAMETER EN_IMU 1 UINT 0 1 0 "Enable IMU telemetry packet"
