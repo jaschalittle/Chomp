@@ -81,8 +81,12 @@ static void startHammerForward(void) {
         return;
 
     int16_t hammer_position = getAngle();
+    // negative when motion should occur in fire direction,
+    // positive when hammer is past min_hammer_angle
     int16_t fire_distance = hammer_position - min_hammer_angle;
-    int16_t retract_distance = hammer_position - max_hammer_angle;
+    // negative when motion should occur in retract direction,
+    // positive when hammer is before max_hammer_angle
+    int16_t retract_distance = max_hammer_angle - hammer_position;
 
     hammer_move_start = micros();
     if(retract_distance<fire_distance) {
