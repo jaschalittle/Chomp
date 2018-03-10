@@ -51,20 +51,32 @@ enum SelfRightState {
     WAIT_UPRIGHT
 };
 
-static enum SelfRightState state = UPRIGHT;
+static enum SelfRightState self_right_state = UPRIGHT;
 String hammer_command;
 uint16_t min_hammer_angle = 166;
 uint16_t max_hammer_angle = 252;
 uint32_t max_hammer_move_duration = 2000000L;
 uint32_t hammer_move_start;
+uint32_t max_reorient_wait = 1000000L;
+uint32_t reorient_start;
 
+
+// state tests
 static bool hammerIsForward() {
     uint16_t hammer_position = getAngle();
     return (hammer_position > min_hammer_angle &&
             hammer_position < max_hammer_angle);
 }
 
-static void hammerForward(void) {
+
+static bool hammerIsRetracted(void) {
+    return (((micros() - hammer_move_start) > max_hammer_move_duration) ||
+            (getAngle() <= RETRACT_COMPLETE_ANGLE));
+}
+
+
+// actions
+static void startHammerForward(void) {
     if(hammerIsForward())
         return;
 
@@ -83,8 +95,16 @@ static void hammerForward(void) {
 }
 
 
-static enum SelfRightState checkOrientation(void) {
-    enum SelfRightState result=UPRIGHT;
+static void startHammerRetract(void)
+{
+    hammer_move_start = micros();
+    hammer_command = startElectricHammerMove(-1000);
+}
+
+
+// state functions
+static enum SelfRightState checkOrientation(const enum SelfRightState state) {
+    enum SelfRightState result=state;
     switch(getOrientation()) {
         case ORN_LEFT:
         case ORN_RIGHT:
@@ -93,7 +113,7 @@ static enum SelfRightState checkOrientation(void) {
         case ORN_TOP:
         case ORN_FRONT:
         case ORN_TAIL:
-            hammerForward();
+            startHammerForward();
             result = MOVE_HAMMER_FORWARD;
             break;
         case ORN_UPRIGHT:
@@ -104,9 +124,10 @@ static enum SelfRightState checkOrientation(void) {
     return result;
 }
 
-static enum SelfRightState checkHammerForward(void)
+
+static enum SelfRightState checkHammerForward(const enum SelfRightState state)
 {
-    enum SelfRightState result=UPRIGHT;
+    enum SelfRightState result=state;
     if(hammerIsForward()) {
         stopElectricHammerMove();
         result = WAIT_STABLE;
@@ -121,15 +142,9 @@ static enum SelfRightState checkHammerForward(void)
 }
 
 
-static void startHammerRetract(void)
+static enum SelfRightState checkStable(const enum SelfRightState state)
 {
-    hammer_move_start = micros();
-    hammer_command = startElectricHammerMove(-1000);
-}
-
-static enum SelfRightState checkStable(void)
-{
-    enum SelfRightState result=UPRIGHT;
+    enum SelfRightState result=state;
     switch(getOrientation()) {
         case ORN_UPRIGHT:
             startHammerRetract();
@@ -138,11 +153,13 @@ static enum SelfRightState checkStable(void)
         case ORN_LEFT:
         case ORN_TOP_LEFT:
             selfRightLeft();
+            reorient_start = micros();
             result = WAIT_UPRIGHT;
             break;
         case ORN_RIGHT:
         case ORN_TOP_RIGHT:
             selfRightRight();
+            reorient_start = micros();
             result = WAIT_UPRIGHT;
             break;
         case ORN_TOP:
@@ -160,46 +177,68 @@ static enum SelfRightState checkStable(void)
 }
 
 
-static bool hammerIsRetracted(void) {
-    return (((micros() - hammer_move_start) > max_hammer_move_duration) ||
-            (getAngle() <= RETRACT_COMPLETE_ANGLE));
+static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
+{
+    enum SelfRightState result = state;
+    if(hammerIsRetracted()) {
+        stopElectricHammerMove();
+        result = UPRIGHT;
+    } else if((micros() - hammer_move_start)>max_hammer_move_duration) {
+        stopElectricHammerMove();
+        result = UPRIGHT;
+    }
+    return result;
 }
+
+
+static enum SelfRightState checkUpright(const enum SelfRightState state)
+{
+    enum SelfRightState result = state;
+    if(getOrientation() == ORN_UPRIGHT) {
+        selfRightOff();
+        startHammerRetract();
+        result = HAMMER_RETRACT;
+    } else if((micros() - reorient_start)>max_reorient_wait) {
+        selfRightOff();
+        result = LOCK_OUT;
+    }
+    return result;
+}
+
 
 void autoSelfRight(void) {
     if(!weaponsEnabled()) {
         selfRightSafe();
+        if(self_right_state == MOVE_HAMMER_FORWARD ||
+           self_right_state == HAMMER_RETRACT) {
+            stopElectricHammerMove();
+        }
+        self_right_state = UPRIGHT;
         return;
     }
-    switch(state) {
+    switch(self_right_state) {
         case UPRIGHT:
-            state = checkOrientation();
+            self_right_state = checkOrientation(self_right_state);
             break;
         case MOVE_HAMMER_FORWARD:
-            state = checkHammerForward();
+            self_right_state = checkHammerForward(self_right_state);
             break;
         case WAIT_STABLE:
-            state = checkStable();
+            self_right_state = checkStable(self_right_state);
             break;
         case LOCK_OUT:
             if(getOrientation() == ORN_UPRIGHT) {
-                state = UPRIGHT;
+                self_right_state = UPRIGHT;
             }
             break;
         case WAIT_UPRIGHT:
-            if(getOrientation() == ORN_UPRIGHT) {
-                selfRightOff();
-                startHammerRetract();
-                state = HAMMER_RETRACT;
-            }
+            self_right_state = checkUpright(self_right_state);
             break;
         case HAMMER_RETRACT:
-            if(hammerIsRetracted()) {
-                stopElectricHammerMove();
-                state = UPRIGHT;
-            }
+            self_right_state = checkHammerRetracted(self_right_state);
             break;
         default:
-            state = UPRIGHT;
+            self_right_state = UPRIGHT;
             break;
     }
 }
