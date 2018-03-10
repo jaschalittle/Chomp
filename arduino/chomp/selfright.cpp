@@ -23,12 +23,12 @@ void selfRightRight(){
 }
 
 
-/* static void selfRightBoth(){
+static void selfRightBoth(){
     if (weaponsEnabled()){
         safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
         safeDigitalWrite(SELF_RIGHT_RIGHT_DO, HIGH);
     }
-}*/
+}
 
 
 void selfRightOff(){
@@ -44,10 +44,11 @@ void selfRightSafe(){
     pinMode(SELF_RIGHT_RIGHT_DO, OUTPUT);
 }
 
+
 enum SelfRightState {
     UPRIGHT,
     MOVE_HAMMER_FORWARD,
-    WAIT_STABLE,
+    EXTEND_BARS,
     LOCK_OUT,
     HAMMER_RETRACT,
     WAIT_UPRIGHT
@@ -135,7 +136,7 @@ static enum SelfRightState checkHammerForward(const enum SelfRightState state)
     enum SelfRightState result=state;
     if(hammerIsForward()) {
         stopElectricHammerMove();
-        result = WAIT_STABLE;
+        result = EXTEND_BARS;
     } else if(micros() - hammer_move_start > max_hammer_move_duration) {
         stopElectricHammerMove();
         selfRightOff();
@@ -143,41 +144,6 @@ static enum SelfRightState checkHammerForward(const enum SelfRightState state)
     } else {
         DriveSerial.println(hammer_command);
     }
-    return result;
-}
-
-
-static enum SelfRightState checkStable(const enum SelfRightState state)
-{
-    enum SelfRightState result=state;
-    switch(getOrientation()) {
-        case ORN_UPRIGHT:
-            startHammerRetract();
-            result = HAMMER_RETRACT;
-            break;
-        case ORN_LEFT:
-        case ORN_TOP_LEFT:
-            selfRightLeft();
-            reorient_start = micros();
-            result = WAIT_UPRIGHT;
-            break;
-        case ORN_RIGHT:
-        case ORN_TOP_RIGHT:
-            selfRightRight();
-            reorient_start = micros();
-            result = WAIT_UPRIGHT;
-            break;
-        case ORN_TOP:
-        case ORN_FRONT:
-        case ORN_TAIL:
-            selfRightOff();
-            result = LOCK_OUT;
-            break;
-        case ORN_UNKNOWN:
-        default:
-            break;
-    }
- 
     return result;
 }
 
@@ -230,8 +196,10 @@ void autoSelfRight(void) {
         case MOVE_HAMMER_FORWARD:
             self_right_state = checkHammerForward(self_right_state);
             break;
-        case WAIT_STABLE:
-            self_right_state = checkStable(self_right_state);
+        case EXTEND_BARS:
+            selfRightBoth();
+            reorient_start = micros();
+            self_right_state = WAIT_UPRIGHT;
             break;
         case LOCK_OUT:
             if(getOrientation() == ORN_UPRIGHT) {

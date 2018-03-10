@@ -7,40 +7,30 @@ LOCK_OUT [shape="octagon"];
 Start [shape="circle"];
 Start -> UPRIGHT;
 
+Disable [shape="circle" label="Weapons\nDisabled"]
+Disable -> UPRIGHT
+
 UPRIGHT -> MOVE_HAMMER_FORWARD [label="Non-Upright\nKnown Orientation"
                                 color="green"];
 UPRIGHT -> UPRIGHT [label="right side up"];
 
-MOVE_HAMMER_FORWARD -> WAIT_STABLE [label="Hammer is forward"
-                                    color="green"];
+MOVE_HAMMER_FORWARD -> EXTEND_BARS [label="Hammer is forward"
+                                   color="green"];
 MOVE_HAMMER_FORWARD -> LOCK_OUT [label="2.0 second time out",
                                  color="red"];
-MOVE_HAMMER_FORWARD -> UPRIGHT [label="weapons disable"];
 
-WAIT_STABLE -> SELF_RIGHT_LEFT [label="on left side"
-                                color="green"];
-WAIT_STABLE -> SELF_RIGHT_RIGHT [label="on right side"
-                                 color="green"];
-WAIT_STABLE -> HAMMER_RETRACT [label="right side up"
-                               color="green"];
-WAIT_STABLE -> LOCK_OUT [label="1.0 second time out"
-                         color="orange"];
-
-SELF_RIGHT_LEFT -> WAIT_UPRIGHT [color="green"];
-SELF_RIGHT_RIGHT -> WAIT_UPRIGHT [color="green"];
+EXTEND_BARS -> WAIT_UPRIGHT [color="green"];
 
 WAIT_UPRIGHT -> HAMMER_RETRACT [label="right side up"
                                 color="green"];
-WAIT_UPRIGHT -> LOCK_OUT [label="1.0 second time out"
+WAIT_UPRIGHT -> LOCK_OUT [label="2.0 second time out"
                           color="orange"];
 
 HAMMER_RETRACT -> UPRIGHT [label="hammer retracted"
                            color="green"];
 HAMMER_RETRACT -> UPRIGHT [label="2.0 second time out"
                            color="red"];
-HAMMER_RETRACT -> UPRIGHT [label="weapons disable"];
 
 LOCK_OUT -> UPRIGHT [label="right side up"
                      color="green"];
-LOCK_OUT -> UPRIGHT [label="weapons disable"];
 }
