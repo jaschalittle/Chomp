@@ -181,7 +181,7 @@ struct IMUTelemInner {
     int16_t a[3];
     int16_t g[3];
     int16_t t;
-};
+} __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_IMU, IMUTelemInner> IMUTelemetry;
 
 bool sendIMUTelem(int16_t (&a)[3], int16_t (&g)[3], int16_t t)
@@ -201,7 +201,7 @@ struct DMPTelemInner {
     uint16_t fifoCount;
     uint8_t intStatus;
     float qw, qx, qy, qz;
-};
+} __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_DMP, DMPTelemInner> DMPTelemetry;
 
 bool sendDMPTelem(size_t fifoCount, uint8_t intStatus, float w, float x, float y, float z)
@@ -224,7 +224,7 @@ struct ORNTelemInner {
     uint8_t stationary:1;
     int32_t best_accum;
     int32_t sum_angular_rate;
-};
+} __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_ORN, ORNTelemInner> ORNTelemetry;
 bool sendORNTelem(bool stationary, uint8_t orientation, int32_t best_accum, int32_t sum_angular_rate)
 {
@@ -240,7 +240,7 @@ bool sendORNTelem(bool stationary, uint8_t orientation, int32_t best_accum, int3
 
 struct SelfRightTelemInner {
     uint8_t state;
-};
+} __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_SRT, SelfRightTelemInner> SRTTelemetry;
 bool sendSelfRightTelem(uint8_t state) {
     CHECK_ENABLED(TLM_ID_SRT);
