@@ -190,6 +190,8 @@ static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
     } else if((micros() - hammer_move_start)>max_hammer_move_duration) {
         stopElectricHammerMove();
         result = UPRIGHT;
+    } else {
+        DriveSerial.println(hammer_command);
     }
     return result;
 }
