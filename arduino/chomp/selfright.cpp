@@ -98,7 +98,7 @@ static void startHammerForward(void) {
 static void startHammerRetract(void)
 {
     hammer_move_start = micros();
-    hammer_command = startElectricHammerMove(-1000);
+    hammer_command = startElectricHammerMove(1000);
 }
 
 
