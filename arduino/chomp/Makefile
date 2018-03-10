@@ -17,3 +17,6 @@ ARDUINO_LIBS = I2C MPU6050
 USER_LIB_PATH := $(realpath ../libraries)
 
 include ${ARDMK_DIR}/Arduino.mk
+
+selfright.pdf: selfright.dot
+	dot -Tpdf -o $@ $<
