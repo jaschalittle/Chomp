@@ -62,7 +62,7 @@ void processIMU(void) {
                       ((int32_t)stable_orientation[imu_step][j]));
         }
         // If this is a new highest, write it down
-        if(abs(accum)>abs(best_accum)) {
+        if(accum>max_accum) {
             max_accum = accum;
             max_orientation = imu_step;
         }
