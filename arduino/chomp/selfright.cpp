@@ -6,6 +6,7 @@
 #include "sensors.h"
 #include "telem.h"
 
+
 void selfRightLeft(){
     if (weaponsEnabled()){
         safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
@@ -58,7 +59,7 @@ uint16_t min_hammer_angle = 166;
 uint16_t max_hammer_angle = 252;
 uint32_t max_hammer_move_duration = 2000000L;
 uint32_t hammer_move_start;
-uint32_t max_reorient_wait = 1000000L;
+uint32_t max_reorient_duration = 5000000L;
 uint32_t reorient_start;
 
 
@@ -204,7 +205,7 @@ static enum SelfRightState checkUpright(const enum SelfRightState state)
         selfRightOff();
         startHammerRetract();
         result = HAMMER_RETRACT;
-    } else if((micros() - reorient_start)>max_reorient_wait) {
+    } else if((micros() - reorient_start)>max_reorient_duration) {
         selfRightOff();
         result = LOCK_OUT;
     }
