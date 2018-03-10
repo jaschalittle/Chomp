@@ -71,8 +71,7 @@ static bool hammerIsForward() {
 
 
 static bool hammerIsRetracted(void) {
-    return (((micros() - hammer_move_start) > max_hammer_move_duration) ||
-            (getAngle() <= RETRACT_COMPLETE_ANGLE));
+    return (getAngle() <= RETRACT_COMPLETE_ANGLE);
 }
 
 
