@@ -81,11 +81,11 @@ static void startHammerForward(void) {
         return;
 
     int16_t hammer_position = getAngle();
-    int16_t forward_distance = abs(hammer_position - min_hammer_angle);
-    int16_t reverse_distance = abs(hammer_position - max_hammer_angle);
+    int16_t fire_distance = hammer_position - min_hammer_angle;
+    int16_t retract_distance = hammer_position - max_hammer_angle;
 
     hammer_move_start = micros();
-    if(reverse_distance<forward_distance) {
+    if(retract_distance<fire_distance) {
         // positive speed moves the hammer in the retract direction
         hammer_command = startElectricHammerMove(1000);
     } else {
