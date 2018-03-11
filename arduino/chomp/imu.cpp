@@ -14,7 +14,7 @@ int32_t stationary_threshold=200;
 int32_t min_valid_sumsq = 4000000;
 int32_t max_valid_sumsq = 5000000;
 int32_t acceleration_z_threshold = 1900;
-bool stationary, upright;
+bool stationary, upright, imu_read_valid;
 int32_t sumsq = 0;
 int32_t sum_angular_rate = 0;
 
@@ -38,9 +38,17 @@ void processIMU(void) {
     uint32_t now = micros();
     if(now-last_imu_process > imu_period) {
         last_imu_process = now;
+        uint8_t imu_err = IMU.getMotion6(
+            &acceleration[0], &acceleration[1], &acceleration[2],
+            &angular_rate[0], &angular_rate[1], &angular_rate[2]);
+        if(imu_err != 0) {
+            imu_read_valid = false;
+            stationary = false;
+            upright = false;
+            return;
+        }
+        imu_read_valid = true;
         temperature = IMU.getTemperature();
-        IMU.getMotion6(&acceleration[0], &acceleration[1], &acceleration[2],
-                       &angular_rate[0], &angular_rate[1], &angular_rate[2]);
         sum_angular_rate = (abs(angular_rate[0]) +
                             abs(angular_rate[1]) +
                             abs(angular_rate[2]));
@@ -71,4 +79,9 @@ bool isUpright(void) {
 
 bool isStationary(void) {
     return stationary;
+}
+
+bool getOmegaZ(int16_t *omega_z) {
+    omega_z = angular_rate[2];
+    return imu_read_valid;
 }
