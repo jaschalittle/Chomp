@@ -10,16 +10,19 @@ Start -> UPRIGHT;
 Disable [shape="circle" label="Weapons\nDisabled"]
 Disable -> UPRIGHT
 
-UPRIGHT -> MOVE_HAMMER_FORWARD [label="Non-Upright\nKnown Orientation"
+UPRIGHT -> WAIT_HAMMER_FORWARD [label="Stationary and Not upright"
                                 color="green"];
 UPRIGHT -> UPRIGHT [label="right side up"];
 
-MOVE_HAMMER_FORWARD -> EXTEND_BARS [label="Hammer is forward"
-                                   color="green"];
-MOVE_HAMMER_FORWARD -> LOCK_OUT [label="2.0 second time out",
-                                 color="red"];
+WAIT_HAMMER_FORWARD -> EXTEND [label="Hammer is forward"
+                                     color="green"];
+WAIT_HAMMER_FORWARD -> EXTEND [label="2.0 second time out"
+                                     color="red"];
+WAIT_HAMMER_FORWARD -> HAMMER_RETRACT [label="Right side up"
+                                       color="green"]
 
-EXTEND_BARS -> WAIT_UPRIGHT [color="green"];
+EXTEND -> WAIT_UPRIGHT [color="green"];
+EXTEND [label="Extend both bars"];
 
 WAIT_UPRIGHT -> HAMMER_RETRACT [label="right side up"
                                 color="green"];

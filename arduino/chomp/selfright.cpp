@@ -47,10 +47,9 @@ void selfRightSafe(){
 
 enum SelfRightState {
     UPRIGHT,
-    MOVE_HAMMER_FORWARD,
-    EXTEND_BARS,
+    WAIT_HAMMER_FORWARD,
     LOCK_OUT,
-    HAMMER_RETRACT,
+    WAIT_HAMMER_RETRACT,
     WAIT_UPRIGHT
 };
 
@@ -60,7 +59,7 @@ uint16_t min_hammer_angle = 166;
 uint16_t max_hammer_angle = 252;
 uint32_t max_hammer_move_duration = 2000000L;
 uint32_t hammer_move_start;
-uint32_t max_reorient_duration = 5000000L;
+uint32_t max_reorient_duration = 2000000L;
 uint32_t reorient_start;
 
 
@@ -108,46 +107,6 @@ static void startHammerRetract(void)
 }
 
 
-// state functions
-static enum SelfRightState checkOrientation(const enum SelfRightState state) {
-    enum SelfRightState result=state;
-    switch(getOrientation()) {
-        case ORN_LEFT:
-        case ORN_RIGHT:
-        case ORN_TOP_LEFT:
-        case ORN_TOP_RIGHT:
-        case ORN_TOP:
-        case ORN_FRONT:
-        case ORN_TAIL:
-            startHammerForward();
-            result = MOVE_HAMMER_FORWARD;
-            break;
-        case ORN_UPRIGHT:
-        case ORN_UNKNOWN:
-        default:
-            break;
-    }
-    return result;
-}
-
-
-static enum SelfRightState checkHammerForward(const enum SelfRightState state)
-{
-    enum SelfRightState result=state;
-    if(hammerIsForward()) {
-        stopElectricHammerMove();
-        result = EXTEND_BARS;
-    } else if(micros() - hammer_move_start > max_hammer_move_duration) {
-        stopElectricHammerMove();
-        selfRightOff();
-        result = LOCK_OUT;
-    } else {
-        DriveSerial.println(hammer_command);
-    }
-    return result;
-}
-
-
 static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
 {
     enum SelfRightState result = state;
@@ -164,15 +123,51 @@ static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
 }
 
 
-static enum SelfRightState checkUpright(const enum SelfRightState state)
+static enum SelfRightState checkOrientation(const enum SelfRightState state)
 {
     enum SelfRightState result = state;
-    if(getOrientation() == ORN_UPRIGHT) {
-        selfRightOff();
+    if(isStationary() && !isUpright()) {
+        startHammerForward();
+        selfRightBoth();
+        result = WAIT_HAMMER_FORWARD;
+    }
+    return result;
+}
+
+
+static enum SelfRightState checkHammerForward(const enum SelfRightState state)
+{
+    enum SelfRightState result=state;
+    if(isUpright()) {
         startHammerRetract();
-        result = HAMMER_RETRACT;
-    } else if((micros() - reorient_start)>max_reorient_duration) {
-        selfRightOff();
+        selfRightSafe();
+        result = WAIT_HAMMER_RETRACT;
+    } else if(hammerIsForward()) {
+        stopElectricHammerMove();
+        selfRightBoth();
+        reorient_start = micros();
+        result = WAIT_UPRIGHT;
+    } else if(micros() - hammer_move_start > max_hammer_move_duration) {
+        stopElectricHammerMove();
+        selfRightBoth();
+        reorient_start = micros();
+        result = WAIT_UPRIGHT;
+    } else {
+        DriveSerial.println(hammer_command);
+    }
+    return result;
+}
+
+
+static enum SelfRightState checkUpright(const enum SelfRightState state)
+{
+    enum SelfRightState result=state;
+    if(isUpright()) {
+        selfRightSafe();
+        startHammerRetract();
+        result = WAIT_HAMMER_RETRACT;
+    } else if((micros() - reorient_start) > max_reorient_duration) {
+        selfRightSafe();
         result = LOCK_OUT;
     }
     return result;
@@ -195,23 +190,18 @@ void autoSelfRight(bool enabled) {
         case UPRIGHT:
             self_right_state = checkOrientation(self_right_state);
             break;
-        case MOVE_HAMMER_FORWARD:
+        case WAIT_HAMMER_FORWARD:
             self_right_state = checkHammerForward(self_right_state);
             break;
-        case EXTEND_BARS:
-            selfRightBoth();
-            reorient_start = micros();
-            self_right_state = WAIT_UPRIGHT;
-            break;
         case LOCK_OUT:
-            if(getOrientation() == ORN_UPRIGHT) {
+            if(isUpright()) {
                 self_right_state = UPRIGHT;
             }
             break;
         case WAIT_UPRIGHT:
             self_right_state = checkUpright(self_right_state);
             break;
-        case HAMMER_RETRACT:
+        case WAIT_HAMMER_RETRACT:
             self_right_state = checkHammerRetracted(self_right_state);
             break;
         default:
