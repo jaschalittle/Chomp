@@ -179,11 +179,13 @@ static enum SelfRightState checkUpright(const enum SelfRightState state)
 }
 
 
-void autoSelfRight(void) {
-    if(!weaponsEnabled()) {
-        selfRightSafe();
-        if(self_right_state == MOVE_HAMMER_FORWARD ||
-           self_right_state == HAMMER_RETRACT) {
+void autoSelfRight(bool enabled) {
+    if(!weaponsEnabled() || !enabled) {
+        if(self_right_state != UPRIGHT) {
+            selfRightSafe();
+        }
+        if(self_right_state == WAIT_HAMMER_FORWARD ||
+           self_right_state == WAIT_HAMMER_RETRACT) {
             stopElectricHammerMove();
         }
         self_right_state = UPRIGHT;
