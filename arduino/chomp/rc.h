@@ -13,11 +13,12 @@ enum SBUSChannels {
     AUTO_HAMMER_ENABLE = 1,
     HAMMER_CTRL = 2,
     FLAME_CTRL = 3,
-    MAG_CTRL = 4,
+    AUTO_SELF_RIGHT = 4,
     GENTLE_HAM_CTRL = 5,
     INTENSITY = 6,
     DANGER_MODE = 7,
     RANGE = 8,
+    MANUAL_SELF_RIGHT = 9,
 };
 
 // Boolean values coming in over RC are stored in a bitfield for ease of comparison
@@ -30,9 +31,10 @@ enum RCBitfield {
     FLAME_PULSE_BIT = 16,
     GENTLE_HAM_F_BIT = 32,
     GENTLE_HAM_R_BIT = 64,
-    MAG_CTRL_BIT = 128,
-    MAG_PULSE_BIT = 256,
+    AUTO_SELF_RIGHT_BIT = 128,
     DANGER_CTRL_BIT = 512,
+    MANUAL_SELF_RIGHT_LEFT_BIT = 1024,
+    MANUAL_SELF_RIGHT_RIGHT_BIT = 2048,
 };
 
 bool bufferSbusData();

@@ -181,11 +181,12 @@ struct IMUTelemInner {
     int16_t a[3];
     int16_t g[3];
     int16_t t;
-};
+} __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_IMU, IMUTelemInner> IMUTelemetry;
 
 bool sendIMUTelem(int16_t (&a)[3], int16_t (&g)[3], int16_t t)
 {
+    CHECK_ENABLED(TLM_ID_IMU);
     IMUTelemetry tlm;
     for(size_t i=0;i<3;i++) {
         tlm.inner.a[i] = a[i];
@@ -200,7 +201,7 @@ struct DMPTelemInner {
     uint16_t fifoCount;
     uint8_t intStatus;
     float qw, qx, qy, qz;
-};
+} __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_DMP, DMPTelemInner> DMPTelemetry;
 
 bool sendDMPTelem(size_t fifoCount, uint8_t intStatus, float w, float x, float y, float z)
@@ -213,6 +214,38 @@ bool sendDMPTelem(size_t fifoCount, uint8_t intStatus, float w, float x, float y
     tlm.inner.qx = x;
     tlm.inner.qy = y;
     tlm.inner.qz = z;
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+
+
+struct ORNTelemInner {
+    uint8_t padding:3;
+    uint8_t orientation:4;
+    uint8_t stationary:1;
+    int32_t best_accum;
+    int32_t sum_angular_rate;
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_ORN, ORNTelemInner> ORNTelemetry;
+bool sendORNTelem(bool stationary, uint8_t orientation, int32_t best_accum, int32_t sum_angular_rate)
+{
+    CHECK_ENABLED(TLM_ID_ORN);
+    ORNTelemetry tlm;
+    tlm.inner.stationary = stationary;
+    tlm.inner.orientation = orientation;
+    tlm.inner.best_accum = best_accum;
+    tlm.inner.sum_angular_rate = sum_angular_rate;
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+
+
+struct SelfRightTelemInner {
+    uint8_t state;
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_SRT, SelfRightTelemInner> SRTTelemetry;
+bool sendSelfRightTelem(uint8_t state) {
+    CHECK_ENABLED(TLM_ID_SRT);
+    SRTTelemetry tlm;
+    tlm.inner.state = state;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 

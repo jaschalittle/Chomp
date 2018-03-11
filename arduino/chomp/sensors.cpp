@@ -4,6 +4,10 @@
 // #include "imu.h"
 #include "drive.h"
 
+
+static uint16_t cached_angle;
+static int16_t cached_pressure;
+
 void sensorSetup(){
     pinMode(ANGLE_AI, INPUT);
     pinMode(PRESSURE_AI, INPUT);
@@ -12,10 +16,16 @@ void sensorSetup(){
 // static const uint32_t pressure_sensor_range = 920 - 102;
 bool readMlhPressure(int16_t* pressure){
     uint16_t counts = analogRead(PRESSURE_AI);
-    if (counts < 102) { *pressure = 0; return true; }
-    if (counts > 920) { *pressure = 500; return true; }
-
-    *pressure = (int16_t) (counts - 102) * 11 / 18; // safe with 16 bit uints, accurate to 0.02%%
+    if (counts < 102) {
+        *pressure = 0;
+        return true;
+    }
+    if (counts > 920) {
+        *pressure = 500;
+        return true;
+    }
+    // safe with 16 bit uints, accurate to 0.02%%
+    *pressure = (int16_t) (counts - 102) * 11 / 18;
     return true;
 }
 
@@ -26,13 +36,39 @@ bool readMlhPressure(int16_t* pressure){
 // 360 deg is 90% of input voltage, empirically observed to be 920 counts
 bool readAngle(uint16_t* angle){
     uint16_t counts = analogRead(ANGLE_AI);
-    if ( counts < MIN_ANGLE_ANALOG_READ ) { return false; } // Failure mode in shock, rails to 0;
-    if ( counts < ZERO_ANGLE_ANALOG_READ ) { *angle = 0; return true; }
-    if ( counts > MAX_ANGLE_ANALOG_READ ) { *angle = 359; return true; }
+    if ( counts < MIN_ANGLE_ANALOG_READ ) {
+        // Failure mode in shock, rails to 0;
+        return false;
+    }
+    if ( counts < ZERO_ANGLE_ANALOG_READ ) {
+        *angle = 0;
+        return true;
+    }
+    if ( counts > MAX_ANGLE_ANALOG_READ ) {
+        *angle = 359;
+        return true;
+    }
 
-    *angle = (int16_t) (counts - ZERO_ANGLE_ANALOG_READ) * 11 / 25;  // safe with 16 bit uints, accurate to 0.02%%
+    // safe with 16 bit uints, accurate to 0.02%
+    *angle = (int16_t) (counts - ZERO_ANGLE_ANALOG_READ) * 11 / 25;
     return true;
 }
+
+
+uint16_t getAngle(void) {
+    return cached_angle;
+}
+
+
+int16_t getPressure(void) {
+    return cached_pressure;
+}
+
+
+bool readSensors(void) {
+    return readAngle(&cached_angle) && readMlhPressure(&cached_pressure);
+}
+
 
 #define ANGLE_CONVERSION_FLOAT 0.4400978f  // 360 / (920 - 102)
 bool readAngleFloat(float* angle){
@@ -47,7 +83,8 @@ bool readAngleFloat(float* angle){
 
 
 bool angularVelocity (float* angular_velocity) {
-    // This function could filter low angle values and ignore them for summing. If we only rail to 0V, we could still get a velocity.
+    // This function could filter low angle values and ignore them for summing.
+    // If we only rail to 0V, we could still get a velocity.
     float angle_traversed = 0;
     float abs_angle_traversed = 0;
     float last_angle;

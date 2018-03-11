@@ -28,8 +28,8 @@
 #define RETRACT_VALVE_DO 8
 #define THROW_VALVE_DO 9
 
-#define MAG2_DO 10
-#define MAG1_DO 11
+#define SELF_RIGHT_RIGHT_DO 10
+#define SELF_RIGHT_LEFT_DO 11
 
 // These are handled as pin change interrupts on the PINB bank
 #define LEFT_RC_PIN 12             // Drive radio ch1

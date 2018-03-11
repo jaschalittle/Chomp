@@ -14,12 +14,13 @@
 #include <avr/wdt.h>
 #include "command.h"
 #include "imu.h"
+#include "selfright.h"
 
 // SAFETY CODE ----------------------------------------------------
 void safeState(){
     valveSafe();
     flameSafe();
-    magnetSafe();
+    selfRightSafe();
 }
 
 void enableState(){
@@ -67,11 +68,12 @@ void chompSetup() {
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
-static uint16_t previous_rc_bitfield = 0;
+static uint16_t current_rc_bitfield = 0, previous_rc_bitfield = 0;
 static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
 static uint32_t last_telem_time = micros();
 static uint32_t last_leddar_telem_time = micros();
+static uint32_t last_sensor_time = micros();
 static int16_t left_drive_value = 0;
 static int16_t right_drive_value = 0;
 static int16_t steer_bias = 0; // positive turns right, negative turns left
@@ -85,12 +87,19 @@ extern uint16_t sbus_overrun;
 
 uint32_t telemetry_interval=50000L;
 uint32_t leddar_telemetry_interval=100000L;
+uint32_t sensor_period=5000L;
+uint32_t leddar_max_request_period=100000L;
 
 void chompLoop() {
     uint32_t start_time = micros();
 
+    if(micros() - last_sensor_time>sensor_period) {
+        readSensors();
+        last_sensor_time = micros();
+    }
+
     // If there has been no data from the LEDDAR for a while, ask again
-    if (micros() - last_request_time > 100000UL){
+    if (micros() - last_request_time > leddar_max_request_period){
         last_request_time = micros();
         requestDetections();
     }
@@ -122,7 +131,7 @@ void chompLoop() {
             case PREDICTIVE_HIT_ZONE:
                 if (previous_leddar_state == ARM_ZONE) {
                     if (autofireEnabled(previous_rc_bitfield)){
-                        fire( hammer_intensity, previous_rc_bitfield & FLAME_PULSE_BIT, previous_rc_bitfield & MAG_PULSE_BIT, true /*autofire*/ );
+                        fire( hammer_intensity, previous_rc_bitfield & FLAME_PULSE_BIT, true /*autofire*/ );
                     }
                 } else {
                     previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
@@ -147,12 +156,13 @@ void chompLoop() {
         }
     }
 
+    // check for data from weapons radio
     if (bufferSbusData()){
         bool in_failsafe_state = parseSbus();
         if (!in_failsafe_state) {
             wdt_reset();
             // React to RC state changes
-            uint16_t current_rc_bitfield = getRcBitfield();
+            current_rc_bitfield = getRcBitfield();
             uint16_t diff = previous_rc_bitfield ^ current_rc_bitfield;
             hammer_intensity = getHammerIntensity();
             if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
@@ -173,9 +183,9 @@ void chompLoop() {
             // Manual hammer fire
             if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
                 if (current_rc_bitfield & DANGER_CTRL_BIT){
-                  noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT);
+                  noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
                 } else {
-                  fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, current_rc_bitfield & MAG_PULSE_BIT, false /*autofire*/);
+                  fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/);
                 }
             }
             if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
@@ -191,20 +201,26 @@ void chompLoop() {
             if( (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
                 gentleRetract(GENTLE_HAM_R_BIT);
             }
-            if( (diff & MAG_CTRL_BIT) && (current_rc_bitfield & MAG_CTRL_BIT)){
-                magOn();
+            if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
+                selfRightLeft();
             }
-            if( (diff & MAG_CTRL_BIT) && !(current_rc_bitfield & MAG_CTRL_BIT)){
-                magOff();
+            if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
+                selfRightRight();
+            }
+            if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
+               !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
+                selfRightOff();
             }
             previous_rc_bitfield = current_rc_bitfield;
         }
     }
 
-    // always sent in telemetry
+    // always sent in telemetry, cache values here
     left_drive_value = getLeftRc();
     right_drive_value = getRightRc();
+    // newRc is destructive, make sure to only call it once
     bool new_rc = newRc();
+    // check for autodrive
     if(new_autodrive || new_rc) {
         if(getTargetingEnable()) {
             left_drive_value -= steer_bias;
@@ -219,15 +235,18 @@ void chompLoop() {
     }
 
 
+    // read IMU and compute orientation
     processIMU();
 
+
+    // if enabled, make sure robot is right-side-up
+    autoSelfRight(current_rc_bitfield && AUTO_SELF_RIGHT_BIT);
+
+
+    // send telemetry
     if (micros() - last_telem_time > telemetry_interval){
         uint32_t loop_speed = micros() - start_time;
-        int16_t pressure = 0;
-        readMlhPressure(&pressure);
-        uint16_t angle = 0;
-        readAngle(&angle);
-        sendSensorTelem(pressure, angle);
+        sendSensorTelem(getPressure(), getAngle());
         sendSystemTelem(loop_speed,
                         leddar_overrun,
                         leddar_crc_error,
@@ -235,9 +254,10 @@ void chompLoop() {
                         last_command,
                         command_overrun,
                         invalid_command);
-        sendSbusTelem(previous_rc_bitfield);
+        sendSbusTelem(current_rc_bitfield);
         sendPWMTelem(left_drive_value, right_drive_value);
         telemetryIMU();
+        telemetrySelfRight();
         last_telem_time = micros();
     }
 

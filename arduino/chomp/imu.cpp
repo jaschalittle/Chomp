@@ -1,6 +1,7 @@
 #include "I2C.h"
 #include "telem_message_stream.h"
 #include "MPU6050.h"
+#include "imu.h"
 
 //TelemetryMessageStream telemetry_stream;
 
@@ -9,6 +10,13 @@ int16_t acceleration[3], angular_rate[3];
 int16_t temperature;
 uint32_t last_imu_process;
 uint32_t imu_period=100000;
+int32_t stationary_threshold=200;
+int32_t min_valid_sumsq = 4000000;
+int32_t max_valid_sumsq = 5000000;
+int32_t acceleration_z_threshold = 1900;
+bool stationary, upright;
+int32_t sumsq = 0;
+int32_t sum_angular_rate = 0;
 
 
 void initializeIMU(void) {
@@ -26,16 +34,41 @@ void initializeIMU(void) {
 
 
 void processIMU(void) {
+    // if enough time has passed, read the IMU
     uint32_t now = micros();
     if(now-last_imu_process > imu_period) {
         last_imu_process = now;
         temperature = IMU.getTemperature();
         IMU.getMotion6(&acceleration[0], &acceleration[1], &acceleration[2],
                        &angular_rate[0], &angular_rate[1], &angular_rate[2]);
+        sum_angular_rate = (abs(angular_rate[0]) +
+                            abs(angular_rate[1]) +
+                            abs(angular_rate[2]));
+        sumsq = 0;
+        for(uint8_t j=0;j<3;j++) {
+            sumsq += (((int32_t)acceleration[j])*((int32_t)acceleration[j]));
+        }
+        bool meaningful_accel = ((min_valid_sumsq<sumsq) &&
+                                 (sumsq<max_valid_sumsq));
+        stationary = ((sum_angular_rate<stationary_threshold) &&
+                      meaningful_accel);
+        upright = (meaningful_accel &&
+                   (acceleration_z_threshold < acceleration[2]));
     }
 }
 
 
 void telemetryIMU(void) {
     sendIMUTelem(acceleration, angular_rate, temperature);
+    sendORNTelem(stationary, upright, sumsq, sum_angular_rate);
+}
+
+
+bool isUpright(void) {
+    return upright;
+}
+
+
+bool isStationary(void) {
+    return stationary;
 }

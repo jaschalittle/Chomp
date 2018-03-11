@@ -14,10 +14,6 @@ uint8_t MAX_SAFE_TIME = 125;
 //                                     3   5   10  15  20  30  40  50  65
 uint8_t HAMMER_INTENSITIES_TIME[9] = { 25, 35, 60, 70, 80, 95, 105, 115, 125 };
 
-#define RELATIVE_TO_FORWARD 221  // offset of axle anfle from 180 when hammer forward on floor. actual angle read 221
-#define RELATIVE_TO_VERTICAL 32  // offset of axle angle from 90 when hammer arms vertical. actual angle read 122
-#define RELATIVE_TO_BACK 25  // offset of axle angle from 0 when hammer back on floor. actual angle read 25
-
 bool weaponsEnabled(){
     return g_enabled;
 }
@@ -26,10 +22,8 @@ bool autofireEnabled(char bitfield){
     return bitfield & AUTO_HAMMER_ENABLE_BIT;
 }
 
-// RETRACT CONSTANTS
-#define RETRACT_BEGIN_VEL_MAX 50.1f
-static const uint32_t RETRACT_TIMEOUT = 2000 * 1000L;  // in microseconds
-static const uint16_t RETRACT_COMPLETE_ANGLE = 20 + RELATIVE_TO_BACK;  // angle read  angle 53 off ground good on 4-09
+// hammer moving with electric motor
+static bool hammer_in_motion = false;
 
 // HAMMER DATA BUFFERS
 #define MAX_DATAPOINTS 500
@@ -63,23 +57,19 @@ void retract( bool check_velocity ){
     // Only retract if hammer is forward and not moving
     if (weaponsEnabled() && angle_read_ok && angle > RETRACT_COMPLETE_ANGLE && velocity_ok) {
         retract_time = micros();
-        // Should already be low, but just in case
-        safeDigitalWrite(VENT_VALVE_DO, LOW);
+        String movecmd = startElectricHammerMove(1000);
         while (micros() - retract_time < RETRACT_TIMEOUT && angle > RETRACT_COMPLETE_ANGLE) {
             sensor_read_time = micros();
             readAngle(&angle);
-            DriveSerial.println("@05!G 100");  // start motor to aid meshing
-            safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
-            DriveSerial.println("@05!G 1000");
             // Ensure that loop step takes 1 ms or more (without this it takes quite a bit less)
             sensor_read_time = micros() - sensor_read_time;
             delay_time = 10000 - sensor_read_time;
             if (delay_time > 0) {
                 delayMicroseconds(delay_time);
             }
+            DriveSerial.println(movecmd);
         }
-        safeDigitalWrite(RETRACT_VALVE_DO, LOW);
-        DriveSerial.println("@05!G 0");
+        stopElectricHammerMove();
     }
 }
 
@@ -98,7 +88,7 @@ void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timest
   vent_closed = false;  
 }
 
-void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool autofire ){
+void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -115,7 +105,7 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
     bool pressure_read_ok;
 
     bool angle_read_ok = readAngle(&angle);
-    if (weaponsEnabled() && angle_read_ok){
+    if (weaponsEnabled() && angle_read_ok && !hammer_in_motion){
         start_angle = angle;
         // Just in case a bug causes us to fall out of the hammer intensities array, do a last minute
         // sanity check before we actually command a throw.
@@ -123,9 +113,6 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
         uint16_t throw_close_angle = start_angle + throw_close_angle_diff;
         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
             
-            if (mag_pulse){
-                magOn();
-            }
             if (flame_pulse){
                 flameStart();
             }
@@ -190,9 +177,6 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
             // If the swing hasn't already ended, end it now
             endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
             
-            if (mag_pulse){
-                magOff();
-            }
             if (flame_pulse) {
                 flameEnd();
             }
@@ -200,7 +184,7 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
             // If we're *not* in autochomp mode, and the hammer is at a funny angle, it probably
             // means we're in a weird spot and maybe want to unstick ourselves with a
             // minimum-intensity danger fire.
-            noAngleFire(/* hammer intensity */1, false, false);
+            noAngleFire(/* hammer intensity */1, false);
             return;
         }
 
@@ -216,11 +200,8 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse, bool aut
 }
 
 const uint8_t NO_ANGLE_SWING_DURATION = 185; // total estimated time in ms of a swing (to calculate vent time)
-void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
-    if (weaponsEnabled()){
-        if (mag_pulse){
-            magOn();
-        }
+void noAngleFire( uint16_t hammer_intensity, bool flame_pulse){
+    if (weaponsEnabled() && !hammer_in_motion){
         if (flame_pulse){
             flameStart();
         }
@@ -239,9 +220,6 @@ void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
         delay(NO_ANGLE_SWING_DURATION - throw_duration);
         safeDigitalWrite(VENT_VALVE_DO, LOW);
 
-        if (mag_pulse){
-            magOff();
-        }
         if (flame_pulse) {
             flameEnd();
         }
@@ -251,15 +229,33 @@ void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool mag_pulse ){
     }
 }
 
-// use retract motor to gently move hammer
-void electricHammerMove(RCBitfield control, int16_t speed){
+String startElectricHammerMove(int16_t speed) {
+    hammer_in_motion = true;
+    DriveSerial.println("@05!G 100");  // start motor to aid meshing
     // Make sure we're vented
     safeDigitalWrite(VENT_VALVE_DO, LOW);
+    // engage drive wheel
     safeDigitalWrite(RETRACT_VALVE_DO, HIGH);
+    // wait for engagement
     delay(50);
     String movecmd("@05!G ");
     movecmd += speed;
     DriveSerial.println(movecmd);
+    return movecmd;
+}
+
+void stopElectricHammerMove(void) {
+    // disengage even if weapons are disabled
+    digitalWrite(RETRACT_VALVE_DO, LOW);
+    DriveSerial.println("@05!G 0");
+    // wait for disengage
+    delay(50);
+    hammer_in_motion = false;
+}
+
+// use retract motor to gently move hammer
+static void electricHammerMove(RCBitfield control, int16_t speed){
+    String movecmd = startElectricHammerMove(speed);
     uint32_t inter_sbus_time = micros();
     while ((micros() - inter_sbus_time) < 30000UL) {
         if (bufferSbusData()){
@@ -279,8 +275,7 @@ void electricHammerMove(RCBitfield control, int16_t speed){
             }
         }
     }
-    safeDigitalWrite(RETRACT_VALVE_DO, LOW);
-    DriveSerial.println("@05!G 0");
+    stopElectricHammerMove();
 }
 
 void gentleFire(RCBitfield control) {
@@ -298,18 +293,6 @@ void flameStart(){
 void flameEnd(){
     // seems like this shouldn't require enable, even though disable should close valve itself
     digitalWrite(PROPANE_DO, LOW);
-}
-
-void magOn(){
-    if (weaponsEnabled()){
-        safeDigitalWrite(MAG1_DO, HIGH);
-        safeDigitalWrite(MAG2_DO, HIGH);
-    }
-}
-
-void magOff(){
-    digitalWrite(MAG1_DO, LOW);
-    digitalWrite(MAG2_DO, LOW);
 }
 
 void valveSafe(){
@@ -339,11 +322,5 @@ void flameSafe(){
 void flameEnable(){
     // Assumes safe() has already been called beforehand, to set pin modes.
     safeDigitalWrite(IGNITER_DO, HIGH);
-}
-void magnetSafe(){
-    digitalWrite(MAG1_DO, LOW);
-    digitalWrite(MAG2_DO, LOW);
-    pinMode(MAG1_DO, OUTPUT);
-    pinMode(MAG2_DO, OUTPUT);
 }
 

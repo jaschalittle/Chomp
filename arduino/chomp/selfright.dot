@@ -1,0 +1,39 @@
+digraph SelfRight {
+// UPRIGHT MOVE_HAMMER_FORWARD WAIT_STABLE SELF_RIGHT_LEFT
+// SELF_RIGHT_RIGHT WAIT_UPRIGHT HAMMER_RETRACT
+node [shape="box"];
+LOCK_OUT [shape="octagon"];
+
+Start [shape="circle"];
+Start -> UPRIGHT;
+
+Disable [shape="circle" label="Weapons\nDisabled"]
+Disable -> UPRIGHT
+
+UPRIGHT -> WAIT_HAMMER_FORWARD [label="Stationary and Not upright"
+                                color="green"];
+UPRIGHT -> UPRIGHT [label="right side up"];
+
+WAIT_HAMMER_FORWARD -> EXTEND [label="Hammer is forward"
+                                     color="green"];
+WAIT_HAMMER_FORWARD -> EXTEND [label="2.0 second time out"
+                                     color="red"];
+WAIT_HAMMER_FORWARD -> HAMMER_RETRACT [label="Right side up"
+                                       color="green"]
+
+EXTEND -> WAIT_UPRIGHT [color="green"];
+EXTEND [label="Extend both bars"];
+
+WAIT_UPRIGHT -> HAMMER_RETRACT [label="right side up"
+                                color="green"];
+WAIT_UPRIGHT -> LOCK_OUT [label="2.0 second time out"
+                          color="orange"];
+
+HAMMER_RETRACT -> UPRIGHT [label="hammer retracted"
+                           color="green"];
+HAMMER_RETRACT -> UPRIGHT [label="2.0 second time out"
+                           color="red"];
+
+LOCK_OUT -> UPRIGHT [label="right side up"
+                     color="green"];
+}
