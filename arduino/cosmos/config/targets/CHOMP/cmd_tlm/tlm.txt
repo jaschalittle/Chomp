@@ -170,9 +170,9 @@ TELEMETRY CHOMP SRT LITTLE_ENDIAN "Self Righting"
     APPEND_ITEM STATE 8 UINT "Self Right State"
         STATE UPRIGHT             0
         STATE WAIT_HAMMER_FORWARD 1
-        STATE LOCK_OUT            3
-        STATE WAIT_HAMMER_RETRACT 4
-        STATE WAIT_UPRIGHT        5
+        STATE LOCK_OUT            2
+        STATE WAIT_HAMMER_RETRACT 3
+        STATE WAIT_UPRIGHT        4
 
 COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
     APPEND_ID_PARAMETER CMDID 8 UINT 10 10 10 "Command ID which must be 10"
