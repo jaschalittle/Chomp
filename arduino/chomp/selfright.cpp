@@ -128,7 +128,6 @@ static enum SelfRightState checkOrientation(const enum SelfRightState state)
     enum SelfRightState result = state;
     if(isStationary() && !isUpright()) {
         startHammerForward();
-        selfRightBoth();
         result = WAIT_HAMMER_FORWARD;
     }
     return result;
