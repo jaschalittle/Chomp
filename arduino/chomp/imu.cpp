@@ -81,7 +81,8 @@ bool isStationary(void) {
     return stationary;
 }
 
+
 bool getOmegaZ(int16_t *omega_z) {
-    omega_z = angular_rate[2];
+    *omega_z = angular_rate[2];
     return imu_read_valid;
 }
