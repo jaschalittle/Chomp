@@ -51,6 +51,22 @@ void weaponsEnableFalling(){
 }
 // -----------------------------------------------------------------
 
+uint32_t start_time, loop_speed_min, loop_speed_avg, loop_speed_max, loop_count;
+void reset_loop_stats(void) {
+    loop_count = loop_speed_max = 0;
+    loop_speed_min = (uint32_t)(-1L);
+}
+
+
+void update_loop_stats() {
+    uint32_t loop_speed = micros() - start_time;
+    start_time = micros();
+    loop_speed_min = min(loop_speed, loop_speed_min);
+    loop_speed_avg += loop_speed;
+    loop_count += 1;
+    loop_speed_max = max(loop_speed, loop_speed_max);
+}
+
 
 void chompSetup() {
     // Come up safely
@@ -64,7 +80,9 @@ void chompSetup() {
     sensorSetup();
     attachRCInterrupts();
     initializeIMU();
+    reset_loop_stats();
     debug_print("STARTUP");
+    start_time = micros();
 }
 
 static int16_t previous_leddar_state = FAR_ZONE;
@@ -91,8 +109,6 @@ uint32_t sensor_period=5000L;
 uint32_t leddar_max_request_period=100000L;
 
 void chompLoop() {
-    uint32_t start_time = micros();
-
     if(micros() - last_sensor_time>sensor_period) {
         readSensors();
         last_sensor_time = micros();
@@ -245,15 +261,16 @@ void chompLoop() {
 
     // send telemetry
     if (micros() - last_telem_time > telemetry_interval){
-        uint32_t loop_speed = micros() - start_time;
         sendSensorTelem(getPressure(), getAngle());
-        sendSystemTelem(loop_speed,
+        sendSystemTelem(loop_speed_min, loop_speed_avg/loop_count,
+                        loop_speed_max, loop_count,
                         leddar_overrun,
                         leddar_crc_error,
                         sbus_overrun,
                         last_command,
                         command_overrun,
                         invalid_command);
+        reset_loop_stats();
         sendSbusTelem(current_rc_bitfield);
         sendPWMTelem(left_drive_value, right_drive_value);
         telemetryIMU();
@@ -262,4 +279,5 @@ void chompLoop() {
     }
 
     handle_commands();
+    update_loop_stats();
 }

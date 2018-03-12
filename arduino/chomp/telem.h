@@ -28,10 +28,11 @@ extern uint32_t enabled_telemetry;
 // Forward decls
 struct Detection;
 
-bool sendSystemTelem(uint32_t loop_speed, uint16_t leddar_overrun,
-                     uint16_t leddar_crc_error, uint16_t sbus_overrun,
-                     uint8_t last_command, uint16_t command_overrun,
-                     uint16_t invalid_command);
+bool sendSystemTelem(uint32_t loop_speed_min, uint32_t loop_speed_avg,
+                     uint32_t loop_speed_max, uint32_t loop_count,
+                     uint16_t leddar_overrun, uint16_t leddar_crc_error,
+                     uint16_t sbus_overrun, uint8_t last_command,
+                     uint16_t command_overrun, uint16_t invalid_command);
 bool sendSensorTelem(int16_t pressure, uint16_t angle);
 bool sendSbusTelem(uint16_t cmd_bitfield);
 bool sendDebugMessageTelem(const char *msg);

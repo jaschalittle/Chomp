@@ -25,7 +25,10 @@ template <uint8_t packet_id, typename packet_inner> struct TelemetryPacket{
 
 struct SystemTelemetryInner {
     uint8_t  weapons_enabled:1;
-    uint32_t loop_speed;
+    uint32_t loop_speed_min;
+    uint32_t loop_speed_avg;
+    uint32_t loop_speed_max;
+    uint32_t loop_count;
     uint16_t leddar_overrun;
     uint16_t leddar_crc_error;
     uint16_t sbus_overrun;
@@ -35,14 +38,18 @@ struct SystemTelemetryInner {
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_SYS, SystemTelemetryInner> SystemTelemetry;
 
-bool sendSystemTelem(uint32_t loop_speed, uint16_t leddar_overrun,
-                     uint16_t leddar_crc_error, uint16_t sbus_overrun,
-                     uint8_t last_command, uint16_t command_overrun,
-                     uint16_t invalid_command){
+bool sendSystemTelem(uint32_t loop_speed_min, uint32_t loop_speed_avg,
+                     uint32_t loop_speed_max, uint32_t loop_count,
+                     uint16_t leddar_overrun, uint16_t leddar_crc_error,
+                     uint16_t sbus_overrun, uint8_t last_command,
+                     uint16_t command_overrun, uint16_t invalid_command){
     CHECK_ENABLED(TLM_ID_SYS);
     SystemTelemetry tlm;
     tlm.inner.weapons_enabled = g_enabled;
-    tlm.inner.loop_speed = loop_speed;
+    tlm.inner.loop_speed_min = loop_speed_min;
+    tlm.inner.loop_speed_avg = loop_speed_avg;
+    tlm.inner.loop_speed_max = loop_speed_max;
+    tlm.inner.loop_count = loop_count;
     tlm.inner.leddar_overrun = leddar_overrun;
     tlm.inner.leddar_crc_error = leddar_crc_error;
     tlm.inner.sbus_overrun = sbus_overrun;
