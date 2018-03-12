@@ -111,18 +111,17 @@ void debug_print(const String &msg){
 struct LeddarTelemetryInner {
     uint16_t state;
     uint16_t count;
-    uint16_t range[16];
-    uint16_t amplitude[16];
+    uint16_t range[LEDDAR_SEGMENTS];
+    uint16_t amplitude[LEDDAR_SEGMENTS];
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_LEDDARV2, LeddarTelemetryInner> LeddarTelemetry;
 
 static LeddarTelemetry leddar_tlm;
 bool sendLeddarTelem(const Detection (&min_detections)[LEDDAR_SEGMENTS], unsigned int count, LeddarState state){
-
   CHECK_ENABLED(TLM_ID_LEDDARV2);
   leddar_tlm.inner.state = state;
   leddar_tlm.inner.count = count;
-  for (uint8_t i = 0; i < 16; i++){
+  for (uint8_t i = 0; i < LEDDAR_SEGMENTS; i++){
       leddar_tlm.inner.range[i] = min_detections[i].Distance;
       leddar_tlm.inner.amplitude[i] = min_detections[i].Amplitude;
   }
