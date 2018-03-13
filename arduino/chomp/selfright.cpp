@@ -59,7 +59,7 @@ uint16_t min_hammer_angle = 166;
 uint16_t max_hammer_angle = 252;
 uint32_t max_hammer_move_duration = 2000000L;
 uint32_t hammer_move_start;
-uint32_t max_reorient_duration = 2000000L;
+uint32_t max_reorient_duration = 3000000L;
 uint32_t reorient_start;
 
 
