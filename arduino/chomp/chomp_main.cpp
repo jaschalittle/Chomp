@@ -53,7 +53,7 @@ void weaponsEnableFalling(){
 
 uint32_t start_time, loop_speed_min, loop_speed_avg, loop_speed_max, loop_count;
 void reset_loop_stats(void) {
-    loop_count = loop_speed_max = 0;
+    loop_count = loop_speed_max = loop_speed_avg = 0;
     loop_speed_min = (uint32_t)(-1L);
 }
 
