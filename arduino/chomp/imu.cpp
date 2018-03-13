@@ -11,7 +11,7 @@ int16_t temperature;
 uint32_t last_imu_process;
 uint32_t imu_period=100000;
 int32_t stationary_threshold=200;
-int32_t min_valid_sumsq = 4000000;
+int32_t min_valid_sumsq = 3800000;
 int32_t max_valid_sumsq = 5000000;
 int32_t acceleration_z_threshold = 1900;
 bool stationary, upright, imu_read_valid;
