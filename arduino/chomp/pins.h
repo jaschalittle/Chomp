@@ -21,7 +21,7 @@
 #define ENABLE_VALVE_DO 4
 #define VENT_VALVE_DO 5
 
-#define IGNITER_DO 6      
+#define IGNITER_DO 6
 #define PROPANE_DO 7
 
 #define RETRACT_VALVE_DO 8
