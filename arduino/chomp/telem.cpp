@@ -172,14 +172,17 @@ bool sendSwingTelem(uint16_t datapoints_collected,
 
 
 struct PWMTelemInner {
+    uint8_t pad:7;
+    uint8_t targeting_enable:1;
     int16_t left_drive;
     int16_t right_drive;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_PWM, PWMTelemInner> PWMTelemetry;
 
-bool sendPWMTelem(int16_t left_drive, int16_t right_drive) {
+bool sendPWMTelem(bool targeting_enable, int16_t left_drive, int16_t right_drive) {
     CHECK_ENABLED(TLM_ID_PWM);
     PWMTelemetry tlm;
+    tlm.inner.targeting_enable = targeting_enable;
     tlm.inner.left_drive = left_drive;
     tlm.inner.right_drive = right_drive;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
