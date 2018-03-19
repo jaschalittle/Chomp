@@ -8,6 +8,8 @@
 #define AMPLITUDE_THRESHOLDING_RANGE 125
 #define LEDDAR_AMPLITUDE_THRESHOLD 50
 
+extern HardwareSerial& LeddarSerial;
+
 // Table of CRC values for highorder byte
 static const uint8_t CRC_HI[] =
 {

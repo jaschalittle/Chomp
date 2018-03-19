@@ -7,6 +7,8 @@
 #include "telem.h"
 
 
+extern HardwareSerial& DriveSerial;
+
 void selfRightLeft(){
     if (weaponsEnabled()){
         safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);

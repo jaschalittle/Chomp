@@ -4,6 +4,7 @@
 #include "pins.h"
 
 // Serial out pins defined in chomp.ino-- check there to verify proper connectivity to motor controllers
+extern HardwareSerial& DriveSerial;
 
 void driveSetup() {
     DriveSerial.begin(115200);

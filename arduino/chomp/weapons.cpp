@@ -7,6 +7,8 @@
 #include "telem.h"
 #include <avr/wdt.h>
 
+extern HardwareSerial& DriveSerial;
+
 uint8_t MAX_SAFE_ANGLE = 65;
 uint8_t HAMMER_INTENSITIES_ANGLE[9] = { 3, 5, 10, 15, 20, 30, 40, 50, 65 };
 

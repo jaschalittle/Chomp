@@ -4,6 +4,9 @@
 #include "leddar_io.h"
 #include "autofire.h"
 #include "pins.h"
+#include "DMASerial.h"
+
+extern DMASerial& Xbee;
 
 const uint16_t TLM_TERMINATOR=0x6666;
 

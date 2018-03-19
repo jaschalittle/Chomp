@@ -1,6 +1,5 @@
 #ifndef PINS_H
 #define PINS_H
-#include "DMASerial.h"
 
 //------------------ DEFINES----------------
 // #define HARD_WIRED
@@ -37,13 +36,6 @@
 
 // Drive control output (for CAN testing)
 // #define CHIP_SELECT_PIN 19
-
-// ----------------- SERIAL ------------------
-// These are defined in chomp.ino
-extern DMASerial& Xbee;
-extern HardwareSerial& LeddarSerial;
-extern HardwareSerial& Sbus;
-extern HardwareSerial& DriveSerial;
 
 // ----------------- GLOBALS ----------------
 extern volatile bool g_enabled;

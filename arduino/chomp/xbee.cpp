@@ -1,6 +1,9 @@
 #include "Arduino.h"
 #include "xbee.h"
 #include "pins.h"
+#include "DMASerial.h"
+
+extern DMASerial& Xbee;
 
 ISR(PCINT2_vect)
 {

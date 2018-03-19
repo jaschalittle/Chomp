@@ -37,6 +37,8 @@
 // #define RIGHT_DEADBAND_MIN 1500
 // #define RIGHT_DEADBAND_MAX 1560
 
+extern HardwareSerial& Sbus;
+
 // initialize PWM vals to neutral values
 static volatile uint16_t LEFT_RC_pwm_val = 1500;
 static volatile uint32_t LEFT_RC_prev_time = 0;
