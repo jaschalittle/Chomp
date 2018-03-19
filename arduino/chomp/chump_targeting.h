@@ -1,6 +1,9 @@
 #ifndef CHUMP_TARGETING_H
 #define CHUMP_TARGETING_H
 
+#include <stdint.h>
+#include "leddar_io.h"
+
 struct Object
 {
     uint16_t Distance;

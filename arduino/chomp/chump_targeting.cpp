@@ -4,6 +4,7 @@
 #include "pins.h"
 #include "sensors.h"
 #include "drive.h"
+#include <stdlib.h>
 #include <math.h>
 
 

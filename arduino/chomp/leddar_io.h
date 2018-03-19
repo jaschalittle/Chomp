@@ -1,6 +1,9 @@
 #ifndef LEDDAR_IO_H
 #define LEDDAR_IO_H
 
+#include <stdint.h>
+#include <stddef.h>
+
 #define LEDDAR_FREQ 50
 #define LEDDAR_SEGMENTS 16
 
