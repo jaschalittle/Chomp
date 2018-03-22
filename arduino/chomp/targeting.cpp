@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "leddar_io.h"
-#include "chump_targeting.h"
+#include "targeting.h"
 #include "pins.h"
 #include "sensors.h"
 #include "drive.h"

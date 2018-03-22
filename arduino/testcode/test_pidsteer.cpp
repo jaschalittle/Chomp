@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "chump_targeting.h"
+#include "targeting.h"
 #include "cosmos_listener.h"
 
 int main()

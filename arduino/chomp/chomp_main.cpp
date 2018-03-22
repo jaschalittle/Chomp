@@ -10,7 +10,7 @@
 #include "drive.h"
 #include "weapons.h"
 #include "utils.h"
-#include "chump_targeting.h"
+#include "targeting.h"
 #include <avr/wdt.h>
 #include "command.h"
 #include "imu.h"
