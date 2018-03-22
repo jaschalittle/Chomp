@@ -263,7 +263,7 @@ static void electricHammerMove(RCBitfield control, int16_t speed){
             bool error = parseSbus();
             if (!error) {
                 wdt_reset();
-                char current_rc_bitfield = getRcBitfield();
+                uint16_t current_rc_bitfield = getRcBitfield();
                 if (!(current_rc_bitfield & control)){
                     break;
                 }
