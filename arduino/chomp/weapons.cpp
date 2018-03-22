@@ -233,7 +233,6 @@ void noAngleFire( uint16_t hammer_intensity, bool flame_pulse){
 
 String startElectricHammerMove(int16_t speed) {
     hammer_in_motion = true;
-    DriveSerial.println("@05!G 100");  // start motor to aid meshing
     // Make sure we're vented
     safeDigitalWrite(VENT_VALVE_DO, LOW);
     // engage drive wheel
