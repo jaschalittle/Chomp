@@ -55,6 +55,7 @@ enum SelfRightState {
     WAIT_UPRIGHT
 };
 
+enum Orientation checked_orientation;
 static enum SelfRightState self_right_state = UPRIGHT;
 String hammer_command;
 uint16_t min_hammer_angle = 166;
@@ -128,7 +129,9 @@ static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
 static enum SelfRightState checkOrientation(const enum SelfRightState state)
 {
     enum SelfRightState result = state;
-    if(isStationary() && !isUpright()) {
+    checked_orientation = getOrientation();
+    if((checked_orientation == ORN_LEFT) ||
+       (checked_orientation == ORN_RIGHT)) {
         startHammerForward();
         result = WAIT_HAMMER_FORWARD;
     }
@@ -139,13 +142,17 @@ static enum SelfRightState checkOrientation(const enum SelfRightState state)
 static enum SelfRightState checkHammerForward(const enum SelfRightState state)
 {
     enum SelfRightState result=state;
-    if(isUpright()) {
+    if(getOrientation()==ORN_UPRIGHT) {
         startHammerRetract();
         selfRightSafe();
         result = WAIT_HAMMER_RETRACT;
     } else if(hammerIsForward()) {
         stopElectricHammerMove();
-        selfRightBoth();
+        if(checked_orientation == ORN_LEFT) {
+            selfRightLeft();
+        } else if(checked_orientation == ORN_RIGHT) {
+            selfRightRight();
+        }
         reorient_start = micros();
         result = WAIT_UPRIGHT;
     } else if(micros() - hammer_move_start > max_hammer_move_duration) {
@@ -163,7 +170,7 @@ static enum SelfRightState checkHammerForward(const enum SelfRightState state)
 static enum SelfRightState checkUpright(const enum SelfRightState state)
 {
     enum SelfRightState result=state;
-    if(isUpright()) {
+    if(getOrientation() == ORN_UPRIGHT) {
         selfRightSafe();
         startHammerRetract();
         result = WAIT_HAMMER_RETRACT;
@@ -195,7 +202,7 @@ void autoSelfRight(bool enabled) {
             self_right_state = checkHammerForward(self_right_state);
             break;
         case LOCK_OUT:
-            if(isUpright()) {
+            if(getOrientation() == ORN_UPRIGHT) {
                 self_right_state = UPRIGHT;
             }
             break;
