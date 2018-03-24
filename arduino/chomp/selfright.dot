@@ -7,10 +7,10 @@ LOCK_OUT [shape="octagon"];
 Start [shape="circle"];
 Start -> UPRIGHT;
 
-Disable [shape="circle" label="Weapons\nDisabled"]
+Disable [shape="ellipse" label="Weapons or SelfRighting\nDisabled"]
 Disable -> UPRIGHT
 
-UPRIGHT -> WAIT_HAMMER_FORWARD [label="Stationary and Not upright"
+UPRIGHT -> WAIT_HAMMER_FORWARD [label="ORN_LEFT or ORN_RIGHT"
                                 color="green"];
 UPRIGHT -> UPRIGHT [label="right side up"];
 
@@ -22,12 +22,15 @@ WAIT_HAMMER_FORWARD -> HAMMER_RETRACT [label="Right side up"
                                        color="green"]
 
 EXTEND -> WAIT_UPRIGHT [color="green"];
-EXTEND [label="Extend both bars"];
+EXTEND [label="Extend bar corresponding to\norientation measured"];
 
 WAIT_UPRIGHT -> HAMMER_RETRACT [label="right side up"
                                 color="green"];
-WAIT_UPRIGHT -> LOCK_OUT [label="2.0 second time out"
+WAIT_UPRIGHT -> GIVE_UP [label="3.0 second time out"
                           color="orange"];
+
+GIVE_UP [label="Retract bar"];
+GIVE_UP -> LOCK_OUT [color="orange"];
 
 HAMMER_RETRACT -> UPRIGHT [label="hammer retracted"
                            color="green"];
