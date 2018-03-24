@@ -4,6 +4,16 @@
 #include "imu.h"
 
 //TelemetryMessageStream telemetry_stream;
+static const int16_t stable_orientation[NUM_STABLE_ORIENTATIONS][3] = {
+    {    0,     0,  2048},  // upright
+    { 2037,     0,   205},  // left
+    {-2027,     0,   287},  // right
+    {    0, -1925,  -614},  // front
+    {    0,   205, -2037},  // top
+    { 1966,   409,  -614},  // top right
+    {-1966,   409,  -614},  // top left 
+    {  163,  1925,   614},  // tail
+};
 
 MPU6050 IMU;
 int16_t acceleration[3], angular_rate[3];
@@ -11,12 +21,12 @@ int16_t temperature;
 uint32_t last_imu_process;
 uint32_t imu_period=100000;
 int32_t stationary_threshold=200;
-int32_t min_valid_sumsq = 3800000;
-int32_t max_valid_sumsq = 5000000;
-int32_t acceleration_z_threshold = 1900;
-bool stationary, upright, imu_read_valid;
-int32_t sumsq = 0;
-int32_t sum_angular_rate = 0;
+int32_t min_valid_accum = 3800000;
+int32_t max_valid_accum = 5000000;
+bool possibly_stationary, stationary, imu_read_valid;
+size_t best_orientation=NUM_STABLE_ORIENTATIONS;
+int32_t best_accum;
+int32_t sum_angular_rate;
 
 
 void initializeIMU(void) {
@@ -33,7 +43,42 @@ void initializeIMU(void) {
 }
 
 
+// State machine to distribute compute over several cycles
 void processIMU(void) {
+    // current orientation value to test
+    // NUM_STABLE_ORIENTATIONS when all have been tested
+    static uint8_t imu_step = NUM_STABLE_ORIENTATIONS;
+    // maximum dot product seen so far
+    static int32_t max_accum = min_valid_accum;
+    // corresponding orientation
+    static uint8_t max_orientation = ORN_UNKNOWN;
+
+    // First, check to see if the step is non-zero.
+    // If so, we are in the middle of checking
+    if(imu_step<NUM_STABLE_ORIENTATIONS && possibly_stationary) {
+        // Compute the current dot product
+        int32_t accum = 0;
+        for(uint8_t j=0;j<3;j++) {
+            accum += (((int32_t)acceleration[j])*
+                      ((int32_t)stable_orientation[imu_step][j]));
+        }
+        // If this is a new highest, write it down
+        if(accum>max_accum) {
+            max_accum = accum;
+            max_orientation = imu_step;
+        }
+        // if this was the last one, record the best result
+        if(++imu_step == NUM_STABLE_ORIENTATIONS) {
+            best_accum = max_accum;
+            if(min_valid_accum < max_accum && max_accum<max_valid_accum) {
+                best_orientation = max_orientation;
+                stationary = true;
+            } else {
+                best_orientation = ORN_UNKNOWN;
+                stationary = false;
+            }
+        }
+    }
     // if enough time has passed, read the IMU
     uint32_t now = micros();
     if(now-last_imu_process > imu_period) {
@@ -44,7 +89,7 @@ void processIMU(void) {
         if(imu_err != 0) {
             imu_read_valid = false;
             stationary = false;
-            upright = false;
+            best_orientation = ORN_UNKNOWN;
             return;
         }
         imu_read_valid = true;
@@ -52,33 +97,31 @@ void processIMU(void) {
         sum_angular_rate = (abs(angular_rate[0]) +
                             abs(angular_rate[1]) +
                             abs(angular_rate[2]));
-        sumsq = 0;
-        for(uint8_t j=0;j<3;j++) {
-            sumsq += (((int32_t)acceleration[j])*((int32_t)acceleration[j]));
+        // still might have large acceleration and small angular rates
+        possibly_stationary = sum_angular_rate<stationary_threshold;
+        // if possibly stationary, trigger a new orientation calculation
+        // on the next call
+        if(possibly_stationary) {
+            imu_step = 0;
+            max_accum = min_valid_accum;
+            max_orientation = ORN_UNKNOWN;
+        } else {
+            // if not stationary, refuse to guess
+            best_orientation = ORN_UNKNOWN;
+            stationary = false;
         }
-        bool meaningful_accel = ((min_valid_sumsq<sumsq) &&
-                                 (sumsq<max_valid_sumsq));
-        stationary = ((sum_angular_rate<stationary_threshold) &&
-                      meaningful_accel);
-        upright = (meaningful_accel &&
-                   (acceleration_z_threshold < acceleration[2]));
     }
 }
 
 
 void telemetryIMU(void) {
     sendIMUTelem(acceleration, angular_rate, temperature);
-    sendORNTelem(stationary, upright, sumsq, sum_angular_rate);
+    sendORNTelem(stationary, best_orientation, best_accum, sum_angular_rate);
 }
 
 
-bool isUpright(void) {
-    return upright;
-}
-
-
-bool isStationary(void) {
-    return stationary;
+enum Orientation getOrientation(void) {
+    return (enum Orientation)best_orientation;
 }
 
 
