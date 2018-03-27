@@ -113,20 +113,36 @@ bool newRc() {
 
 uint16_t sbus_overrun = 0;
 static uint8_t sbusData[25] = {0};
+uint32_t last_sbus_time = 0;
+uint8_t sbus_idx = 0;
 bool bufferSbusData() {
   // returns number of bytes available for reading from serial receive buffer, which is 64 bytes
-  uint16_t count = Sbus.available();
-  if (count == 25){
-    Sbus.readBytes(sbusData, count);
-    return true;
-  } else if (count > 25) {
-    uint8_t trash[64];
-    while(count>0) {
-        Sbus.readBytes(trash, min(64, count));
-        count = Sbus.available();
+  if(Sbus.available()>25) {
+    while(Sbus.available()) {
+        Sbus.read();
     }
     sbus_overrun++;
     return false;
+  }
+  while(Sbus.available()) {
+    if(sbus_idx == 25) {
+        sbus_overrun++;
+        sbus_idx = 0;
+    }
+    uint8_t c = Sbus.read();
+    last_sbus_time = micros();
+    if(((sbus_idx == 0) && (c == 0x0f)) ||
+        (sbus_idx>0 && sbus_idx<25)) {
+        sbusData[sbus_idx++] = c;
+    }
+  }
+  if(sbus_idx==25) {
+      sbus_idx = 0;
+      return true;
+  }
+  if((micros() - last_sbus_time)>1000) {
+      last_sbus_time = micros();
+      sbus_idx = 0;
   }
   return false;
 }
@@ -154,7 +170,7 @@ bool parseSbus(){
         sbusChannels[13] = (sbusData[20] << 9  | sbusData[19] << 1 | sbusData[18] >> 7) & 0x07FF; // 2, 8, 1
         sbusChannels[14] = (sbusData[21] << 6  | sbusData[20] >> 2)                     & 0x07FF; // 5, 6
         sbusChannels[15] = (sbusData[22] << 3  | sbusData[21] >> 5)                     & 0x07FF; // 8, 3
-        failsafe = sbusData[23] & 0x0008;
+        failsafe = sbusData[23] & 0x08;
     }
     return failsafe;
 }
