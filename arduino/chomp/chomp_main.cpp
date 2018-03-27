@@ -258,7 +258,7 @@ void chompLoop() {
 
 
     // if enabled, make sure robot is right-side-up
-    autoSelfRight(current_rc_bitfield && AUTO_SELF_RIGHT_BIT);
+    autoSelfRight(current_rc_bitfield & AUTO_SELF_RIGHT_BIT);
 
 
     // send telemetry
