@@ -25,12 +25,12 @@ void selfRightRight(){
 }
 
 
-static void selfRightBoth(){
-    if (weaponsEnabled()){
-        safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
-        safeDigitalWrite(SELF_RIGHT_RIGHT_DO, HIGH);
-    }
-}
+// static void selfRightBoth(){
+//     if (weaponsEnabled()){
+//         safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
+//         safeDigitalWrite(SELF_RIGHT_RIGHT_DO, HIGH);
+//     }
+// }
 
 
 void selfRightOff(){
@@ -50,6 +50,7 @@ void selfRightSafe(){
 enum SelfRightState {
     UPRIGHT,
     WAIT_HAMMER_FORWARD,
+    EXTEND,
     LOCK_OUT,
     WAIT_HAMMER_RETRACT,
     WAIT_UPRIGHT
@@ -58,8 +59,10 @@ enum SelfRightState {
 enum Orientation checked_orientation;
 static enum SelfRightState self_right_state = UPRIGHT;
 String hammer_command;
-uint16_t min_hammer_angle = 166;
-uint16_t max_hammer_angle = 252;
+uint16_t min_hammer_forward_angle = 166;
+uint16_t max_hammer_forward_angle = 252;
+uint16_t min_hammer_back_angle = 10;
+uint16_t max_hammer_back_angle = 20;
 uint32_t max_hammer_move_duration = 2000000L;
 uint32_t hammer_move_start;
 uint32_t max_reorient_duration = 3000000L;
@@ -69,15 +72,20 @@ uint32_t reorient_start;
 // state tests
 static bool hammerIsForward() {
     uint16_t hammer_position = getAngle();
-    return (hammer_position > min_hammer_angle &&
-            hammer_position < max_hammer_angle);
+    return (hammer_position > min_hammer_forward_angle &&
+            hammer_position < max_hammer_forward_angle);
 }
 
 
 static bool hammerIsRetracted(void) {
     return (getAngle() <= RETRACT_COMPLETE_ANGLE);
-}
+ }
 
+
+static bool hammerIsBack(void) {
+    return (min_hammer_back_angle<getAngle() &&
+            getAngle() < max_hammer_back_angle);
+}
 
 // actions
 static void startHammerForward(void) {
@@ -87,10 +95,10 @@ static void startHammerForward(void) {
     int16_t hammer_position = getAngle();
     // negative when motion should occur in fire direction,
     // positive when hammer is past min_hammer_angle
-    int16_t fire_distance = hammer_position - min_hammer_angle;
+    int16_t fire_distance = hammer_position - min_hammer_forward_angle;
     // negative when motion should occur in retract direction,
     // positive when hammer is before max_hammer_angle
-    int16_t retract_distance = max_hammer_angle - hammer_position;
+    int16_t retract_distance = max_hammer_forward_angle - hammer_position;
 
     hammer_move_start = micros();
     if(retract_distance<fire_distance) {
@@ -125,6 +133,17 @@ static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
     return result;
 }
 
+static enum SelfRightState doExtend(const enum SelfRightState state)
+{
+    if(checked_orientation == ORN_LEFT) {
+        selfRightLeft();
+    } else if(checked_orientation == ORN_RIGHT) {
+        selfRightRight();
+    }
+    reorient_start = micros();
+    return WAIT_UPRIGHT;
+}
+
 
 static enum SelfRightState checkOrientation(const enum SelfRightState state)
 {
@@ -132,8 +151,12 @@ static enum SelfRightState checkOrientation(const enum SelfRightState state)
     checked_orientation = getOrientation();
     if((checked_orientation == ORN_LEFT) ||
        (checked_orientation == ORN_RIGHT)) {
-        startHammerForward();
-        result = WAIT_HAMMER_FORWARD;
+        if(hammerIsBack()) {
+            result = EXTEND;
+        } else {
+            startHammerForward();
+            result = WAIT_HAMMER_FORWARD;
+        }
     }
     return result;
 }
@@ -146,20 +169,10 @@ static enum SelfRightState checkHammerForward(const enum SelfRightState state)
         startHammerRetract();
         selfRightSafe();
         result = WAIT_HAMMER_RETRACT;
-    } else if(hammerIsForward()) {
+    } else if(hammerIsForward() ||
+              (micros() - hammer_move_start > max_hammer_move_duration)) {
         stopElectricHammerMove();
-        if(checked_orientation == ORN_LEFT) {
-            selfRightLeft();
-        } else if(checked_orientation == ORN_RIGHT) {
-            selfRightRight();
-        }
-        reorient_start = micros();
-        result = WAIT_UPRIGHT;
-    } else if(micros() - hammer_move_start > max_hammer_move_duration) {
-        stopElectricHammerMove();
-        selfRightBoth();
-        reorient_start = micros();
-        result = WAIT_UPRIGHT;
+        result = EXTEND;
     } else {
         DriveSerial.println(hammer_command);
     }
@@ -200,6 +213,9 @@ void autoSelfRight(bool enabled) {
             break;
         case WAIT_HAMMER_FORWARD:
             self_right_state = checkHammerForward(self_right_state);
+            break;
+        case EXTEND:
+            self_right_state = doExtend(self_right_state);
             break;
         case LOCK_OUT:
             if(getOrientation() == ORN_UPRIGHT) {

@@ -10,9 +10,14 @@ Start -> UPRIGHT;
 Disable [shape="ellipse" label="Weapons or SelfRighting\nDisabled"]
 Disable -> UPRIGHT
 
-UPRIGHT -> WAIT_HAMMER_FORWARD [label="ORN_LEFT or ORN_RIGHT"
-                                color="green"];
+UPRIGHT -> CHECK_HAMMER_POSITION [label="ORN_LEFT or ORN_RIGHT"
+                                  color="green"];
 UPRIGHT -> UPRIGHT [label="right side up"];
+
+CHECK_HAMMER_POSITION [shape="diamond",
+                       label="10<hammer angle<20"];
+CHECK_HAMMER_POSITION:s -> WAIT_HAMMER_FORWARD [label="no", color="green"];
+CHECK_HAMMER_POSITION:w -> EXTEND [label="yes", color="green"];
 
 WAIT_HAMMER_FORWARD -> EXTEND [label="Hammer is forward"
                                      color="green"];
