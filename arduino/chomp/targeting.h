@@ -6,6 +6,7 @@
 
 void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t distance_threshold);
 
+void setTrackingFilterParams(int16_t alpha, int16_t beta);
 
 // angle deltas over 5 times / total time = avg angular velocity per unit time
 

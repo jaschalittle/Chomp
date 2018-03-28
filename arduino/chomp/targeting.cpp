@@ -158,6 +158,10 @@ void pidSteer (const Detection (&detections)[LEDDAR_SEGMENTS], uint16_t distance
     *steer_bias = calculated_steer_bias;
 }
 
+void setTrackingFilterParams(int16_t alpha, int16_t beta) {
+    tracked_object.alpha = alpha;
+    tracked_object.beta = beta;
+}
 
 // size in mm
 // r = average radius = (min+max)/2

@@ -1,10 +1,12 @@
 #include "command.h"
 #include "DMASerial.h"
 #include "telem.h"
+#include "targeting.h"
 
 #define MAXIMUM_COMMAND_LENGTH 64
 enum Commands {
-    CMD_ID_TRATE = 10
+    CMD_ID_TRATE = 10,
+    CMD_ID_TRKFLT = 11
 };
 
 extern uint32_t telemetry_interval;
@@ -20,6 +22,8 @@ template <uint8_t command_id, typename command_inner> struct CommandPacket{
     uint16_t terminator;
     CommandPacket() : cmd_id(command_id), terminator(CMD_TERMINATOR) {};
 } __attribute__((packed));
+
+
 struct TelemetryRateInner {
     uint32_t small_telem_period;
     uint32_t leddar_telem_period;
@@ -27,6 +31,13 @@ struct TelemetryRateInner {
     uint32_t enabled_messages;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_TRATE, TelemetryRateInner> TelemetryRateCommand;
+
+
+struct TrackingFilterInner {
+    int16_t alpha;
+    int16_t beta;
+} __attribute__((packed));
+typedef CommandPacket<CMD_ID_TRKFLT, TrackingFilterInner> TrackingFilterCommand;
 
 static uint8_t command_buffer[MAXIMUM_COMMAND_LENGTH];
 static size_t command_length=0;
@@ -56,6 +67,7 @@ void serialEvent(void) {
 
 void handle_commands(void) {
   TelemetryRateCommand *trate_cmd;
+  TrackingFilterCommand *trkflt_cmd;
   if(command_ready) {
       last_command = command_buffer[0];
       switch(last_command) {
@@ -66,6 +78,11 @@ void handle_commands(void) {
               drive_telem_interval = trate_cmd->inner.drive_telem_period;
               enabled_telemetry = trate_cmd->inner.enabled_messages;
               debug_print(String("enabled_telemetry=")+String(enabled_telemetry, 16));
+              break;
+          case CMD_ID_TRKFLT:
+              trkflt_cmd = (TrackingFilterCommand *)command_buffer;
+              setTrackingFilterParams(trkflt_cmd->inner.alpha,
+                                      trkflt_cmd->inner.beta);
               break;
           default:
               invalid_command++;
