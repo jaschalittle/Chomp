@@ -126,6 +126,8 @@ enum Orientation getOrientation(void) {
 
 
 bool getOmegaZ(int16_t *omega_z) {
-    *omega_z = angular_rate[2];
+    if(imu_read_valid) {
+        *omega_z = angular_rate[2];
+    }
     return imu_read_valid;
 }
