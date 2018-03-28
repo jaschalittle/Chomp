@@ -6,6 +6,7 @@ enum TelemetryPacketId {
     TLM_ID_HS=1,
     TLM_ID_LEDDAR=2,
     TLM_DBGM_AUTOFIRE=3,
+    TLM_ID_TRK=4,
     TLM_ID_DRV=8,
     TLM_ID_SNS=10,
     TLM_ID_SYS=11,
@@ -53,4 +54,10 @@ bool sendORNTelem(bool stationary, uint8_t orientation, int32_t best_accum, int3
 bool sendDMPTelem(size_t fifoCount, uint8_t intStatus, float w, float x, float y, float z);
 bool sendSelfRightTelem(uint8_t state);
 bool sendDriveTelem(int16_t const (&vwheel)[4], int16_t vweapon);
+bool sendTrackingTelemetry(int16_t detection_radius,
+                           int16_t detection_angle,
+                           int32_t filtered_x,
+                           int32_t filtered_vx,
+                           int32_t filtered_y,
+                           int32_t filtered_vy);
 #endif //TELEM_H

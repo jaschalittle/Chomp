@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "imu.h"
+#include "telem.h"
 
 
 // #define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
@@ -131,9 +132,21 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
             }
         }
         tracked_object.update(objects[best_match], omegaZ);
+        sendTrackingTelemetry(objects[best_match].radius(),
+                              objects[best_match].angle(),
+                              tracked_object.x,
+                              tracked_object.vx,
+                              tracked_object.y,
+                              tracked_object.vy);
     // below is called if no objects called in current Leddar return
     } else {
         tracked_object.updateNoObs(now, omegaZ);
+        sendTrackingTelemetry(0,
+                              0,
+                              tracked_object.x,
+                              tracked_object.vx,
+                              tracked_object.y,
+                              tracked_object.vy);
     }
 }
 
