@@ -138,8 +138,11 @@ void chompLoop() {
         const Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
         getMinimumDetections(&minDetections);
 
+        trackObject(*minDetections, 600);
+
         // check for detections in zones
-        LeddarState current_leddar_state = getState(*minDetections, getRange());
+        // LeddarState current_leddar_state = getState(*minDetections, getRange());
+        LeddarState current_leddar_state = FAR_ZONE;
         switch (current_leddar_state){
             case FAR_ZONE:
                 previous_leddar_state = current_leddar_state;
@@ -164,8 +167,8 @@ void chompLoop() {
         targeting_enabled = getTargetingEnable();
 
         // auto centering code
-        pidSteer(*minDetections, 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
-        new_autodrive = true;
+        // pidSteer(*minDetections, 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
+        // new_autodrive = true;
 
         // Send subsampled leddar telem
         if (micros() - last_leddar_telem_time > leddar_telemetry_interval){
