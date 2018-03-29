@@ -44,6 +44,7 @@ struct Object
 struct Track
 {
     int32_t x, vx, y, vy;
+    int32_t rx, ry;
     uint32_t num_updates;
     uint32_t last_update, last_predict;
     int32_t last_omgaz;
@@ -140,7 +141,9 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
                               tracked_object.x,
                               tracked_object.vx,
                               tracked_object.y,
-                              tracked_object.vy);
+                              tracked_object.vy,
+                              tracked_object.rx,
+                              tracked_object.ry);
     // below is called if no objects called in current Leddar return
     } else {
         tracked_object.updateNoObs(now, omegaZ);
@@ -149,7 +152,9 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
                               tracked_object.x,
                               tracked_object.vx,
                               tracked_object.y,
-                              tracked_object.vy);
+                              tracked_object.vy,
+                              0,
+                              0);
     }
 }
 
@@ -297,9 +302,9 @@ void Track::update(const Object& best_match, int16_t omegaZ) {
         // residual:
         // rx = mr*cos(ma) - x
         // rx = mr*(2048 - ma*ma/2048/2)/2048 - x
-        int32_t rx = mx - x;
+        rx = mx - x;
         // ry = mr*sin(ma) - y
-        int32_t ry = my - y;
+        ry = my - y;
         //
         // correct:
         x += alpha*rx/32768L;

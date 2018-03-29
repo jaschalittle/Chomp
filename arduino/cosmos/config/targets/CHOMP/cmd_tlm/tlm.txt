@@ -206,6 +206,8 @@ TELEMETRY CHOMP TRK LITTLE_ENDIAN "Tracking"
     APPEND_ITEM FLTVX 32 INT "filtered x velocity"
     APPEND_ITEM FLTY 32 INT "filtered y"
     APPEND_ITEM FLTVY 32 INT "filtered y velocity"
+    APPEND_ITEM RX 32 INT "residual x"
+    APPEND_ITEM RY 32 INT "residual y"
 
 COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
     APPEND_ID_PARAMETER CMDID 8 UINT 10 10 10 "Command ID which must be 10"
