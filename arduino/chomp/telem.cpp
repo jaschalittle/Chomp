@@ -277,24 +277,24 @@ bool sendDriveTelem(int16_t const (&vwheel)[4], int16_t vweapon) {
 }
 
 struct TrackingTelemetryInner {
-    int16_t detection_radius;
-    int16_t detection_angle;
+    int16_t detection_x;
+    int16_t detection_y;
     int32_t filtered_x;
     int32_t filtered_vx;
     int32_t filtered_y;
     int32_t filtered_vy;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_TRK, TrackingTelemetryInner> TRKTelemetry;
-bool sendTrackingTelemetry(int16_t detection_radius,
-                           int16_t detection_angle,
+bool sendTrackingTelemetry(int16_t detection_x,
+                           int16_t detection_y,
                            int32_t filtered_x,
                            int32_t filtered_vx,
                            int32_t filtered_y,
                            int32_t filtered_vy) {
     CHECK_ENABLED(TLM_ID_TRK);
     TRKTelemetry tlm;
-    tlm.inner.detection_radius = detection_radius;
-    tlm.inner.detection_angle = detection_angle;
+    tlm.inner.detection_x = detection_x;
+    tlm.inner.detection_y = detection_y;
     tlm.inner.filtered_x = filtered_x;
     tlm.inner.filtered_vx = filtered_vx;
     tlm.inner.filtered_y = filtered_y;

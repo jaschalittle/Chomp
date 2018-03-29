@@ -135,8 +135,8 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
             }
         }
         tracked_object.update(objects[best_match], omegaZ);
-        sendTrackingTelemetry(objects[best_match].radius(),
-                              objects[best_match].angle(),
+        sendTrackingTelemetry(objects[best_match].xcoord(),
+                              objects[best_match].ycoord(),
                               tracked_object.x,
                               tracked_object.vx,
                               tracked_object.y,
