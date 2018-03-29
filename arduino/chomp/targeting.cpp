@@ -20,16 +20,19 @@
 #define EDGE_CALL_THRESHOLD 60
 #define MIN_NUM_UPDATES 3
 
-static const int32_t track_lost_dt = 2000000;
+static const int32_t track_lost_dt = 500000;  // us
+static const int32_t MAX_OFF_TRACK = 600L*600L; // squared distance in mm
+static const int32_t MAX_START_DISTANCE = 6000L*6000L; // squared distance in mm
 
 struct Object
 {
-    uint16_t MinDistance, MaxDistance;
+    uint16_t MinDistance, MaxDistance, SumDistance;
     int8_t LeftEdge, RightEdge;
     uint32_t Time;
 
     // Default constructor
-    Object() : MinDistance(10000), MaxDistance(0), LeftEdge(0), RightEdge(0),
+    Object() : MinDistance(10000), MaxDistance(0), SumDistance(0),
+               LeftEdge(0), RightEdge(0),
                Time(0) { }
     inline int16_t size(void) const;
     inline int16_t angle(void) const;
@@ -59,9 +62,10 @@ struct Track
         last_update(micros()),
         last_predict(micros())
         { }
-    void predict(uint32_t now, int16_t omegaZ);
+    int32_t predict(uint32_t now, int16_t omegaZ);
     void update(const Object& best_match, int16_t omegaZ);
     int32_t distanceSq(const Object& obj) const;
+    bool valid(uint32_t now) const;
     int16_t updateOmegaZ(int32_t dt, int16_t omegaZ);
     void updateNoObs(uint32_t inter_leddar_time, int16_t omegaZ);
     bool timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ) const;
@@ -76,7 +80,7 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
     int16_t last_seg_distance = min_detections[0].Distance;
     int16_t min_obj_distance = min_detections[0].Distance;
     int16_t max_obj_distance = min_detections[0].Distance;
-    int16_t right_edge = -1;
+    int16_t right_edge = 0;
     int16_t left_edge = 0;
     Object objects[8];
     uint8_t num_objects = 0;
@@ -88,9 +92,10 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
             left_edge = i;
             min_obj_distance = min_detections[i].Distance;
             max_obj_distance = min_detections[i].Distance;
+            objects[num_objects].SumDistance = 0;
         } else if (delta > EDGE_CALL_THRESHOLD) {
             // call object if there is an unmatched left edge
-            if (left_edge > right_edge) {
+            if (left_edge >= right_edge) {
                 right_edge = i;
                 objects[num_objects].MinDistance = min_obj_distance;
                 objects[num_objects].MaxDistance = max_obj_distance;
@@ -105,11 +110,13 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
         }
         min_obj_distance = min(min_obj_distance, min_detections[i].Distance);
         max_obj_distance = max(max_obj_distance, min_detections[i].Distance);
+        objects[num_objects].SumDistance += min_detections[i].Distance;
         last_seg_distance = min_detections[i].Distance;
     }
 
     // call object after loop if no matching right edge seen for a left edge-- end of loop can be a right edge. do not call entire FOV an object
-    if (left_edge != 0 && left_edge > right_edge) {
+    if ((left_edge > 0 && left_edge > right_edge) ||
+        (left_edge == 0 && right_edge == 0)){
         right_edge = LEDDAR_SEGMENTS;
         objects[num_objects].MinDistance = min_obj_distance;
         objects[num_objects].MaxDistance = max_obj_distance;
@@ -127,32 +134,49 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
     // if an object has been called, assign it to existing tracked object or to new one
     if (num_objects > 0) {
         int8_t best_match = 0;
-        int32_t best_distance = tracked_object.distanceSq(objects[best_match]);
+        int32_t best_distance;
+        if(tracked_object.valid(now)) {
+            best_distance = tracked_object.distanceSq(objects[best_match]);
+        } else {
+            best_distance = objects[best_match].radius();
+            best_distance *= best_distance;
+        }
         for (uint8_t i = 1; i < num_objects; i++) {
-            int32_t distance = tracked_object.distanceSq(objects[i]);
+            int32_t distance;
+            if(tracked_object.valid(now)) {
+                distance = tracked_object.distanceSq(objects[i]);
+            } else {
+                distance = objects[i].radius();
+                distance *= distance;
+            }
             if (distance < best_distance) {
                 best_distance = distance;
                 best_match = i;
             }
         }
-        tracked_object.update(objects[best_match], omegaZ);
+        if(( tracked_object.valid(now) && best_distance < MAX_OFF_TRACK) ||
+           (!tracked_object.valid(now) && best_distance < MAX_START_DISTANCE)) {
+           tracked_object.update(objects[best_match], omegaZ);
+        } else {
+           tracked_object.updateNoObs(now, omegaZ);
+        }
         sendTrackingTelemetry(objects[best_match].xcoord(),
                               objects[best_match].ycoord(),
-                              tracked_object.x,
-                              tracked_object.vx,
-                              tracked_object.y,
-                              tracked_object.vy,
-                              tracked_object.rx,
+                              tracked_object.x/16,
+                              tracked_object.vx/16,
+                              tracked_object.y/16,
+                              tracked_object.vy/16,
+                              best_distance,
                               tracked_object.ry);
     // below is called if no objects called in current Leddar return
     } else {
         tracked_object.updateNoObs(now, omegaZ);
         sendTrackingTelemetry(0,
                               0,
-                              tracked_object.x,
-                              tracked_object.vx,
-                              tracked_object.y,
-                              tracked_object.vy,
+                              tracked_object.x/16,
+                              tracked_object.vx/16,
+                              tracked_object.y/16,
+                              tracked_object.vy/16,
                               0,
                               0);
     }
@@ -184,7 +208,7 @@ inline int16_t Object::size(void) const {
 
 // radius in mm
 inline int16_t Object::radius(void) const {
-    return (MaxDistance + MinDistance)*5; // really *10/2
+    return SumDistance*10/(RightEdge - LeftEdge);
 }
 
 // angle in radians scaled by 2048
@@ -232,22 +256,17 @@ float Object::originalDistance(const Object &other) const {
     return radial_distance + angular_distance * average_radius;
 }
 
+bool Track::valid(uint32_t now) const {
+    uint32_t dt = (now - last_update);
+    return dt<track_lost_dt;
+}
+
 
 // distance squared in mm
 int32_t Track::distanceSq(const Object &detection) const {
-    uint32_t dt = (detection.Time - last_update);
-    if(dt>track_lost_dt) {
-        return detection.radius()*detection.radius();
-    } else {
-        int32_t rd=detection.radius(), ad=detection.angle();
-        // d = (x-rd*cad)**2 + (y-rd*sad)**2;
-        // d = x*x - 2*x*rd*cad + rd*rd*cad*cad + y*y - 2*y*rd*sad + rd*rd*sad*sad;
-        // d = x*x + y*y + rd*rd - 2*rd*(x*cad + y*sad);
-        // d = x*x + y*y + rd*rd - 2*rd*(x*(2048-ad*ad/2048/2)/2048 + y*ad/2048);
-        // d = x*x + y*y + rd*rd - 2*rd*(x*(2048-ad*ad/2048/2) + y*ad)/2048;
-        // d = x*x + y*y + rd*rd - rd*(x*2048*2 - x*ad*ad/2048 + y*ad*2)/2048;
-        return x*x + y*y + rd*rd - rd*(x*4096 - x*ad*ad/2048 + y*ad*2)/2048;
-    }
+    int32_t dx = (x/16-detection.xcoord());
+    int32_t dy = (y/16-detection.ycoord());
+    return dx*dx + dy*dy;
 }
 
 // return change in body angle as measured by gyro
@@ -261,7 +280,7 @@ int16_t Track::updateOmegaZ(int32_t dt, int16_t omegaZ) {
     return ((average_omegaZ/16)*(dt/1000))/1000;
 }
 
-void Track::predict(uint32_t now, int16_t omegaZ) {
+int32_t Track::predict(uint32_t now, int16_t omegaZ) {
     int32_t dt = (now - last_predict);
     last_predict = now;
     int32_t dtheta = updateOmegaZ(dt, omegaZ);
@@ -276,14 +295,15 @@ void Track::predict(uint32_t now, int16_t omegaZ) {
     // x = x + dt*vx/1e6 + (x*(-dtheta*dtheta/2048/2/2048) - y*dtheta/2048)
     // x = x + dt*vx/1e6 - (x*dtheta*dtheta/2048/2 + y*dtheta)/2048
     int32_t xp = x;
-    x = x + ((dt/1024)*vx)/64 - (x*dtheta*dtheta/4096L + y*dtheta)/2048L;
+    x = x + ((dt/1000)*vx)/1000 - (x*dtheta*dtheta/4096L + y*dtheta)/2048L;
     // y = y + dt*vy/1e6 + r*(sin(theta+dtheta) - sin(theta));
     // y = y + dt*vy/1e6 + r*(sin(theta)*cos(dtheta) + cos(theta)*sin(dtheta) - sin(theta));
     // y = y + dt*vy/1e6 + r*((y/r)*cos(dtheta) + (x/r)*sin(dtheta) - (y/r));
     // y = y + dt*vy/1e6 + (y*cos(dtheta) + x*sin(dtheta) - y);
     // y = y + dt*vy/1e6 + (y*(cos(dtheta)-1) + x*sin(dtheta));
     // y = y + dt*vy/1e6 + (y*(-dtheta*dtheta/2048/2) + x*dtheta)/2048;
-    y = y + ((dt/1024)*vy)/64 - (y*dtheta*dtheta/4096L - xp*dtheta)/2048L;
+    y = y + ((dt/1000)*vy)/1000 - (y*dtheta*dtheta/4096L - xp*dtheta)/2048L;
+    return dt;
 }
 
 void Track::update(const Object& best_match, int16_t omegaZ) {
@@ -291,124 +311,51 @@ void Track::update(const Object& best_match, int16_t omegaZ) {
     //int32_t mr = best_match.radius();
     int32_t mx = best_match.xcoord();
     int32_t my = best_match.ycoord();
-    if(num_updates == 0) {
-        x = mx;
-        y = my;
+    if(!valid(best_match.Time)) {
+        x = mx*16;
+        y = my*16;
         vx = 0;
         vy = 0;
+        num_updates = 0;
     } else {
         predict(best_match.Time, omegaZ);
         //
         // residual:
         // rx = mr*cos(ma) - x
         // rx = mr*(2048 - ma*ma/2048/2)/2048 - x
-        rx = mx - x;
+        rx = mx*16 - x;
         // ry = mr*sin(ma) - y
-        ry = my - y;
+        ry = my*16 - y;
         //
         // correct:
-        x += alpha*rx/32768L;
-        y += alpha*ry/32768L;
-        vx += beta*rx/32768L;
-        vy += beta*ry/32768L;
+        x += alpha*rx/32767;
+        y += alpha*ry/32767;
+        vx += beta*rx/16384;
+        vy += beta*ry/16384;
     }
-    last_update = micros();
     num_updates++;
+    last_update = best_match.Time;
 }
 
 void Track::updateNoObs(uint32_t time, int16_t omegaZ) {
-    predict(time, omegaZ);
+    if(valid(time)) {
+        predict(time, omegaZ);
+    }
 }
 
 int16_t Track::angle(void) const {
-    return ((int32_t)y/x - ((((((int32_t)y*y)/x)*y)/x)/x)/3L)*2048L;
-}
-
-uint32_t sqrti(uint32_t x) {
-    // https://stackoverflow.com/questions/1100090/looking-for-an-efficient-integer-square-root-algorithm-for-arm-thumb2
-    uint32_t op  = x;
-    uint32_t res = 0;
-    uint32_t one = 1uL << 30; // The second-to-top bit is set: use 1u << 14 for uint16_t type; use 1uL<<30 for uint32_t type
-
-    // "one" starts at the highest power of four <= than the argument.
-    while (one > op)
-    {
-        one >>= 2;
+    if(valid(micros()) && num_updates>MIN_NUM_UPDATES) {
+        return (y/x - (((((y*y)/x)*y)/x)/x)/3L)*2048L;
+    } else {
+        return 0;
     }
-
-    while (one != 0)
-    {
-        if (op >= res + one)
-        {
-            op = op - (res + one);
-            res = res +  2 * one;
-        }
-        res >>= 1;
-        one >>= 2;
-    }
-    return res;
 }
 
 bool Track::timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ) const
 {
-    int32_t update_dt = micros() - last_update;
-    if(update_dt<track_lost_dt && num_updates>MIN_NUM_UPDATES) {
-        // p(t+dt) = [ x ] + dt*[ vx ] + r(t)*[ cos(theta(t) + dt*omegaZ)-cos(theta(t)) ]
-        //           [ y ]      [ vy ]        [ sin(theta(t) + dt*omegaZ)-sin(theta(t)) ]
-        //
-        // hit when ||p(t+dt) - [depth, 0].T|| < tol
-        //
-        // Compute extra velocity due to body frame rotation, hold that fixed
-        // through the prediction step
-        // Vr = d  ( r(t)*[ cos(theta(t) + t*omegaZ)-cos(theta(t)) ] )
-        //      dt        [ sin(theta(t) + t*omegaZ)-sin(theta(t)) ]
-        //
-        // Vr = d  ( [ (x(t)*(cos(t*omegaZ)-1) - y(t)*sin(t*omegaZ)) ] )
-        //      dt   [ (y(t)*(cos(t*omegaZ)-1) + x(t)*sin(t*omegaZ)) ]
-        //
-        // Vr = [ vx*(cos(t*omegaZ)-1) - x*omegaZ*sin(t*omegaZ) - vy*sin(t*omegaZ) - y*omegaZ*cos(t*omegaZ) ]
-        //      [ vy*(cos(t*omegaZ)-1) - y*omegaZ*sin(t*omegaZ) + vx*sin(t*omegaZ) + x*omegaZ*cos(t*omegaZ) ]
-        // t=0 to evaluate velocity now
-        // Vr = [ -y*omegaZ ]
-        //      [  x*omegaZ ]
-        //
-        // p(t+dt) = [ x ] + dt*[ vx - y*omegaZ ]
-        //           [ y ]      [ vy + x*omegaZ ]
-        //
-        // ((x-depth) + dt*(vx-y*omegaZ))**2 + (y + dt*(vy+x*omegaZ))**2
-        // (x-depth)**2 + 2*(x-depth)*dt*(vx-y*omegaZ) + dt*dt*(vx-y*omegaZ)**2 +
-        // y**2 +         2*y*dt*(vy+x*omegaZ) +         dt*dt*(vy+x*omegaZ)**2
-        //
-        //       (x-depth)**2 + y**2
-        // dt*   2*((x-depth)*(vx-y*omegaZ) + y*(vy+x*omegaZ))
-        // dt*dt*((vx-y*omegaZ)*(vy+x*omegaZ))**2
-        //
-        //effective velocities including rotation
-        int32_t evx = (vx-(int32_t)y*omegaZ/2048L);
-        int32_t evy = (vy+(int32_t)x*omegaZ/2048L);
-        //target x distance
-        int32_t tx = x-depth;
-        //polynomial coefficients
-        int32_t a = (evx*evy)*(evx*evy);
-        int32_t b = 2*(tx*evx + y*evy);
-        int32_t c = tx*tx + (int32_t)y*y;
-        //quadratic formula
-        int32_t det = (b*b-4*a*c);
-        if(det<0) {
-            // negative determinant, no real solutions
-            return false;
-        }
-        det = sqrti(det);
-        int32_t dtp = (-b + det)/a/2;
-        int32_t dtm = (-b - det)/a/2;
-        if(dtp>0 && dtp<dtm) {
-            *dt = dtp;
-            return true;
-        }
-        if(dtm>0 && dtm<dtp) {
-            *dt = dtm;
-            return true;
-        }
+    if(valid(micros()) && num_updates>MIN_NUM_UPDATES) {
+        // maybe true?
+        return false;
     }
     return false;
 }
