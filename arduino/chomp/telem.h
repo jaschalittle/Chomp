@@ -61,5 +61,6 @@ bool sendTrackingTelemetry(int16_t detection_x,
                            int32_t filtered_y,
                            int32_t filtered_vy,
                            int32_t rx,
-                           int32_t ry);
+                           int32_t ry,
+                           int32_t best_distance);
 #endif //TELEM_H

@@ -285,6 +285,7 @@ struct TrackingTelemetryInner {
     int32_t filtered_vy;
     int32_t rx;
     int32_t ry;
+    int32_t best_distance;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_TRK, TrackingTelemetryInner> TRKTelemetry;
 bool sendTrackingTelemetry(int16_t detection_x,
@@ -294,7 +295,8 @@ bool sendTrackingTelemetry(int16_t detection_x,
                            int32_t filtered_y,
                            int32_t filtered_vy,
                            int32_t rx,
-                           int32_t ry) {
+                           int32_t ry,
+                           int32_t best_distance) {
     CHECK_ENABLED(TLM_ID_TRK);
     TRKTelemetry tlm;
     tlm.inner.detection_x = detection_x;
@@ -305,5 +307,6 @@ bool sendTrackingTelemetry(int16_t detection_x,
     tlm.inner.filtered_vy = filtered_vy;
     tlm.inner.rx = rx;
     tlm.inner.ry = ry;
+    tlm.inner.best_distance = best_distance;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
