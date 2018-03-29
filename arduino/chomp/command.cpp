@@ -36,6 +36,13 @@ typedef CommandPacket<CMD_ID_TRATE, TelemetryRateInner> TelemetryRateCommand;
 struct TrackingFilterInner {
     int16_t alpha;
     int16_t beta;
+    int16_t min_object_size;
+    int16_t max_object_size;
+    int16_t edge_call_threshold;
+    int8_t min_num_updates;
+    uint32_t track_lost_dt;
+    int16_t max_off_track;
+    int16_t max_start_distance;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_TRKFLT, TrackingFilterInner> TrackingFilterCommand;
 
@@ -82,7 +89,14 @@ void handle_commands(void) {
           case CMD_ID_TRKFLT:
               trkflt_cmd = (TrackingFilterCommand *)command_buffer;
               setTrackingFilterParams(trkflt_cmd->inner.alpha,
-                                      trkflt_cmd->inner.beta);
+                                      trkflt_cmd->inner.beta,
+                                      trkflt_cmd->inner.min_object_size,
+                                      trkflt_cmd->inner.max_object_size,
+                                      trkflt_cmd->inner.edge_call_threshold,
+                                      trkflt_cmd->inner.min_num_updates,
+                                      trkflt_cmd->inner.track_lost_dt,
+                                      trkflt_cmd->inner.max_off_track,
+                                      trkflt_cmd->inner.max_start_distance);
               break;
           default:
               invalid_command++;

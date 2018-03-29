@@ -15,14 +15,13 @@
 #define STEER_BIAS_CAP 500
 
 // object sizes are in mm
-#define MIN_OBJECT_SIZE 200
-#define MAX_OBJECT_SIZE 1800
-#define EDGE_CALL_THRESHOLD 60
-#define MIN_NUM_UPDATES 3
-
-static const int32_t track_lost_dt = 500000;  // us
-static const int32_t MAX_OFF_TRACK = 600L*600L; // squared distance in mm
-static const int32_t MAX_START_DISTANCE = 6000L*6000L; // squared distance in mm
+static int32_t min_object_size = 200;
+static int32_t max_object_size = 1800;   // mm of circumferential size
+static int32_t edge_call_threshold = 60; // cm for edge in leddar returns
+static uint32_t min_num_updates = 3;
+static uint32_t track_lost_dt = 500000;  // us
+static int32_t max_off_track = 600L*600L; // squared distance in mm
+static int32_t max_start_distance = 6000L*6000L; // squared distance in mm
 
 struct Object
 {
@@ -60,7 +59,8 @@ struct Track
         y(0), vy(0),
         num_updates(0),
         last_update(micros()),
-        last_predict(micros())
+        last_predict(micros()),
+        alpha(10000), beta(16384)
         { }
     int32_t predict(uint32_t now, int16_t omegaZ);
     void update(const Object& best_match, int16_t omegaZ);
@@ -88,12 +88,12 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
     // this currently will not call a more distant object obscured by a nearer object, even if both edges of more distant object are visible
     for (uint8_t i = 1; i < 16; i++) {
         int16_t delta = (int16_t) min_detections[i].Distance - last_seg_distance;
-        if (delta < -EDGE_CALL_THRESHOLD) {
+        if (delta < -edge_call_threshold) {
             left_edge = i;
             min_obj_distance = min_detections[i].Distance;
             max_obj_distance = min_detections[i].Distance;
             objects[num_objects].SumDistance = 0;
-        } else if (delta > EDGE_CALL_THRESHOLD) {
+        } else if (delta > edge_call_threshold) {
             // call object if there is an unmatched left edge
             if (left_edge >= right_edge) {
                 right_edge = i;
@@ -103,7 +103,7 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
                 objects[num_objects].RightEdge = right_edge;
                 objects[num_objects].Time = now;
                 int16_t size = objects[num_objects].size();
-                if(size>MIN_OBJECT_SIZE && size<MAX_OBJECT_SIZE) {
+                if(size>min_object_size && size<max_object_size) {
                     num_objects++;
                 }
             }
@@ -124,7 +124,7 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
         objects[num_objects].RightEdge = right_edge;
         objects[num_objects].Time = now;
         int16_t size = objects[num_objects].size();
-        if(size>MIN_OBJECT_SIZE && size<MAX_OBJECT_SIZE) {
+        if(size>min_object_size && size<max_object_size) {
             num_objects++;
         }
     }
@@ -154,8 +154,8 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
                 best_match = i;
             }
         }
-        if(( tracked_object.valid(now) && best_distance < MAX_OFF_TRACK) ||
-           (!tracked_object.valid(now) && best_distance < MAX_START_DISTANCE)) {
+        if(( tracked_object.valid(now) && best_distance < max_off_track) ||
+           (!tracked_object.valid(now) && best_distance < max_start_distance)) {
            tracked_object.update(objects[best_match], omegaZ);
         } else {
            tracked_object.updateNoObs(now, omegaZ);
@@ -190,7 +190,23 @@ void pidSteer (const Detection (&detections)[LEDDAR_SEGMENTS], uint16_t distance
     *steer_bias = calculated_steer_bias;
 }
 
-void setTrackingFilterParams(int16_t alpha, int16_t beta) {
+
+void setTrackingFilterParams(int16_t alpha, int16_t beta,
+                             int16_t p_min_object_size,
+                             int16_t p_max_object_size,
+                             int16_t p_edge_call_threshold,
+                             int8_t p_min_num_updates,
+                             uint32_t p_track_lost_dt,
+                             int16_t p_max_off_track,
+                             int16_t p_max_start_distance
+        ) {
+    min_object_size    = p_min_object_size;
+    max_object_size    = p_max_object_size;
+    edge_call_threshold= p_edge_call_threshold;
+    min_num_updates    = p_min_num_updates;
+    track_lost_dt      = p_track_lost_dt;
+    max_off_track      = p_max_off_track;
+    max_start_distance = p_max_start_distance;
     tracked_object.alpha = alpha;
     tracked_object.beta = beta;
 }
@@ -344,7 +360,7 @@ void Track::updateNoObs(uint32_t time, int16_t omegaZ) {
 }
 
 int16_t Track::angle(void) const {
-    if(valid(micros()) && num_updates>MIN_NUM_UPDATES) {
+    if(valid(micros()) && num_updates>min_num_updates) {
         return (y/x - (((((y*y)/x)*y)/x)/x)/3L)*2048L;
     } else {
         return 0;
@@ -353,7 +369,7 @@ int16_t Track::angle(void) const {
 
 bool Track::timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ) const
 {
-    if(valid(micros()) && num_updates>MIN_NUM_UPDATES) {
+    if(valid(micros()) && num_updates>min_num_updates) {
         // maybe true?
         return false;
     }
