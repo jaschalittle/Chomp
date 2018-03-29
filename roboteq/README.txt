@@ -1,5 +1,5 @@
 ********Firmware******
-MBL1660 controllers should be upgraded to version 1.4a
+MBL1660 controllers should be upgraded to version 1.8d
 
 
 ********Loading wheel configurations********
