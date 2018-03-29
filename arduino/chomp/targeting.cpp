@@ -18,7 +18,7 @@
 #define MIN_OBJECT_SIZE 200
 #define MAX_OBJECT_SIZE 1800
 #define EDGE_CALL_THRESHOLD 60
-#define MIN_NUM_UPDATES 5
+#define MIN_NUM_UPDATES 3
 
 static const int32_t track_lost_dt = 2000000;
 
@@ -33,6 +33,8 @@ struct Object
                Time(0) { }
     inline int16_t size(void) const;
     inline int16_t angle(void) const;
+    inline int16_t xcoord(void) const;
+    inline int16_t ycoord(void) const;
     inline int16_t radius(void) const;
     inline int32_t distanceSq(const Object &other) const;
     float originalDistance(const Object &other) const;
@@ -43,7 +45,7 @@ struct Track
 {
     int32_t x, vx, y, vy;
     uint32_t num_updates;
-    uint32_t last_update;
+    uint32_t last_update, last_predict;
     int32_t last_omgaz;
 
     int16_t alpha, beta;
@@ -53,9 +55,10 @@ struct Track
         x(0), vx(0),
         y(0), vy(0),
         num_updates(0),
-        last_update(micros())
+        last_update(micros()),
+        last_predict(micros())
         { }
-    inline int32_t computedt(uint32_t now);
+    void predict(uint32_t now, int16_t omegaZ);
     void update(const Object& best_match, int16_t omegaZ);
     int32_t distanceSq(const Object& obj) const;
     int16_t updateOmegaZ(int32_t dt, int16_t omegaZ);
@@ -185,6 +188,17 @@ inline int16_t Object::angle(void) const {
 }
 
 
+// x coordinate in mm
+inline int16_t Object::xcoord(void) const {
+    int32_t ma = angle();
+    return (radius()*(2048L-((ma*ma)/4096L)))/2048L;
+}
+
+// y coordinate in mm
+inline int16_t Object::ycoord(void) const {
+    return ((int32_t)radius()*angle())/2048L;
+}
+
 // distance squared in mm
 int32_t Object::distanceSq(const Object &other) const {
     int32_t r = radius(), ro=other.radius();
@@ -202,7 +216,7 @@ int32_t Object::distanceSq(const Object &other) const {
     // d = r*r + ro*ro - 2*r*ro*((2048-a*a/2/2048)*(2048-ao*ao/2/2048) + a*ao)/2048/2048;
     // d = r*r + ro*ro - 2*r*ro*(2048*2048 - a*a/2 - ao*ao/2 + a*a*ao*a0/2/2/2048/2048)/2048/2048;
     // d = r*r + ro*ro - r*ro*(4096*2048 - a*a - ao*ao + a*a*ao*a0/2/2048/2048)/2048/2048;
-    return r*r + ro*ro - r*ro*(8388608 - a*a - ao*ao + a*a*ao*ao/8388608)/4194304;
+    return r*r + ro*ro - r*ro*(8388608L - a*a - ao*ao + a*a*ao*ao/8388608L)/4194304L;
 }
 
 // original distance formula from old code
@@ -242,45 +256,43 @@ int16_t Track::updateOmegaZ(int32_t dt, int16_t omegaZ) {
     return ((average_omegaZ/16)*(dt/1000))/1000;
 }
 
-inline int32_t Track::computedt(uint32_t now)
-{
-    int32_t dt = (now - last_update);
-    last_update = now;
-    return dt;
+void Track::predict(uint32_t now, int16_t omegaZ) {
+    int32_t dt = (now - last_predict);
+    last_predict = now;
+    int32_t dtheta = updateOmegaZ(dt, omegaZ);
+    // predict:
+    // r = sqrt(x**2+y**2)
+    // theta = atan2(y, x)
+    // x = x + dt*vx/1e6 + r*(cos(theta+dtheta) - cos(theta))
+    // x = x + dt*vx/1e6 + r*(cos(theta)*cos(dtheta) - sin(theta)*sin(dtheta) - x/r)
+    // x = x + dt*vx/1e6 + r*((x/r)*cos(dtheta) - (y/r)*sin(dtheta) - x/r)
+    // x = x + dt*vx/1e6 + (x*cos(dtheta) - y*sin(dtheta) - x)
+    // x = x + dt*vx/1e6 + (x*(cos(dtheta)-1) - y*sin(dtheta))
+    // x = x + dt*vx/1e6 + (x*(-dtheta*dtheta/2048/2/2048) - y*dtheta/2048)
+    // x = x + dt*vx/1e6 - (x*dtheta*dtheta/2048/2 + y*dtheta)/2048
+    int32_t xp = x;
+    x = x + ((dt/1024)*vx)/64 - (x*dtheta*dtheta/4096L + y*dtheta)/2048L;
+    // y = y + dt*vy/1e6 + r*(sin(theta+dtheta) - sin(theta));
+    // y = y + dt*vy/1e6 + r*(sin(theta)*cos(dtheta) + cos(theta)*sin(dtheta) - sin(theta));
+    // y = y + dt*vy/1e6 + r*((y/r)*cos(dtheta) + (x/r)*sin(dtheta) - (y/r));
+    // y = y + dt*vy/1e6 + (y*cos(dtheta) + x*sin(dtheta) - y);
+    // y = y + dt*vy/1e6 + (y*(cos(dtheta)-1) + x*sin(dtheta));
+    // y = y + dt*vy/1e6 + (y*(-dtheta*dtheta/2048/2) + x*dtheta)/2048;
+    y = y + ((dt/1024)*vy)/64 - (y*dtheta*dtheta/4096L - xp*dtheta)/2048L;
 }
 
 void Track::update(const Object& best_match, int16_t omegaZ) {
-    int32_t dt = computedt(best_match.Time);
-    int32_t dtheta = updateOmegaZ(dt, omegaZ);
-    int32_t ma = best_match.angle();
-    int32_t mr = best_match.radius();
-    int32_t mx = (mr*(2048-((ma*ma)/4096)))/2048; 
-    int32_t my = mr*(ma/2048);
+    //int32_t ma = best_match.angle();
+    //int32_t mr = best_match.radius();
+    int32_t mx = best_match.xcoord();
+    int32_t my = best_match.ycoord();
     if(num_updates == 0) {
         x = mx;
         y = my;
         vx = 0;
         vy = 0;
     } else {
-        // predict:
-        // r = sqrt(x**2+y**2)
-        // theta = atan2(y, x)
-        // x = x + dt*vx/1e6 + r*(cos(theta+dtheta) - cos(theta))
-        // x = x + dt*vx/1e6 + r*(cos(theta)*cos(dtheta) - sin(theta)*sin(dtheta) - x/r)
-        // x = x + dt*vx/1e6 + r*((x/r)*cos(dtheta) - (y/r)*sin(dtheta) - x/r)
-        // x = x + dt*vx/1e6 + (x*cos(dtheta) - y*sin(dtheta) - x)
-        // x = x + dt*vx/1e6 + (x*(cos(dtheta)-1) - y*sin(dtheta))
-        // x = x + dt*vx/1e6 + (x*(-dtheta*dtheta/2048/2/2048) - y*dtheta/2048)
-        // x = x + dt*vx/1e6 - (x*dtheta*dtheta/2048/2 + y*dtheta)/2048
-        int32_t xp = x;
-        x = x + ((dt/1000)*vx)/1000 - (x*dtheta*dtheta/4096 + y*dtheta)/2048;
-        // y = y + dt*vy/1e6 + r*(sin(theta+dtheta) - sin(theta));
-        // y = y + dt*vy/1e6 + r*(sin(theta)*cos(dtheta) + cos(theta)*sin(dtheta) - sin(theta));
-        // y = y + dt*vy/1e6 + r*((y/r)*cos(dtheta) + (x/r)*sin(dtheta) - (y/r));
-        // y = y + dt*vy/1e6 + (y*cos(dtheta) + x*sin(dtheta) - y);
-        // y = y + dt*vy/1e6 + (y*(cos(dtheta)-1) + x*sin(dtheta));
-        // y = y + dt*vy/1e6 + (y*(-dtheta*dtheta/2048/2) + x*dtheta)/2048;
-        y = y + ((dt/1000)*vy)/1000 - (y*dtheta*dtheta/4096 - xp*dtheta)/2048;
+        predict(best_match.Time, omegaZ);
         //
         // residual:
         // rx = mr*cos(ma) - x
@@ -290,22 +302,21 @@ void Track::update(const Object& best_match, int16_t omegaZ) {
         int32_t ry = my - y;
         //
         // correct:
-        x += alpha*rx/32768;
-        y += alpha*ry/32768;
-        vx += beta*rx/32768;
-        vy += beta*ry/32768;
+        x += alpha*rx/32768L;
+        y += alpha*ry/32768L;
+        vx += beta*rx/32768L;
+        vy += beta*ry/32768L;
     }
+    last_update = micros();
     num_updates++;
 }
 
 void Track::updateNoObs(uint32_t time, int16_t omegaZ) {
-    int32_t dt = computedt(time);
-    updateOmegaZ(dt, omegaZ);
-    num_updates = 0;
+    predict(time, omegaZ);
 }
 
 int16_t Track::angle(void) const {
-    return (y/x - (((((y*y)/x)*y)/x)/x)/3)*2048;
+    return ((int32_t)y/x - ((((((int32_t)y*y)/x)*y)/x)/x)/3L)*2048L;
 }
 
 uint32_t sqrti(uint32_t x) {
@@ -335,8 +346,8 @@ uint32_t sqrti(uint32_t x) {
 
 bool Track::timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ) const
 {
-    int32_t predict_dt = micros() - last_update;
-    if(predict_dt<track_lost_dt && num_updates>MIN_NUM_UPDATES) {
+    int32_t update_dt = micros() - last_update;
+    if(update_dt<track_lost_dt && num_updates>MIN_NUM_UPDATES) {
         // p(t+dt) = [ x ] + dt*[ vx ] + r(t)*[ cos(theta(t) + dt*omegaZ)-cos(theta(t)) ]
         //           [ y ]      [ vy ]        [ sin(theta(t) + dt*omegaZ)-sin(theta(t)) ]
         //
@@ -368,14 +379,14 @@ bool Track::timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ) const
         // dt*dt*((vx-y*omegaZ)*(vy+x*omegaZ))**2
         //
         //effective velocities including rotation
-        int32_t evx = (vx-y*omegaZ/2048);
-        int32_t evy = (vy+x*omegaZ/2048);
+        int32_t evx = (vx-(int32_t)y*omegaZ/2048L);
+        int32_t evy = (vy+(int32_t)x*omegaZ/2048L);
         //target x distance
         int32_t tx = x-depth;
         //polynomial coefficients
         int32_t a = (evx*evy)*(evx*evy);
         int32_t b = 2*(tx*evx + y*evy);
-        int32_t c = tx*tx + y*y;
+        int32_t c = tx*tx + (int32_t)y*y;
         //quadratic formula
         int32_t det = (b*b-4*a*c);
         if(det<0) {
