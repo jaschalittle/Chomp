@@ -215,7 +215,8 @@ COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
         UNITS "microseconds" "us"
     APPEND_PARAMETER DPERIOD 32 UINT 5000 30000000 10000 "Interval between Drive telemetry transmissions"
         UNITS "microseconds" "us"
-    APPEND_PARAMETER PADDING03 4 UINT 0 0 0
+    APPEND_PARAMETER PADDING05 3 UINT 0 0 0
+    APPEND_PARAMETER EN_TRK 1 UINT 0 1 0 "Enable tracking filter telemetry"
     APPEND_PARAMETER EN_DBGM_AUTOFIRE 1 UINT 0 1 0 "Enable Autofire debug messages"
     APPEND_PARAMETER EN_LEDDAR 1 UINT 0 1 0 "Enable LEDDAR telemetry packet"
     APPEND_PARAMETER EN_HS 1 UINT 0 1 0 "Enable HS telemetry packet"
