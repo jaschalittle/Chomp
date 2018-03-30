@@ -189,17 +189,28 @@ TELEMETRY CHOMP SRT LITTLE_ENDIAN "Self Righting"
         STATE WAIT_HAMMER_RETRACT 4
         STATE WAIT_UPRIGHT        5
 
+TELEMETRY CHOMP DRV LITTLE_ENDIAN "Drive Telemetry"
+    APPEND_ID_ITEM PKTID 8 UINT 8 "Packet ID which must be 8"
+    APPEND_ARRAY_ITEM WHEEL_VOLTAGES 16 INT 64 "Wheel Battery Voltages"
+        UNITS "volts" "v"
+        POLY_READ_CONVERSION 0.0 0.1
+    APPEND_ITEM WEAPONS_VOLTAGE 16 INT "Weapons Battery Voltage"
+        UNITS "volts" "v"
+        POLY_READ_CONVERSION 0.0 0.1
+
 COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
     APPEND_ID_PARAMETER CMDID 8 UINT 10 10 10 "Command ID which must be 10"
     APPEND_PARAMETER SPERIOD 32 UINT 10000 30000000 50000 "Interval between small telemetry transmissions"
         UNITS "microseconds" "us"
     APPEND_PARAMETER LPERIOD 32 UINT 10000 30000000 100000 "Interval between LEDDAR telemetry transmissions"
         UNITS "microseconds" "us"
+    APPEND_PARAMETER DPERIOD 32 UINT 5000 30000000 10000 "Interval between Drive telemetry transmissions"
+        UNITS "microseconds" "us"
     APPEND_PARAMETER PADDING03 4 UINT 0 0 0
     APPEND_PARAMETER EN_DBGM_AUTOFIRE 1 UINT 0 1 0 "Enable Autofire debug messages"
     APPEND_PARAMETER EN_LEDDAR 1 UINT 0 1 0 "Enable LEDDAR telemetry packet"
     APPEND_PARAMETER EN_HS 1 UINT 0 1 0 "Enable HS telemetry packet"
-    APPEND_PARAMETER PADDING00 1 UINT 0 0 0
+    APPEND_PARAMETER EN_DRV 1 UINT 0 1 1 "Enable drive control telemetry"
     APPEND_PARAMETER EN_LEDDARV2 1 UINT 0 1 0 "Enable LEDDARV2 telemetry packet"
     APPEND_PARAMETER EN_SWG 1 UINT 0 1 0 "Enable SWG telemetry packet"
     APPEND_PARAMETER EN_DBGM 1 UINT 0 1 1 "Enable DBGM telemetry packet"

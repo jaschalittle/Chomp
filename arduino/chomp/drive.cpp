@@ -2,6 +2,7 @@
 #include "Arduino.h"
 #include "drive.h"
 #include "pins.h"
+#include "telem.h"
 
 // Serial out pins defined in chomp.ino-- check there to verify proper connectivity to motor controllers
 extern HardwareSerial& DriveSerial;
@@ -61,4 +62,37 @@ int16_t getAvgDriveCommand() {
     }
     average_drive_command /= DRIVE_HISTORY_LENGTH;
     return average_drive_command;
+}
+
+#define VOLTAGE_RESPONSE_LENGTH 12
+#define VOLTAGE_RESPONSE_TIMEOUT 5000
+#define NUM_DRIVES 5
+void driveTelem(void) {
+    static int idx = 0;
+    static int16_t volts[NUM_DRIVES];
+    char volt_buffer[VOLTAGE_RESPONSE_LENGTH];
+    if(IS_TLM_ENABLED(TLM_ID_DRV)) {
+        while(DriveSerial.available()) DriveSerial.read();
+        String request("@0");
+        request += (idx+1);
+        request += "?V 2_";
+        DriveSerial.write(request.c_str());
+        uint32_t now = micros();
+        while(DriveSerial.available()<VOLTAGE_RESPONSE_LENGTH &&
+              micros() - now < VOLTAGE_RESPONSE_TIMEOUT);
+        if(DriveSerial.available() >= VOLTAGE_RESPONSE_LENGTH) {
+            DriveSerial.readBytes(volt_buffer, VOLTAGE_RESPONSE_LENGTH);
+            // response is "@0i V=nnn\x0d+\x0d"
+            // i=[1-NUM_DRIVES], nnn=volts*10
+            volt_buffer[9] = '\x00';
+            volts[idx++] = atoi(volt_buffer+6);
+        } else {
+            volts[idx++] = -1;
+        }
+        if(idx == NUM_DRIVES) {
+            // id 1-4 are wheels, id 5 is weapons
+            sendDriveTelem(reinterpret_cast<int16_t(&)[4]>(volts), volts[4]);
+            idx = 0;
+        }
+    }
 }

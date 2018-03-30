@@ -15,6 +15,8 @@ const uint16_t TLM_TERMINATOR=0x6666;
 uint32_t enabled_telemetry=(
     _LBV(TLM_ID_SYS)|
     _LBV(TLM_ID_SBS)|
+    _LBV(TLM_ID_PWM)|
+    _LBV(TLM_ID_DRV)|
     _LBV(TLM_ID_DBGM));
 
 
@@ -261,3 +263,15 @@ bool sendSelfRightTelem(uint8_t state) {
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 
+struct DriveTelemInner {
+    int16_t wheel_voltages[4];
+    int16_t weapons_voltage;
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_DRV, DriveTelemInner> DRVTelemetry;
+bool sendDriveTelem(int16_t const (&vwheel)[4], int16_t vweapon) {
+    CHECK_ENABLED(TLM_ID_DRV);
+    DRVTelemetry tlm;
+    memcpy(tlm.inner.wheel_voltages, vwheel, sizeof(vwheel));
+    tlm.inner.weapons_voltage = vweapon;
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}

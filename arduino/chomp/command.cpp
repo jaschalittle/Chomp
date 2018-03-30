@@ -9,6 +9,7 @@ enum Commands {
 
 extern uint32_t telemetry_interval;
 extern uint32_t leddar_telemetry_interval;
+extern uint32_t drive_telem_interval;
 extern uint32_t enabled_telemetry;
 
 const uint16_t CMD_TERMINATOR=0x6666;
@@ -22,6 +23,7 @@ template <uint8_t command_id, typename command_inner> struct CommandPacket{
 struct TelemetryRateInner {
     uint32_t small_telem_period;
     uint32_t leddar_telem_period;
+    uint32_t drive_telem_period;
     uint32_t enabled_messages;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_TRATE, TelemetryRateInner> TelemetryRateCommand;
@@ -61,6 +63,7 @@ void handle_commands(void) {
               trate_cmd = (TelemetryRateCommand *)command_buffer;
               telemetry_interval = trate_cmd->inner.small_telem_period;
               leddar_telemetry_interval = trate_cmd->inner.leddar_telem_period;
+              drive_telem_interval = trate_cmd->inner.drive_telem_period;
               enabled_telemetry = trate_cmd->inner.enabled_messages;
               debug_print(String("enabled_telemetry=")+String(enabled_telemetry, 16));
               break;
