@@ -76,7 +76,7 @@ struct Track
 
 // Consider adding requirement that near objects must cover multiple segments
 static Track tracked_object;
-void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t distance_threshold) {
+void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS]) {
 
     // call all objects in frame by detecting edges
     int16_t last_seg_distance = min_detections[0].Distance;
@@ -186,8 +186,8 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS], int16_t dis
     }
 }
 
-void pidSteer (const Detection (&detections)[LEDDAR_SEGMENTS], uint16_t distance_threshold, int16_t *steer_bias) {
-    trackObject(detections, distance_threshold);
+void pidSteer (const Detection (&detections)[LEDDAR_SEGMENTS], int16_t *steer_bias) {
+    trackObject(detections);
     int16_t calculated_steer_bias = P_COEFF * tracked_object.angle();
     if (calculated_steer_bias > STEER_BIAS_CAP) { calculated_steer_bias = STEER_BIAS_CAP; }
     if (calculated_steer_bias < -STEER_BIAS_CAP) { calculated_steer_bias = -STEER_BIAS_CAP; }

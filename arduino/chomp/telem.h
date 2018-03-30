@@ -1,6 +1,6 @@
 #ifndef TELEM_H
 #define TELEM_H
-#include "autofire.h"
+#include "leddar_io.h"
 
 enum TelemetryPacketId {
     TLM_ID_HS=1,
@@ -39,7 +39,7 @@ bool sendSensorTelem(int16_t pressure, uint16_t angle);
 bool sendSbusTelem(uint16_t cmd_bitfield);
 bool sendDebugMessageTelem(const char *msg);
 void debug_print(const String &msg);
-bool sendLeddarTelem(const Detection (&detections)[LEDDAR_SEGMENTS], unsigned int count, LeddarState state);
+bool sendLeddarTelem(const Detection (&detections)[LEDDAR_SEGMENTS], unsigned int count);
 bool sendSwingTelem(uint16_t datapoints_collected,
                     uint16_t* angle_data,
                     int16_t* pressure_data,

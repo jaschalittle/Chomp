@@ -2,7 +2,6 @@
 #include "chomp_main.h"
 #include "rc.h"
 #include "leddar_io.h"
-#include "autofire.h"
 #include "sensors.h"
 #include "xbee.h"
 #include "telem.h"
@@ -87,7 +86,6 @@ void chompSetup() {
     start_time = micros();
 }
 
-static int16_t previous_leddar_state = FAR_ZONE;
 static uint16_t current_rc_bitfield = 0, previous_rc_bitfield = 0;
 static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
@@ -100,7 +98,6 @@ static int16_t right_drive_value = 0;
 static int16_t steer_bias = 0; // positive turns right, negative turns left
 static bool targeting_enabled = false;
 static bool new_autodrive = false;
-static bool reset_targeting = false;
 
 extern uint16_t leddar_overrun;
 extern uint16_t leddar_crc_error;
@@ -138,32 +135,9 @@ void chompLoop() {
         const Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
         getMinimumDetections(&minDetections);
 
-        trackObject(*minDetections, 600);
-
-        // check for detections in zones
-        // LeddarState current_leddar_state = getState(*minDetections, getRange());
-        LeddarState current_leddar_state = FAR_ZONE;
-        switch (current_leddar_state){
-            case FAR_ZONE:
-                previous_leddar_state = current_leddar_state;
-                break;
-            case ARM_ZONE:
-                previous_leddar_state = current_leddar_state;
-                break;
-            case HIT_ZONE:
-            case PREDICTIVE_HIT_ZONE:
-                if (previous_leddar_state == ARM_ZONE) {
-                    if (autofireEnabled(previous_rc_bitfield)){
-                        fire( hammer_intensity, previous_rc_bitfield & FLAME_PULSE_BIT, true /*autofire*/ );
-                    }
-                } else {
-                    previous_leddar_state = ARM_ZONE; // Going from far to hit counts as arming
-                }
-                break;
-        }
+        trackObject(*minDetections);
 
         // get targeting RC command. reset targeting if RC state changes.
-        reset_targeting = targeting_enabled ^ getTargetingEnable();
         targeting_enabled = getTargetingEnable();
 
         // auto centering code
@@ -172,7 +146,7 @@ void chompLoop() {
 
         // Send subsampled leddar telem
         if (micros() - last_leddar_telem_time > leddar_telemetry_interval){
-          bool success = sendLeddarTelem(*minDetections, raw_detection_count, current_leddar_state);
+          bool success = sendLeddarTelem(*minDetections, raw_detection_count);
           if (success){
             last_leddar_telem_time = micros();
           }

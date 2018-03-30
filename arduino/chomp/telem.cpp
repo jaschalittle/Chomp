@@ -2,7 +2,6 @@
 #include "telem.h"
 #include "xbee.h"
 #include "leddar_io.h"
-#include "autofire.h"
 #include "pins.h"
 #include "DMASerial.h"
 
@@ -122,9 +121,8 @@ struct LeddarTelemetryInner {
 typedef TelemetryPacket<TLM_ID_LEDDARV2, LeddarTelemetryInner> LeddarTelemetry;
 
 static LeddarTelemetry leddar_tlm;
-bool sendLeddarTelem(const Detection (&min_detections)[LEDDAR_SEGMENTS], unsigned int count, LeddarState state){
+bool sendLeddarTelem(const Detection (&min_detections)[LEDDAR_SEGMENTS], unsigned int count){
   CHECK_ENABLED(TLM_ID_LEDDARV2);
-  leddar_tlm.inner.state = state;
   leddar_tlm.inner.count = count;
   for (uint8_t i = 0; i < LEDDAR_SEGMENTS; i++){
       leddar_tlm.inner.range[i] = min_detections[i].Distance;
