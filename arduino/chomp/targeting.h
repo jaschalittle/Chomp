@@ -13,7 +13,9 @@ void setTrackingFilterParams(int16_t alpha, int16_t beta,
                              int8_t p_min_num_updates,
                              uint32_t p_track_lost_dt,
                              int16_t p_max_off_track,
-                             int16_t p_max_start_distance
+                             int16_t p_max_start_distance,
+                             int16_t xtol,
+                             int16_t ytol
         );
 
 bool timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ);

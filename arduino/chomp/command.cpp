@@ -43,6 +43,8 @@ struct TrackingFilterInner {
     uint32_t track_lost_dt;
     int16_t max_off_track;
     int16_t max_start_distance;
+    int16_t xtol;
+    int16_t ytol;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_TRKFLT, TrackingFilterInner> TrackingFilterCommand;
 
@@ -96,7 +98,9 @@ void handle_commands(void) {
                                       trkflt_cmd->inner.min_num_updates,
                                       trkflt_cmd->inner.track_lost_dt,
                                       trkflt_cmd->inner.max_off_track,
-                                      trkflt_cmd->inner.max_start_distance);
+                                      trkflt_cmd->inner.max_start_distance,
+                                      trkflt_cmd->inner.xtol,
+                                      trkflt_cmd->inner.ytol);
               break;
           default:
               invalid_command++;

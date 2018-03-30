@@ -205,7 +205,9 @@ void setTrackingFilterParams(int16_t alpha, int16_t beta,
                              int8_t p_min_num_updates,
                              uint32_t p_track_lost_dt,
                              int16_t p_max_off_track,
-                             int16_t p_max_start_distance
+                             int16_t p_max_start_distance,
+                             int16_t p_xtol,
+                             int16_t p_ytol
         ) {
     min_object_size    = p_min_object_size;
     max_object_size    = p_max_object_size;
@@ -214,6 +216,8 @@ void setTrackingFilterParams(int16_t alpha, int16_t beta,
     track_lost_dt      = p_track_lost_dt;
     max_off_track      = p_max_off_track;
     max_start_distance = p_max_start_distance;
+    xtol = p_xtol;
+    ytol = p_ytol;
     tracked_object.alpha = alpha;
     tracked_object.beta = beta;
 }
