@@ -16,6 +16,8 @@ void setTrackingFilterParams(int16_t alpha, int16_t beta,
                              int16_t p_max_start_distance
         );
 
+bool timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ);
+
 void pidSteer(const Detection (&detections)[LEDDAR_SEGMENTS], uint16_t threshold, int16_t* steer_bias, bool reset_targeting);
 
 #endif  // CHUMP_TARGETING_H

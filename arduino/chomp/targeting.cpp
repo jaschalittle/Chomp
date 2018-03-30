@@ -22,6 +22,8 @@ static uint32_t min_num_updates = 3;
 static uint32_t track_lost_dt = 500000;  // us
 static int32_t max_off_track = 600L*600L; // squared distance in mm
 static int32_t max_start_distance = 6000L*6000L; // squared distance in mm
+static int32_t xtol = 200;
+static int32_t ytol = 200;
 
 struct Object
 {
@@ -192,6 +194,9 @@ void pidSteer (const Detection (&detections)[LEDDAR_SEGMENTS], uint16_t distance
     *steer_bias = calculated_steer_bias;
 }
 
+bool timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ) {
+    return tracked_object.timeToHit(dt, depth, omegaZ);
+}
 
 void setTrackingFilterParams(int16_t alpha, int16_t beta,
                              int16_t p_min_object_size,
@@ -372,8 +377,42 @@ int16_t Track::angle(void) const {
 bool Track::timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ) const
 {
     if(valid(micros()) && num_updates>min_num_updates) {
-        // maybe true?
-        return false;
+        // Compute extra velocity due to body frame rotation, hold that fixed
+        // through the prediction step
+        // Vr = d  ( r(t)*[ cos(theta(t) + t*omegaZ)-cos(theta(t)) ] )
+        //      dt        [ sin(theta(t) + t*omegaZ)-sin(theta(t)) ]
+        //
+        // Vr = d  ( [ (x(t)*(cos(t*omegaZ)-1) - y(t)*sin(t*omegaZ)) ] )
+        //      dt   [ (y(t)*(cos(t*omegaZ)-1) + x(t)*sin(t*omegaZ)) ]
+        //
+        // Vr = [ vx*(cos(t*omegaZ)-1) - x*omegaZ*sin(t*omegaZ) - vy*sin(t*omegaZ) - y*omegaZ*cos(t*omegaZ) ]
+        //      [ vy*(cos(t*omegaZ)-1) - y*omegaZ*sin(t*omegaZ) + vx*sin(t*omegaZ) + x*omegaZ*cos(t*omegaZ) ]
+        // t=0 to evaluate velocity now
+        // Vr = [ -y*omegaZ ]
+        //      [  x*omegaZ ]
+        //
+        // p(t+dt) = [ x ] + dt*[ vx - y*omegaZ ]
+        //           [ y ]      [ vy + x*omegaZ ]
+        // When will the target cross y==0?
+        // 0 = y + t*(vy +x*omegaZ)
+        int32_t ty = -y*1000/(vy+x*omegaZ/2048);
+        if(ty>0) {
+            int32_t xerr = (x + ty*(vx - y*omegaZ/2048)/1000)/16 - depth;
+            if(xerr<xtol) {
+                *dt = ty;
+                return true;
+            }
+        }
+        // When will the target cross x==depth?
+        // depth = x + dt*(vx - y*omegaZ)
+        int32_t tx = (((depth-x)*1000)/(vx - y*omegaZ/2048))/16;
+        if(tx>0) {
+            int32_t yerr = (y + tx*(vy +x*omegaZ/2048)/1000)/16;
+            if(yerr<ytol) {
+                *dt = tx;
+                return true;
+            }
+        }
     }
     return false;
 }
