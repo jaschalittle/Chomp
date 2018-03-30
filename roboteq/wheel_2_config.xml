@@ -93,7 +93,7 @@
           <Node Text="Node ID" Value="2">
             <Nodes />
           </Node>
-          <Node Text="Listen Node ID" Value="4">
+          <Node Text="Listen Node ID" Value="5">
             <Nodes />
           </Node>
           <Node Text="Heartbeat (ms)" Value="0">
@@ -101,6 +101,38 @@
           </Node>
           <Node Text="MiniCAN Send Rate (ms)" Value="100">
             <Nodes />
+          </Node>
+          <Node Text="CANOpen TPDO Send Rate">
+            <Nodes>
+              <Node Text="TPDO 1 Send Rate (ms)" Value="0">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 2 Send Rate (ms)" Value="0">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 3 Send Rate (ms)" Value="0">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 4 Send Rate (ms)" Value="0">
+                <Nodes />
+              </Node>
+            </Nodes>
+          </Node>
+          <Node Text="CANOpen Transmission Type">
+            <Nodes>
+              <Node Text="TPDO 1 Transmission Type" Value="255">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 2 Transmission Type" Value="255">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 3 Transmission Type" Value="255">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 4 Transmission Type" Value="255">
+                <Nodes />
+              </Node>
+            </Nodes>
           </Node>
           <Node Text="CANOpen Autostart" Value="0">
             <Nodes />
@@ -592,6 +624,9 @@
               <Node Text="Over Voltage Limit (V)" Value="600">
                 <Nodes />
               </Node>
+              <Node Text="Over Voltage Hysteresis (V)" Value="50">
+                <Nodes />
+              </Node>
               <Node Text="Under Voltage Limit (V)" Value="420">
                 <Nodes />
               </Node>
@@ -607,6 +642,9 @@
       </Node>
       <Node Text="Motor Configuration">
         <Nodes>
+          <Node Text="Motor Direction" Value="0">
+            <Nodes />
+          </Node>
           <Node Text="Number of Pole Pairs" Value="2">
             <Nodes />
           </Node>
@@ -640,6 +678,9 @@
           </Node>
           <Node Text="Sinusoidal Settings">
             <Nodes>
+              <Node Text="Swap Windings" Value="0">
+                <Nodes />
+              </Node>
               <Node Text="Sinusoidal Angle Sensor" Value="0">
                 <Nodes />
               </Node>
