@@ -92,6 +92,7 @@ static uint16_t current_rc_bitfield = 0, previous_rc_bitfield = 0;
 static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
 static uint32_t last_telem_time = micros();
+static uint32_t last_drive_telem_time = micros();
 static uint32_t last_leddar_telem_time = micros();
 static uint32_t last_sensor_time = micros();
 static int16_t left_drive_value = 0;
@@ -108,6 +109,7 @@ extern uint16_t sbus_overrun;
 uint32_t telemetry_interval=50000L;
 uint32_t leddar_telemetry_interval=100000L;
 uint32_t sensor_period=5000L;
+uint32_t drive_telem_interval=20000L;
 uint32_t leddar_max_request_period=100000L;
 
 void chompLoop() {
@@ -262,7 +264,8 @@ void chompLoop() {
 
 
     // send telemetry
-    if (micros() - last_telem_time > telemetry_interval){
+    uint32_t now = micros();
+    if (now - last_telem_time > telemetry_interval){
         sendSensorTelem(getPressure(), getAngle());
         sendSystemTelem(loop_speed_min, loop_speed_avg/loop_count,
                         loop_speed_max, loop_count,
@@ -279,6 +282,13 @@ void chompLoop() {
         telemetrySelfRight();
         last_telem_time = micros();
     }
+    if(now-last_drive_telem_time > drive_telem_interval) {
+        driveTelem();
+        last_drive_telem_time = now;
+    }
+
+
+
 
     handle_commands();
     update_loop_stats();

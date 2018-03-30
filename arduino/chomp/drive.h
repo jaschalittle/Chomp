@@ -9,5 +9,6 @@ void updateDriveHistory(int16_t l_drive_value, int16_t r_drive_value);
 // are stored in the history.
 void drive(int16_t &l_drive_value, int16_t &r_drive_value);
 int16_t getAvgDriveCommand();
+void driveTelem(void);
 
 #endif // DRIVE_H
