@@ -40,10 +40,7 @@ int16_t Track::updateOmegaZ(int32_t dt, int16_t omegaZ) {
     return ((average_omegaZ/16)*(dt/1000))/1000;
 }
 
-int32_t Track::predict(uint32_t now, int16_t omegaZ) {
-    int32_t dt = (now - last_predict);
-    last_predict = now;
-    int32_t dtheta = updateOmegaZ(dt, omegaZ);
+void Track::project(int32_t dt, int32_t dtheta, int32_t *px, int32_t *py) const {
     // predict:
     // r = sqrt(x**2+y**2)
     // theta = atan2(y, x)
@@ -54,15 +51,23 @@ int32_t Track::predict(uint32_t now, int16_t omegaZ) {
     // x = x + dt*vx/1e6 + (x*(cos(dtheta)-1) - y*sin(dtheta))
     // x = x + dt*vx/1e6 + (x*(-dtheta*dtheta/2048/2/2048) - y*dtheta/2048)
     // x = x + dt*vx/1e6 - (x*dtheta*dtheta/2048/2 + y*dtheta)/2048
-    int32_t xp = x;
-    x = x + ((dt/1000)*vx)/1000 - (x*dtheta*dtheta/4096L + y*dtheta)/2048L;
+    int32_t lx=*px;
+    int32_t ly=*py;
+    *px = lx + ((dt/1000)*vx)/1000 - (lx*dtheta*dtheta/4096L + ly*dtheta)/2048L;
     // y = y + dt*vy/1e6 + r*(sin(theta+dtheta) - sin(theta));
     // y = y + dt*vy/1e6 + r*(sin(theta)*cos(dtheta) + cos(theta)*sin(dtheta) - sin(theta));
     // y = y + dt*vy/1e6 + r*((y/r)*cos(dtheta) + (x/r)*sin(dtheta) - (y/r));
     // y = y + dt*vy/1e6 + (y*cos(dtheta) + x*sin(dtheta) - y);
     // y = y + dt*vy/1e6 + (y*(cos(dtheta)-1) + x*sin(dtheta));
     // y = y + dt*vy/1e6 + (y*(-dtheta*dtheta/2048/2) + x*dtheta)/2048;
-    y = y + ((dt/1000)*vy)/1000 - (y*dtheta*dtheta/4096L - xp*dtheta)/2048L;
+    *py = ly + ((dt/1000)*vy)/1000 - (ly*dtheta*dtheta/4096L - lx*dtheta)/2048L;
+}
+
+int32_t Track::predict(uint32_t now, int16_t omegaZ) {
+    int32_t dt = (now - last_predict);
+    last_predict = now;
+    int32_t dtheta = updateOmegaZ(dt, omegaZ);
+    project(dt, dtheta, &x, &y);
     return dt;
 }
 
