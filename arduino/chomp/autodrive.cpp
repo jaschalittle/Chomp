@@ -3,10 +3,10 @@
 #include "utils.h"
 
 
-static int32_t steer_p = 0;
+static int32_t steer_p = 512;
 static int32_t steer_d = 0;
 static int32_t steer_max = 500;
-static int32_t drive_p = 0;
+static int32_t drive_p = 256;
 static int32_t drive_d = 0;
 static int32_t drive_max = 500;
 
@@ -23,12 +23,15 @@ void setDriveControlParams(int16_t p_steer_p,
 
 bool pidSteer(const Track &tracked_object,
               int16_t depth, int16_t *drive_bias, int16_t *steer_bias) {
-    uint32_t now = micros();
-    if(tracked_object.valid(now)) {
-        *steer_bias = -clip(steer_p * tracked_object.y/16384L,
-                            -steer_max, steer_max);
-        *drive_bias = clip(drive_p * (tracked_object.x-(int32_t)depth*16L)/16384L,
-                           -drive_max, drive_max);
+    bool valid = tracked_object.valid(micros());
+    if(valid) {
+        *steer_bias  = -steer_p * tracked_object.y/16384L;
+        *steer_bias += -steer_d * tracked_object.vy/16384L;
+        *steer_bias  = clip(*steer_bias, -steer_max, steer_max);
+
+        *drive_bias  = drive_p * (tracked_object.x-(int32_t)depth*16L)/16384L;
+        *drive_bias += drive_d * tracked_object.vx/16384L;
+        *drive_bias  = clip(*drive_bias, -drive_max, drive_max);
     }
-    return tracked_object.valid(now);
+    return valid;
 }
