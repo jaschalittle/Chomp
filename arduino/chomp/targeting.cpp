@@ -8,11 +8,10 @@
 #include <math.h>
 #include "imu.h"
 #include "telem.h"
+#include "utils.h"
 
 
 // #define P_COEFF 2000  // coeff for radians, should correspond to 100 for segments. seems okay for Chump, too fast for Chomp
-#define P_COEFF 1800
-#define STEER_BIAS_CAP 500
 
 // object sizes are in mm
 static int32_t min_object_size = 200;
@@ -24,6 +23,11 @@ static int32_t max_off_track = 600L*600L; // squared distance in mm
 static int32_t max_start_distance = 6000L*6000L; // squared distance in mm
 static int32_t xtol = 200;
 static int32_t ytol = 200;
+
+static int32_t steer_p = 0;
+static int32_t steer_max = 500;
+static int32_t drive_p = 0;
+static int32_t drive_max = 500;
 
 struct Object
 {
@@ -186,12 +190,15 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS]) {
     }
 }
 
-void pidSteer (const Detection (&detections)[LEDDAR_SEGMENTS], int16_t *steer_bias) {
-    trackObject(detections);
-    int16_t calculated_steer_bias = P_COEFF * tracked_object.angle();
-    if (calculated_steer_bias > STEER_BIAS_CAP) { calculated_steer_bias = STEER_BIAS_CAP; }
-    if (calculated_steer_bias < -STEER_BIAS_CAP) { calculated_steer_bias = -STEER_BIAS_CAP; }
-    *steer_bias = calculated_steer_bias;
+bool pidSteer(int16_t depth, int16_t *drive_bias, int16_t *steer_bias) {
+    uint32_t now = micros();
+    if(tracked_object.valid(now)) {
+        *steer_bias = clip(steer_p * tracked_object.y/2048,
+                           -steer_max, steer_max);
+        *drive_bias = clip(drive_p * (depth*16-tracked_object.x)/2048,
+                           -drive_max, drive_max);
+    }
+    return tracked_object.valid(now);
 }
 
 bool timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ) {
@@ -207,7 +214,9 @@ void setTrackingFilterParams(int16_t alpha, int16_t beta,
                              int16_t p_max_off_track,
                              int16_t p_max_start_distance,
                              int16_t p_xtol,
-                             int16_t p_ytol
+                             int16_t p_ytol,
+                             int16_t p_steer_p,
+                             int16_t p_drive_p
         ) {
     min_object_size    = p_min_object_size;
     max_object_size    = p_max_object_size;
@@ -218,6 +227,8 @@ void setTrackingFilterParams(int16_t alpha, int16_t beta,
     max_start_distance = p_max_start_distance;
     xtol = p_xtol;
     ytol = p_ytol;
+    steer_p = p_steer_p;
+    drive_p = p_drive_p;
     tracked_object.alpha = alpha;
     tracked_object.beta = beta;
 }

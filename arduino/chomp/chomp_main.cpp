@@ -54,6 +54,7 @@ static uint32_t last_drive_telem_time = micros();
 static uint32_t last_leddar_telem_time = micros();
 static uint32_t last_sensor_time = micros();
 static int16_t steer_bias = 0; // positive turns right, negative turns left
+static int16_t drive_bias = 0;
 static bool targeting_enabled = false;
 static bool new_autodrive = false;
 
@@ -100,8 +101,7 @@ void chompLoop() {
         targeting_enabled = getTargetingEnable();
 
         // auto centering code
-        // pidSteer(*minDetections, 600, &steer_bias, reset_targeting);   // 600 cm ~ 20 ft
-        // new_autodrive = true;
+        new_autodrive = pidSteer(drive_range, &steer_bias, &drive_bias);
 
         // Send subsampled leddar telem
         if (micros() - last_leddar_telem_time > leddar_telemetry_interval){
@@ -176,8 +176,8 @@ void chompLoop() {
     // check for autodrive
     if(new_autodrive || new_rc) {
         if(getTargetingEnable()) {
-            left_drive_value -= steer_bias;
-            right_drive_value -= steer_bias;
+            left_drive_value -= steer_bias + drive_bias;
+            right_drive_value -= steer_bias - drive_bias;
             // values passed by reference to capture clamping
             drive(left_drive_value, right_drive_value);
         }
