@@ -2,8 +2,15 @@
 #include <stdint.h>
 #include "track.h"
 
-bool willHit(const Track &tracked_object,
-             int16_t depth, int16_t hammer_intensity);
+enum AutofireState {
+    AF_NO_TARGET = 0,
+    AF_OMEGAZ_LOCKOUT,
+    AF_NO_HIT,
+    AF_HIT
+};
+
+enum AutofireState willHit(const Track &tracked_object,
+                           int16_t depth, int16_t hammer_intensity);
 
 bool omegaZLockout(int16_t *omegaZ);
 

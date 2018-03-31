@@ -12,11 +12,12 @@ const uint16_t TLM_TERMINATOR=0x6666;
 #define CHECK_ENABLED(TLM_ID) if(!(enabled_telemetry & _LBV(TLM_ID))) return false;
 
 uint32_t enabled_telemetry=(
-    _LBV(TLM_ID_SYS)|
     _LBV(TLM_ID_SBS)|
     _LBV(TLM_ID_PWM)|
-    _LBV(TLM_ID_DRV)|
-    _LBV(TLM_ID_DBGM));
+    _LBV(TLM_ID_SRT)|
+    _LBV(TLM_ID_TRK)|
+    _LBV(TLM_ID_AF)
+    );
 
 
 template <uint8_t packet_id, typename packet_inner> struct TelemetryPacket{
@@ -316,5 +317,17 @@ bool sendTrackingTelemetry(int16_t detection_x,
     tlm.inner.rx = rx;
     tlm.inner.ry = ry;
     tlm.inner.best_distance = best_distance;
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+
+
+struct AutofireTelemetryInner {
+    int8_t state;
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_AF, AutofireTelemetryInner> AFTelemetry;
+bool sendAutofireTelemetry(enum AutofireState st) {
+    CHECK_ENABLED(TLM_ID_TRK);
+    AFTelemetry tlm;
+    tlm.inner.state = st;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }

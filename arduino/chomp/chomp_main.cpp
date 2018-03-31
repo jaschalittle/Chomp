@@ -57,10 +57,12 @@ static uint32_t last_sensor_time = micros();
 static int16_t steer_bias = 0; // positive turns right, negative turns left
 static int16_t drive_bias = 0;
 static bool new_autodrive = false;
+static enum AutofireState autofire = AF_NO_TARGET;
 
 extern uint16_t leddar_overrun;
 extern uint16_t leddar_crc_error;
 extern uint16_t sbus_overrun;
+extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
 
 uint32_t telemetry_interval=50000L;
 uint32_t leddar_telemetry_interval=100000L;
@@ -94,7 +96,6 @@ void chompLoop() {
     int16_t hammer_intensity = getHammerIntensity();
     int16_t hammer_distance = getRange();
     bool targeting_enabled = getTargetingEnable();
-    bool should_autofire = false;
     // Check if data is available from the LEDDAR
     if (bufferDetections()){
 
@@ -117,8 +118,8 @@ void chompLoop() {
                                  drive_range, &drive_bias, &steer_bias);
 
 
-        should_autofire = willHit(tracked_object, hammer_distance, hammer_intensity);
-        if(should_autofire && (current_rc_bitfield & AUTO_HAMMER_ENABLE_BIT)) {
+        autofire = willHit(tracked_object, hammer_distance, hammer_intensity);
+        if((autofire==AF_HIT) && (current_rc_bitfield & AUTO_HAMMER_ENABLE_BIT)) {
             fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, true);
         }
 
@@ -220,11 +221,13 @@ void chompLoop() {
                         invalid_command,
                         valid_command);
         reset_loop_stats();
-        sendSbusTelem(current_rc_bitfield, hammer_intensity, hammer_distance);
+        int16_t hammer_angle = HAMMER_INTENSITIES_ANGLE[hammer_intensity];
+        sendSbusTelem(current_rc_bitfield, hammer_angle, hammer_distance);
         sendPWMTelem(targeting_enabled, left_drive_value, right_drive_value,
                      drive_range);
         telemetryIMU();
         telemetrySelfRight();
+        sendAutofireTelemetry(autofire);
         last_telem_time = micros();
     }
     if(now-last_drive_telem_time > drive_telem_interval) {

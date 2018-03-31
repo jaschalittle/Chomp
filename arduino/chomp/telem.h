@@ -1,12 +1,14 @@
 #ifndef TELEM_H
 #define TELEM_H
 #include "leddar_io.h"
+#include "autofire.h"
 
 enum TelemetryPacketId {
     TLM_ID_HS=1,
     TLM_ID_LEDDAR=2,
     TLM_DBGM_AUTOFIRE=3,
     TLM_ID_TRK=4,
+    TLM_ID_AF=5,
     TLM_ID_DRV=8,
     TLM_ID_SNS=10,
     TLM_ID_SYS=11,
@@ -64,4 +66,5 @@ bool sendTrackingTelemetry(int16_t detection_x,
                            int32_t rx,
                            int32_t ry,
                            int32_t best_distance);
+bool sendAutofireTelemetry(enum AutofireState st);
 #endif //TELEM_H

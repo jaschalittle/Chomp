@@ -218,6 +218,14 @@ TELEMETRY CHOMP TRK LITTLE_ENDIAN "Tracking"
     APPEND_ITEM RY 32 INT "residual y"
     APPEND_ITEM BESTD 32 INT "best distance"
 
+TELEMETRY CHOMP AUTOF LITTLE_ENDIAN "Autofire"
+    APPEND_ID_ITEM PKTID 8 UINT 5 "Packet ID which must be 5"
+    APPEND_ITEM STATE 8 INT "State"
+        STATE NO_TARGET  0
+        STATE WZ_LOCKOUT 1
+        STATE NO_HIT     2
+        STATE HIT        3
+
 COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
     APPEND_ID_PARAMETER CMDID 8 UINT 10 10 10 "Command ID which must be 10"
     APPEND_PARAMETER SPERIOD 32 UINT 10000 30000000 50000 "Interval between small telemetry transmissions"
