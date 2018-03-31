@@ -251,8 +251,13 @@ bool getTargetingEnable() {
     return TARGETING_ENABLE_pwm_val > 1700;
 }
 
+#define DRIVE_DISTANCE_PWM_MIN 1000
+static int16_t max_drive_range=2000;
+static int16_t min_drive_range=500;
+static int16_t drive_range_scale=2;
 int16_t getDriveDistance() {
-    return clip((DRIVE_DISTANCE_pwm_val - 1000)*2, 0, 2000) + 200;
+    return clip((DRIVE_DISTANCE_pwm_val - DRIVE_DISTANCE_PWM_MIN)*drive_range_scale,
+                0, max_drive_range) + min_drive_range;
 }
 
 #define WEAPONS_ENABLE_THRESHOLD 1450
