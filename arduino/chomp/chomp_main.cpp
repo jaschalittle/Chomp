@@ -15,6 +15,7 @@
 #include "imu.h"
 #include "selfright.h"
 #include "autodrive.h"
+#include "autofire.h"
 
 uint32_t start_time, loop_speed_min, loop_speed_avg, loop_speed_max, loop_count;
 void reset_loop_stats(void) {
@@ -55,7 +56,6 @@ static uint32_t last_leddar_telem_time = micros();
 static uint32_t last_sensor_time = micros();
 static int16_t steer_bias = 0; // positive turns right, negative turns left
 static int16_t drive_bias = 0;
-static bool targeting_enabled = false;
 static bool new_autodrive = false;
 
 extern uint16_t leddar_overrun;
@@ -77,6 +77,13 @@ void chompLoop() {
         last_sensor_time = micros();
     }
 
+    // check for data from weapons radio
+    bool radio_working = processSbusData();
+    if (radio_working) {
+        wdt_reset();
+    }
+    uint16_t current_rc_bitfield = getRcBitfield();
+
     // If there has been no data from the LEDDAR for a while, ask again
     if (micros() - last_request_time > leddar_max_request_period){
         last_request_time = micros();
@@ -86,6 +93,8 @@ void chompLoop() {
     int16_t drive_range = getDriveDistance();
     int16_t hammer_intensity = getHammerIntensity();
     int16_t hammer_distance = getRange();
+    bool targeting_enabled = getTargetingEnable();
+    bool should_autofire = false;
     // Check if data is available from the LEDDAR
     if (bufferDetections()){
 
@@ -102,12 +111,16 @@ void chompLoop() {
 
         trackObject(*minDetections, tracked_object);
 
-        // get targeting RC command. reset targeting if RC state changes.
-        targeting_enabled = getTargetingEnable();
 
         // auto centering code
         new_autodrive = pidSteer(tracked_object, 
                                  drive_range, &drive_bias, &steer_bias);
+
+
+        should_autofire = willHit(tracked_object, hammer_distance, hammer_intensity);
+        if(should_autofire && (current_rc_bitfield & AUTO_HAMMER_ENABLE_BIT)) {
+            fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, true);
+        }
 
         // Send subsampled leddar telem
         if (micros() - last_leddar_telem_time > leddar_telemetry_interval){
@@ -118,59 +131,53 @@ void chompLoop() {
         }
     }
 
-    // check for data from weapons radio
-    bool radio_working = processSbusData();
-    uint16_t current_rc_bitfield = getRcBitfield();
-    if (radio_working) {
-        wdt_reset();
-        // React to RC state changes (change since last time this call was made)
-        int16_t diff = getRcBitfieldChanges();
-        if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
-            flameSafe();
+    // React to RC state changes (change since last time this call was made)
+    int16_t diff = getRcBitfieldChanges();
+    if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
+        flameSafe();
+    }
+    if( (diff & FLAME_PULSE_BIT) && (current_rc_bitfield & FLAME_PULSE_BIT) ){
+        flameEnable();
+    }
+    // Flame on -> off
+    if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
+        flameEnd();
+    }
+    // Flame off -> on
+    if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
+        flameEnable();
+        flameStart();
+    }
+    // Manual hammer fire
+    if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
+        if (current_rc_bitfield & DANGER_CTRL_BIT){
+          noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
+        } else {
+          fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/);
         }
-        if( (diff & FLAME_PULSE_BIT) && (current_rc_bitfield & FLAME_PULSE_BIT) ){
-            flameEnable();
-        }
-        // Flame on -> off
-        if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
-            flameEnd();
-        }
-        // Flame off -> on
-        if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
-            flameEnable();
-            flameStart();
-        }
-        // Manual hammer fire
-        if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-            if (current_rc_bitfield & DANGER_CTRL_BIT){
-              noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
-            } else {
-              fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/);
-            }
-        }
-        if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
-          if (current_rc_bitfield & DANGER_CTRL_BIT){
-            gentleRetract(HAMMER_RETRACT_BIT);
-          } else {
-            retract();
-          }
-        }
-        if( (current_rc_bitfield & GENTLE_HAM_F_BIT)) {
-            gentleFire(GENTLE_HAM_F_BIT);
-        }
-        if( (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
-            gentleRetract(GENTLE_HAM_R_BIT);
-        }
-        if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
-            selfRightLeft();
-        }
-        if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
-            selfRightRight();
-        }
-        if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
-           !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
-            selfRightOff();
-        }
+    }
+    if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
+      if (current_rc_bitfield & DANGER_CTRL_BIT){
+        gentleRetract(HAMMER_RETRACT_BIT);
+      } else {
+        retract();
+      }
+    }
+    if( (current_rc_bitfield & GENTLE_HAM_F_BIT)) {
+        gentleFire(GENTLE_HAM_F_BIT);
+    }
+    if( (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
+        gentleRetract(GENTLE_HAM_R_BIT);
+    }
+    if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
+        selfRightLeft();
+    }
+    if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
+        selfRightRight();
+    }
+    if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
+       !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
+        selfRightOff();
     }
 
     // always sent in telemetry, cache values here
@@ -180,7 +187,7 @@ void chompLoop() {
     bool new_rc = newRc();
     // check for autodrive
     if(new_autodrive || new_rc) {
-        if(getTargetingEnable()) {
+        if(targeting_enabled) {
             left_drive_value += steer_bias - drive_bias;
             right_drive_value += steer_bias + drive_bias;
             // values passed by reference to capture clamping
@@ -201,6 +208,7 @@ void chompLoop() {
     // send telemetry
     uint32_t now = micros();
     if (now - last_telem_time > telemetry_interval){
+        // get targeting RC command.
         sendSensorTelem(getPressure(), getAngle());
         sendSystemTelem(loop_speed_min, loop_speed_avg/loop_count,
                         loop_speed_max, loop_count,

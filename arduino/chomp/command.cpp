@@ -50,6 +50,7 @@ typedef CommandPacket<CMD_ID_OBJSEG, ObjectSegmentationInner> ObjectSegmentation
 struct AutoFireInner {
     int16_t xtol;
     int16_t ytol;
+    int16_t ttol;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_AF, AutoFireInner> AutoFireCommand;
 
@@ -142,7 +143,8 @@ void handle_commands(void) {
           case CMD_ID_AF:
               af_cmd = (AutoFireCommand *)command_buffer;
               setAutoFireParams(af_cmd->inner.xtol,
-                                af_cmd->inner.ytol);
+                                af_cmd->inner.ytol,
+                                af_cmd->inner.ttol);
               valid_command++;
               break;
           case CMD_ID_ADRV:

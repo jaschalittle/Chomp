@@ -1,9 +1,11 @@
 #include <Arduino.h>
 #include "autofire.h"
+#include "imu.h"
 
-static int32_t xtol = 200, ytol=200;
+static int32_t xtol = 200, ytol=200, ttol=5;
+static int32_t max_omegaZ = 50;
 
-bool timeToHit(const Track &tracked_object,
+static bool timeToHit(const Track &tracked_object,
                int32_t *dt, int16_t depth, int16_t omegaZ)
 {
     if(tracked_object.valid(micros())) {
@@ -47,10 +49,36 @@ bool timeToHit(const Track &tracked_object,
     return false;
 }
 
+int32_t swingDuration(int16_t hammer_intensity) {
+    int32_t x=(40l-hammer_intensity);
+    return 230 + x*x*x*3/1024;
+}
+
+bool omegaZLockout(int16_t *omegaZ) {
+    *omegaZ = 0;
+    bool imu_valid = getOmegaZ(omegaZ);
+    return imu_valid && *omegaZ>max_omegaZ;
+}
+
+bool willHit(const Track &tracked_object,
+             int16_t depth, int16_t hammer_intensity) {
+    int32_t dt;
+    int16_t omegaZ=0;
+    if(omegaZLockout(&omegaZ)) {
+        return false;
+    }
+    if(timeToHit(tracked_object, &dt, depth, omegaZ)) {
+        return (abs(swingDuration(hammer_intensity) - dt)<ttol);
+    }
+    return false;
+}
+
 void setAutoFireParams(int16_t p_xtol,
-                       int16_t p_ytol){
+                       int16_t p_ytol,
+                       int16_t p_ttol){
     xtol = p_xtol;
     ytol = p_ytol;
+    ttol = p_ttol;
 }
 
 
