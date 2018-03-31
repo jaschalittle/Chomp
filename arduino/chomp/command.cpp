@@ -3,6 +3,7 @@
 #include "telem.h"
 #include "targeting.h"
 #include "autodrive.h"
+#include "autofire.h"
 
 #define MAXIMUM_COMMAND_LENGTH 64
 enum Commands {
@@ -140,8 +141,8 @@ void handle_commands(void) {
               break;
           case CMD_ID_AF:
               af_cmd = (AutoFireCommand *)command_buffer;
-              tracked_object.setAutoFireParams(af_cmd->inner.xtol,
-                                               af_cmd->inner.ytol);
+              setAutoFireParams(af_cmd->inner.xtol,
+                                af_cmd->inner.ytol);
               valid_command++;
               break;
           case CMD_ID_ADRV:

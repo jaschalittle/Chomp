@@ -345,10 +345,10 @@ uint16_t getHammerIntensity(){
   return intensity;
 }
 
-// 30-90, 60 cm neutral
+// 300-908, 600 mm neutral
 uint16_t getRange() {
   uint16_t channel_val = sbusChannels[RANGE];
   if (channel_val < 172) { channel_val = 172; } else if (channel_val > 1811) { channel_val = 1811; }
-  uint16_t range = (channel_val - 172) / 27 + 30;
+  uint16_t range = (channel_val - 172) * 15 / 28 + 30;
   return range;
 }

@@ -29,16 +29,12 @@ struct Track
     int16_t updateOmegaZ(int32_t dt, int16_t omegaZ);
     void updateNoObs(uint32_t inter_leddar_time, int16_t omegaZ);
     bool wants_update(uint32_t now, int32_t best_distance);
-    bool timeToHit(int32_t *dt, int16_t depth, int16_t omegaZ) const;
     int16_t angle(void) const;
     void setTrackingFilterParams(int16_t alpha, int16_t beta,
                              int8_t p_min_num_updates,
                              uint32_t p_track_lost_dt,
                              int16_t p_max_off_track,
                              int16_t p_max_start_distance);
-
-    void setAutoFireParams(int16_t p_xtol,
-                           int16_t p_ytol);
 };
 
 
