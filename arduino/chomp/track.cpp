@@ -16,7 +16,7 @@ Track::Track() :
         max_start_distance(6000L*6000L)
         { }
 
-bool Track::valid(uint32_t now) const {
+bool Track::recent_update(uint32_t now) const {
     uint32_t dt = (now - last_update);
     return dt<track_lost_dt;
 }
@@ -71,7 +71,7 @@ void Track::update(const Object& best_match, int16_t omegaZ) {
     //int32_t mr = best_match.radius();
     int32_t mx = best_match.xcoord();
     int32_t my = best_match.ycoord();
-    if(!valid(best_match.Time)) {
+    if(!recent_update(best_match.Time)) {
         x = mx*16;
         y = my*16;
         vx = 0;
@@ -102,19 +102,22 @@ void Track::update(const Object& best_match, int16_t omegaZ) {
 }
 
 void Track::updateNoObs(uint32_t time, int16_t omegaZ) {
-    if(valid(time)) {
+    if(recent_update(time)) {
         predict(time, omegaZ);
     }
 }
 
 bool Track::wants_update(uint32_t now, int32_t best_distance) {
-    return (( valid(now) && best_distance < max_off_track) ||
-            (!valid(now) && best_distance < max_start_distance));
+    return (( recent_update(now) && best_distance < max_off_track) ||
+            (!recent_update(now) && best_distance < max_start_distance));
 }
 
+bool Track::valid(uint32_t now) const {
+    return recent_update(micros()) && (num_updates>min_num_updates);
+}
 
 int16_t Track::angle(void) const {
-    if(valid(micros()) && num_updates>min_num_updates) {
+    if(valid(micros())) {
         return (y/x - (((((y*y)/x)*y)/x)/x)/3L)*2048L;
     } else {
         return 0;

@@ -130,7 +130,7 @@ static int8_t selectObject(const Object (&objects)[8], uint8_t num_objects,
     int8_t best_match = 0;
     int32_t best_distance;
     uint32_t now = objects[best_match].Time;
-    if(tracked_object.valid(now)) {
+    if(tracked_object.recent_update(now)) {
         best_distance = tracked_object.distanceSq(objects[best_match]);
     } else {
         best_distance = objects[best_match].radius();

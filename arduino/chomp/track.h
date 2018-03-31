@@ -24,6 +24,7 @@ struct Track
     int32_t predict(uint32_t now, int16_t omegaZ);
     void update(const Object& best_match, int16_t omegaZ);
     int32_t distanceSq(const Object& obj) const;
+    bool recent_update(uint32_t now) const;
     bool valid(uint32_t now) const;
     int16_t updateOmegaZ(int32_t dt, int16_t omegaZ);
     void updateNoObs(uint32_t inter_leddar_time, int16_t omegaZ);
