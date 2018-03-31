@@ -2,8 +2,21 @@
 #include "Arduino.h"
 #include "rc.h"
 #include "pins.h"
+#include "weapons.h"
+#include "utils.h"
 #include <avr/interrupt.h>
 #include <util/atomic.h>
+
+enum RCinterrupts {
+    DRIVE_DISTANCE = digitalPinToInterrupt(DRIVE_DISTANCE_PIN),
+    TARGETING_ENABLE = digitalPinToInterrupt(TARGETING_ENABLE_PIN),
+};
+
+
+static uint16_t computeRCBitfield();
+static void attachRCInterrupts();
+static bool bufferSbusData();
+static bool parseSbus();
 
 // values for converting Futaba 7C RC PWM to Roboteq drive control (-1000 to 1000)
 // CH1 LEFT 1116-1932 1522 neutral CH2 RIGHT 1100-1920 1512 neutral
@@ -25,18 +38,6 @@
 #define RIGHT_DEADBAND_MIN 1475
 #define RIGHT_DEADBAND_MAX 1525
 
-// values for converting Futaba 9C RC PWM to Roboteq drive control (-1000 to 1000)
-// CH1 922-2120 1522 neutral CH2 909-2106 1503 neutral
-// #define LEFT_PWM_NEUTRAL 1506
-// #define LEFT_PWM_RANGE 598
-// #define RIGHT_PWM_NEUTRAL 1530
-// #define RIGHT_PWM_RANGE 598
-// // deadband is 60 wide, 5%
-// #define LEFT_DEADBAND_MIN 1476
-// #define LEFT_DEADBAND_MAX 1536
-// #define RIGHT_DEADBAND_MIN 1500
-// #define RIGHT_DEADBAND_MAX 1560
-
 extern HardwareSerial& Sbus;
 
 // initialize PWM vals to neutral values
@@ -46,9 +47,17 @@ static volatile uint16_t RIGHT_RC_pwm_val = 1500;
 static volatile uint32_t RIGHT_RC_prev_time = 0;
 static volatile uint16_t TARGETING_ENABLE_pwm_val = 1500;
 static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
+static volatile int DRIVE_DISTANCE_pwm_val = 1500;
+static volatile int DRIVE_DISTANCE_prev_time = 0;
+
+static uint32_t last_parse_time = 0;
+static uint32_t radio_lost_timeout = 10000;
 
 static volatile uint8_t PBLAST = 0; // 0 so that we detect rising interrupts first.
 static volatile bool NEW_RC = false;
+
+static uint16_t bitfield;
+static uint16_t last_bitfield;
 
 ISR(PCINT0_vect) {
     uint8_t PBNOW = PINB ^ PBLAST;
@@ -75,9 +84,8 @@ ISR(PCINT0_vect) {
     }
 }
 
-void TARGETING_ENABLE_falling(); // forward decl
-
-void TARGETING_ENABLE_rising() {
+static void TARGETING_ENABLE_falling(); // forward decl
+static void TARGETING_ENABLE_rising() {
     attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_falling, FALLING);
     TARGETING_ENABLE_prev_time = micros();
 }
@@ -87,8 +95,25 @@ void TARGETING_ENABLE_falling() {
     NEW_RC = true;
 }
 
+static void DRIVE_DISTANCE_Falling();
+static void DRIVE_DISTANCE_Rising(){
+    attachInterrupt(WEAPONS_ENABLE, DRIVE_DISTANCE_Falling, FALLING );
+    DRIVE_DISTANCE_prev_time = micros();
+}
+static void DRIVE_DISTANCE_Falling(){
+    attachInterrupt(WEAPONS_ENABLE, DRIVE_DISTANCE_Rising, RISING);
+    DRIVE_DISTANCE_pwm_val = micros() - DRIVE_DISTANCE_prev_time;
+}
+
+void rcInit() {
+    Sbus.begin(100000);
+    attachRCInterrupts();
+    attachInterrupt(DRIVE_DISTANCE, DRIVE_DISTANCE_Rising, RISING);
+    last_parse_time = micros();
+}
+
 // Set up all RC interrupts
-void attachRCInterrupts(){
+static void attachRCInterrupts(){
     pinMode(LEFT_RC_PIN, INPUT_PULLUP);
     pinMode(RIGHT_RC_PIN, INPUT_PULLUP);
     pinMode(TARGETING_ENABLE_PIN, INPUT_PULLUP);
@@ -111,11 +136,42 @@ bool newRc() {
     }
 }
 
+static void setWeaponsEnabled(bool state)
+{
+    if(state) {
+        if (!g_enabled) {
+            g_enabled = true;
+            enableState();
+        }
+    } else {
+        safeState();
+        g_enabled = false;
+    }
+}
+
+bool processSbusData(void) {
+    bool ready = bufferSbusData();
+    bool fail = false;
+    if(ready) {
+        fail = parseSbus();
+        last_parse_time = micros();
+        if(!fail) {
+            computeRCBitfield();
+        }
+    }
+    bool timeout = (micros() - last_parse_time) > radio_lost_timeout;
+    bool radio_working = !(fail || timeout);
+    if(!radio_working) {
+        setWeaponsEnabled(false);
+    }
+    return radio_working;
+}
+
 uint16_t sbus_overrun = 0;
 static uint8_t sbusData[25] = {0};
 uint32_t last_sbus_time = 0;
 uint8_t sbus_idx = 0;
-bool bufferSbusData() {
+static bool bufferSbusData() {
   // returns number of bytes available for reading from serial receive buffer, which is 64 bytes
   if(Sbus.available()>25) {
     while(Sbus.available()) {
@@ -148,7 +204,7 @@ bool bufferSbusData() {
 }
 
 static uint16_t sbusChannels [17];  // could initialize this with failsafe values for extra safety
-bool parseSbus(){
+static bool parseSbus(){
     bool failsafe = true;
     if (sbusData[0] == 0x0F && sbusData[24] == 0x00) {
         // perverse little endian-ish packet structure-- low bits come in first byte, remaining high bits
@@ -195,6 +251,11 @@ bool getTargetingEnable() {
     return TARGETING_ENABLE_pwm_val > 1700;
 }
 
+int16_t getDriveDistance() {
+    return clip((DRIVE_DISTANCE_pwm_val - 1000)*2, 0, 2000) + 200;
+}
+
+#define WEAPONS_ENABLE_THRESHOLD 1450
 #define AUTO_HAMMER_THRESHOLD 1000 // (190 down - 1800 up)
 #define HAMMER_FIRE_THRESHOLD 1500 // 900 neutral, 170 to 1800
 #define HAMMER_RETRACT_THRESHOLD 500
@@ -213,7 +274,23 @@ bool getTargetingEnable() {
 #define DANGER_MODE_THRESHOLD 1500
 
 uint16_t getRcBitfield() {
-  uint16_t bitfield = 0;
+    return bitfield;
+}
+
+uint16_t getRcBitfieldChanges() {
+    uint16_t changes = bitfield ^ last_bitfield;
+    last_bitfield = bitfield;
+    return changes;
+}
+
+static uint16_t computeRCBitfield() {
+  bitfield = 0;
+
+  if(sbusChannels[WEAPONS_ENABLE] > WEAPONS_ENABLE_THRESHOLD) {
+    bitfield |= WEAPONS_ENABLE_BIT;
+  }
+  setWeaponsEnabled(bitfield&WEAPONS_ENABLE_BIT);
+
   if ( sbusChannels[AUTO_HAMMER_ENABLE] > AUTO_HAMMER_THRESHOLD){
     bitfield |= AUTO_HAMMER_ENABLE_BIT;
   }

@@ -41,4 +41,8 @@ String startElectricHammerMove(int16_t speed);
 
 void stopElectricHammerMove(void);
 
+void enableState();
+
+void safeState();
+
 #endif // WEAPONS_H

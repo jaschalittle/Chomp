@@ -5,6 +5,7 @@
 #include "pins.h"
 #include "utils.h"
 #include "telem.h"
+#include "selfright.h"
 #include <avr/wdt.h>
 
 extern HardwareSerial& DriveSerial;
@@ -259,21 +260,19 @@ static void electricHammerMove(RCBitfield control, int16_t speed){
     String movecmd = startElectricHammerMove(speed);
     uint32_t inter_sbus_time = micros();
     while ((micros() - inter_sbus_time) < 30000UL) {
-        if (bufferSbusData()){
-            bool error = parseSbus();
-            if (!error) {
-                wdt_reset();
-                uint16_t current_rc_bitfield = getRcBitfield();
-                if (!(current_rc_bitfield & control)){
-                    break;
-                }
-                delay(5);
-                DriveSerial.println(movecmd);
-                inter_sbus_time = micros();
-            // continue retracting
-            } else {
+        bool radio_working = processSbusData();
+        if (radio_working) {
+            wdt_reset();
+            uint16_t current_rc_bitfield = getRcBitfield();
+            if (!(current_rc_bitfield & control)){
                 break;
             }
+            delay(5);
+            DriveSerial.println(movecmd);
+            inter_sbus_time = micros();
+            // continue retracting
+        } else {
+            break;
         }
     }
     stopElectricHammerMove();
@@ -324,4 +323,15 @@ void flameEnable(){
     // Assumes safe() has already been called beforehand, to set pin modes.
     safeDigitalWrite(IGNITER_DO, HIGH);
 }
+
+void safeState(){
+    valveSafe();
+    flameSafe();
+    selfRightSafe();
+}
+
+void enableState(){
+   valveEnable();
+}
+
 

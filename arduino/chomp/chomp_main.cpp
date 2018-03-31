@@ -15,43 +15,6 @@
 #include "imu.h"
 #include "selfright.h"
 
-// SAFETY CODE ----------------------------------------------------
-void safeState(){
-    valveSafe();
-    flameSafe();
-    selfRightSafe();
-}
-
-void enableState(){
-   valveEnable();
-}
-
-static volatile int WEAPONS_ENABLE_pwm_val = 500; // disabled
-static volatile int WEAPONS_ENABLE_prev_time = 0;
-#define WEAPONS_ENABLE_THRESHOLD 1500
-void weaponsEnableFalling();
-void weaponsEnableRising(){
-    attachInterrupt(WEAPONS_ENABLE, weaponsEnableFalling, FALLING );
-    WEAPONS_ENABLE_prev_time = micros();
-}
-
-void weaponsEnableFalling(){
-    attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
-    WEAPONS_ENABLE_pwm_val = micros() - WEAPONS_ENABLE_prev_time;
-    if ( WEAPONS_ENABLE_pwm_val < WEAPONS_ENABLE_THRESHOLD){
-        safeState();
-        g_enabled = false;
-    } else {
-        if (!g_enabled) {
-            g_enabled = true;
-            enableState();
-        }  
-    }
-}
-// -----------------------------------------------------------------
-
-extern HardwareSerial& Sbus;
-
 uint32_t start_time, loop_speed_min, loop_speed_avg, loop_speed_max, loop_count;
 void reset_loop_stats(void) {
     loop_count = loop_speed_max = loop_speed_avg = 0;
@@ -72,29 +35,24 @@ void update_loop_stats() {
 void chompSetup() {
     // Come up safely
     safeState();
-    attachInterrupt(WEAPONS_ENABLE, weaponsEnableRising, RISING);
     wdt_enable(WDTO_4S);
     xbeeInit();
-    Sbus.begin(100000);
+    rcInit();
     driveSetup();
     leddarWrapperInit();
     sensorSetup();
-    attachRCInterrupts();
     initializeIMU();
     reset_loop_stats();
     debug_print("STARTUP");
     start_time = micros();
 }
 
-static uint16_t current_rc_bitfield = 0, previous_rc_bitfield = 0;
 static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
 static uint32_t last_telem_time = micros();
 static uint32_t last_drive_telem_time = micros();
 static uint32_t last_leddar_telem_time = micros();
 static uint32_t last_sensor_time = micros();
-static int16_t left_drive_value = 0;
-static int16_t right_drive_value = 0;
 static int16_t steer_bias = 0; // positive turns right, negative turns left
 static bool targeting_enabled = false;
 static bool new_autodrive = false;
@@ -121,6 +79,7 @@ void chompLoop() {
         requestDetections();
     }
 
+    int16_t drive_range = getDriveDistance();
     // Check if data is available from the LEDDAR
     if (bufferDetections()){
 
@@ -154,67 +113,64 @@ void chompLoop() {
     }
 
     // check for data from weapons radio
-    if (bufferSbusData()){
-        bool in_failsafe_state = parseSbus();
-        if (!in_failsafe_state) {
-            wdt_reset();
-            // React to RC state changes
-            current_rc_bitfield = getRcBitfield();
-            uint16_t diff = previous_rc_bitfield ^ current_rc_bitfield;
-            hammer_intensity = getHammerIntensity();
-            if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
-                flameSafe();
+    bool radio_working = processSbusData();
+    uint16_t current_rc_bitfield = getRcBitfield();
+    if (radio_working) {
+        wdt_reset();
+        // React to RC state changes
+        int16_t diff = getRcBitfieldChanges();
+        hammer_intensity = getHammerIntensity();
+        if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
+            flameSafe();
+        }
+        if( (diff & FLAME_PULSE_BIT) && (current_rc_bitfield & FLAME_PULSE_BIT) ){
+            flameEnable();
+        }
+        // Flame on -> off
+        if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
+            flameEnd();
+        }
+        // Flame off -> on
+        if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
+            flameEnable();
+            flameStart();
+        }
+        // Manual hammer fire
+        if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
+            if (current_rc_bitfield & DANGER_CTRL_BIT){
+              noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
+            } else {
+              fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/);
             }
-            if( (diff & FLAME_PULSE_BIT) && (current_rc_bitfield & FLAME_PULSE_BIT) ){
-                flameEnable();
-            }
-            // Flame on -> off
-            if( (diff & FLAME_CTRL_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
-                flameEnd();
-            }
-            // Flame off -> on
-            if( (diff & FLAME_CTRL_BIT) && (current_rc_bitfield & FLAME_CTRL_BIT) ){
-                flameEnable();
-                flameStart();
-            }
-            // Manual hammer fire
-            if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
-                if (current_rc_bitfield & DANGER_CTRL_BIT){
-                  noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
-                } else {
-                  fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/);
-                }
-            }
-            if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
-              if (current_rc_bitfield & DANGER_CTRL_BIT){
-                gentleRetract(HAMMER_RETRACT_BIT);
-              } else {
-                retract();
-              }
-            }
-            if( (current_rc_bitfield & GENTLE_HAM_F_BIT)) {
-                gentleFire(GENTLE_HAM_F_BIT);
-            }
-            if( (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
-                gentleRetract(GENTLE_HAM_R_BIT);
-            }
-            if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
-                selfRightLeft();
-            }
-            if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
-                selfRightRight();
-            }
-            if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
-               !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
-                selfRightOff();
-            }
-            previous_rc_bitfield = current_rc_bitfield;
+        }
+        if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
+          if (current_rc_bitfield & DANGER_CTRL_BIT){
+            gentleRetract(HAMMER_RETRACT_BIT);
+          } else {
+            retract();
+          }
+        }
+        if( (current_rc_bitfield & GENTLE_HAM_F_BIT)) {
+            gentleFire(GENTLE_HAM_F_BIT);
+        }
+        if( (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
+            gentleRetract(GENTLE_HAM_R_BIT);
+        }
+        if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
+            selfRightLeft();
+        }
+        if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
+            selfRightRight();
+        }
+        if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
+           !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
+            selfRightOff();
         }
     }
 
     // always sent in telemetry, cache values here
-    left_drive_value = getLeftRc();
-    right_drive_value = getRightRc();
+    int16_t left_drive_value = getLeftRc();
+    int16_t right_drive_value = getRightRc();
     // newRc is destructive, make sure to only call it once
     bool new_rc = newRc();
     // check for autodrive
@@ -254,7 +210,8 @@ void chompLoop() {
                         invalid_command);
         reset_loop_stats();
         sendSbusTelem(current_rc_bitfield);
-        sendPWMTelem(targeting_enabled, left_drive_value, right_drive_value);
+        sendPWMTelem(targeting_enabled, left_drive_value, right_drive_value,
+                     drive_range);
         telemetryIMU();
         telemetrySelfRight();
         last_telem_time = micros();

@@ -48,7 +48,7 @@ bool sendSwingTelem(uint16_t datapoints_collected,
                     uint16_t vent_open_timestep,
                     uint16_t throw_close_angle,
                     uint16_t start_angle);
-bool sendPWMTelem(bool targeting_enable, int16_t left_drive, int16_t right_drive);
+bool sendPWMTelem(bool targeting_enable, int16_t left_drive, int16_t right_drive, int16_t drive_distance);
 bool sendIMUTelem(int16_t (&a)[3], int16_t (&g)[3], int16_t temperature);
 bool sendORNTelem(bool stationary, uint8_t orientation, int32_t best_accum, int32_t sum_angular_rate);
 bool sendDMPTelem(size_t fifoCount, uint8_t intStatus, float w, float x, float y, float z);

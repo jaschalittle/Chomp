@@ -8,4 +8,8 @@ void safeDigitalWrite( uint32_t ulPin, uint32_t ulVal){
   }
 }
 
-
+int16_t clip(int16_t x, int16_t min, int16_t max) {
+    if(x<min) return min;
+    if(x>max) return max;
+    return x;
+}

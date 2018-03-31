@@ -15,7 +15,7 @@
 // 2 (int.0), 3 (int.1), 18 (int.5), 19 (int.4), 20 (int.3), 21 (int.2)
 // We currently use 2 and 3 for these high-pri PWM inputs and leave the
 // rest for other purposes
-#define WEAPONS_ENABLE_PIN 2       // Weapons radio
+#define DRIVE_DISTANCE_PIN 2       // Drive radio ch6
 #define TARGETING_ENABLE_PIN 3     // Drive radio ch5
 
 #define ENABLE_VALVE_DO 4
