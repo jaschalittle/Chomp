@@ -226,14 +226,15 @@ COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
     APPEND_PARAMETER EN_DBGM_AUTOFIRE 1 UINT 0 1 0 "Enable Autofire debug messages"
     APPEND_PARAMETER EN_LEDDAR 1 UINT 0 1 0 "Enable LEDDAR telemetry packet"
     APPEND_PARAMETER EN_HS 1 UINT 0 1 0 "Enable HS telemetry packet"
-    APPEND_PARAMETER EN_DRV 1 UINT 0 1 1 "Enable drive control telemetry"
+    APPEND_PARAMETER PAD00 1 UINT 0 0 0
     APPEND_PARAMETER EN_LEDDARV2 1 UINT 0 1 0 "Enable LEDDARV2 telemetry packet"
     APPEND_PARAMETER EN_SWG 1 UINT 0 1 0 "Enable SWG telemetry packet"
     APPEND_PARAMETER EN_DBGM 1 UINT 0 1 1 "Enable DBGM telemetry packet"
     APPEND_PARAMETER EN_SBS 1 UINT 0 1 1 "Enable SBS telemetry packet"
     APPEND_PARAMETER EN_SYS 1 UINT 0 1 1 "Enable SYS telemetry packet"
     APPEND_PARAMETER EN_SNS 1 UINT 0 1 0 "Enable SNS telemetry packet"
-    APPEND_PARAMETER PADDING11 2 UINT 0 0 0
+    APPEND_PARAMETER PADDING11  1 UINT 0 0 0
+    APPEND_PARAMETER EN_DRV 1 UINT 0 1 1 "Enable drive control telemetry"
     APPEND_PARAMETER PADDING27 3 UINT 0 0 0
     APPEND_PARAMETER EN_SRT 1 UINT 0 1 0 "Enable SRT telemetry packet"
     APPEND_PARAMETER EN_ORN 1 UINT 0 1 0 "Enable ORN telemetry packet"
