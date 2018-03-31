@@ -13,8 +13,6 @@ struct Track
     int16_t alpha, beta;  // position, velocity filter
     uint32_t track_lost_dt; // timeout for no observations
     uint32_t min_num_updates; // minimum number before trusted
-    int32_t xtol;     // hit tolerance
-    int32_t ytol;
     int32_t max_off_track; // squared distance in mm
     int32_t max_start_distance; // squared distance in mm
 

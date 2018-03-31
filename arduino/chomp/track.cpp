@@ -10,8 +10,6 @@ Track::Track() :
         alpha(10000), beta(16384),
         track_lost_dt(100000),
         min_num_updates(3),
-        xtol(200),
-        ytol(200),
         max_off_track(600L*600L),
         max_start_distance(6000L*6000L)
         { }
