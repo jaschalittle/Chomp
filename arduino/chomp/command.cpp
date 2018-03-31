@@ -56,8 +56,11 @@ typedef CommandPacket<CMD_ID_AF, AutoFireInner> AutoFireCommand;
 struct AutoDriveInner {
     int16_t steer_p;
     int16_t steer_d;
+    int16_t steer_max;
+    int16_t gyro_gain;
     int16_t drive_p;
     int16_t drive_d;
+    int16_t drive_max;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_ADRV, AutoDriveInner> AutoDriveCommand;
 
@@ -145,8 +148,11 @@ void handle_commands(void) {
               adrv_cmd = (AutoDriveCommand *)command_buffer;
               setDriveControlParams(adrv_cmd->inner.steer_p,
                                     adrv_cmd->inner.steer_d,
+                                    adrv_cmd->inner.steer_max,
+                                    adrv_cmd->inner.gyro_gain,
                                     adrv_cmd->inner.drive_p,
-                                    adrv_cmd->inner.drive_d);
+                                    adrv_cmd->inner.drive_d,
+                                    adrv_cmd->inner.drive_max);
               valid_command++;
               break;
           default:
