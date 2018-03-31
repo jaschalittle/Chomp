@@ -48,7 +48,6 @@ void chompSetup() {
     start_time = micros();
 }
 
-static uint16_t hammer_intensity = 0;
 static uint32_t last_request_time = micros();
 static uint32_t last_telem_time = micros();
 static uint32_t last_drive_telem_time = micros();
@@ -85,6 +84,8 @@ void chompLoop() {
     }
 
     int16_t drive_range = getDriveDistance();
+    int16_t hammer_intensity = getHammerIntensity();
+    int16_t hammer_distance = getRange();
     // Check if data is available from the LEDDAR
     if (bufferDetections()){
 
@@ -124,7 +125,6 @@ void chompLoop() {
         wdt_reset();
         // React to RC state changes (change since last time this call was made)
         int16_t diff = getRcBitfieldChanges();
-        hammer_intensity = getHammerIntensity();
         if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
             flameSafe();
         }
@@ -212,7 +212,7 @@ void chompLoop() {
                         invalid_command,
                         valid_command);
         reset_loop_stats();
-        sendSbusTelem(current_rc_bitfield);
+        sendSbusTelem(current_rc_bitfield, hammer_intensity, hammer_distance);
         sendPWMTelem(targeting_enabled, left_drive_value, right_drive_value,
                      drive_range);
         telemetryIMU();
@@ -223,8 +223,6 @@ void chompLoop() {
         driveTelem();
         last_drive_telem_time = now;
     }
-
-
 
 
     handle_commands();

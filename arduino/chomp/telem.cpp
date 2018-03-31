@@ -84,13 +84,17 @@ bool sendSensorTelem(int16_t pressure, uint16_t angle){
 
 struct SBusTelemetryInner {
     uint16_t bitfield;
+    int16_t hammer_intensity;
+    int16_t hammer_distance;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_SBS, SBusTelemetryInner> SBusTelemetry;
 
-bool sendSbusTelem(uint16_t cmd_bitfield){
+bool sendSbusTelem(uint16_t cmd_bitfield, int16_t hammer_intensity, int16_t hammer_distance) {
     CHECK_ENABLED(TLM_ID_SBS);
     SBusTelemetry tlm;
     tlm.inner.bitfield = cmd_bitfield;
+    tlm.inner.hammer_intensity = hammer_intensity;
+    tlm.inner.hammer_distance = hammer_distance;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 
