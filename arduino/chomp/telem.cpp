@@ -39,6 +39,7 @@ struct SystemTelemetryInner {
     uint8_t last_command;
     uint16_t command_overrun;
     uint16_t invalid_command;
+    uint16_t valid_command;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_SYS, SystemTelemetryInner> SystemTelemetry;
 
@@ -46,7 +47,8 @@ bool sendSystemTelem(uint32_t loop_speed_min, uint32_t loop_speed_avg,
                      uint32_t loop_speed_max, uint32_t loop_count,
                      uint16_t leddar_overrun, uint16_t leddar_crc_error,
                      uint16_t sbus_overrun, uint8_t last_command,
-                     uint16_t command_overrun, uint16_t invalid_command){
+                     uint16_t command_overrun, uint16_t invalid_command,
+                     uint16_t valid_command){
     CHECK_ENABLED(TLM_ID_SYS);
     SystemTelemetry tlm;
     tlm.inner.weapons_enabled = g_enabled;
@@ -60,6 +62,7 @@ bool sendSystemTelem(uint32_t loop_speed_min, uint32_t loop_speed_avg,
     tlm.inner.last_command = last_command;
     tlm.inner.command_overrun = command_overrun;
     tlm.inner.invalid_command = invalid_command;
+    tlm.inner.valid_command = valid_command;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 

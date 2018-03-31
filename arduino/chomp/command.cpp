@@ -78,6 +78,7 @@ static size_t command_length=0;
 static bool command_ready = false;
 uint16_t command_overrun = 0;
 uint16_t invalid_command = 0;
+uint16_t valid_command = 0;
 uint8_t last_command = 0;
 
 void serialEvent(void) {
@@ -115,6 +116,7 @@ void handle_commands(void) {
               drive_telem_interval = trate_cmd->inner.drive_telem_period;
               enabled_telemetry = trate_cmd->inner.enabled_messages;
               debug_print(String("enabled_telemetry=")+String(enabled_telemetry, 16));
+              valid_command++;
               break;
           case CMD_ID_TRKFLT:
               trkflt_cmd = (TrackingFilterCommand *)command_buffer;
@@ -124,6 +126,8 @@ void handle_commands(void) {
                                       trkflt_cmd->inner.track_lost_dt,
                                       trkflt_cmd->inner.max_off_track,
                                       trkflt_cmd->inner.max_start_distance);
+              valid_command++;
+              break;
           case CMD_ID_OBJSEG:
               objseg_cmd = (ObjectSegmentationCommand *)command_buffer;
               setObjectSegmentationParams(
@@ -135,6 +139,7 @@ void handle_commands(void) {
               af_cmd = (AutoFireCommand *)command_buffer;
               tracked_object.setAutoFireParams(af_cmd->inner.xtol,
                                                af_cmd->inner.ytol);
+              valid_command++;
               break;
           case CMD_ID_ADRV:
               adrv_cmd = (AutoDriveCommand *)command_buffer;
@@ -142,7 +147,8 @@ void handle_commands(void) {
                                     adrv_cmd->inner.steer_d,
                                     adrv_cmd->inner.drive_p,
                                     adrv_cmd->inner.drive_d);
-
+              valid_command++;
+              break;
           default:
               invalid_command++;
               break;

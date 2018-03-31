@@ -209,7 +209,8 @@ void chompLoop() {
                         sbus_overrun,
                         last_command,
                         command_overrun,
-                        invalid_command);
+                        invalid_command,
+                        valid_command);
         reset_loop_stats();
         sendSbusTelem(current_rc_bitfield);
         sendPWMTelem(targeting_enabled, left_drive_value, right_drive_value,
