@@ -2,17 +2,22 @@
 #include "DMASerial.h"
 #include "telem.h"
 #include "targeting.h"
+#include "autodrive.h"
 
 #define MAXIMUM_COMMAND_LENGTH 64
 enum Commands {
     CMD_ID_TRATE = 10,
-    CMD_ID_TRKFLT = 11
+    CMD_ID_TRKFLT = 11,
+    CMD_ID_OBJSEG = 12,
+    CMD_ID_AF = 13,
+    CMD_ID_ADRV = 14
 };
 
 extern uint32_t telemetry_interval;
 extern uint32_t leddar_telemetry_interval;
 extern uint32_t drive_telem_interval;
 extern uint32_t enabled_telemetry;
+extern Track tracked_object;
 
 const uint16_t CMD_TERMINATOR=0x6666;
 
@@ -33,22 +38,40 @@ struct TelemetryRateInner {
 typedef CommandPacket<CMD_ID_TRATE, TelemetryRateInner> TelemetryRateCommand;
 
 
-struct TrackingFilterInner {
-    int16_t alpha;
-    int16_t beta;
+struct ObjectSegmentationInner {
     int16_t min_object_size;
     int16_t max_object_size;
     int16_t edge_call_threshold;
+} __attribute__((packed));
+typedef CommandPacket<CMD_ID_OBJSEG, ObjectSegmentationInner> ObjectSegmentationCommand;
+
+
+struct AutoFireInner {
+    int16_t xtol;
+    int16_t ytol;
+} __attribute__((packed));
+typedef CommandPacket<CMD_ID_AF, AutoFireInner> AutoFireCommand;
+
+
+struct AutoDriveInner {
+    int16_t steer_p;
+    int16_t steer_d;
+    int16_t drive_p;
+    int16_t drive_d;
+} __attribute__((packed));
+typedef CommandPacket<CMD_ID_ADRV, AutoDriveInner> AutoDriveCommand;
+
+
+struct TrackingFilterInner {
+    int16_t alpha;
+    int16_t beta;
     int8_t min_num_updates;
     uint32_t track_lost_dt;
     int16_t max_off_track;
     int16_t max_start_distance;
-    int16_t xtol;
-    int16_t ytol;
-    int16_t steer_p;
-    int16_t drive_p;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_TRKFLT, TrackingFilterInner> TrackingFilterCommand;
+
 
 static uint8_t command_buffer[MAXIMUM_COMMAND_LENGTH];
 static size_t command_length=0;
@@ -79,6 +102,9 @@ void serialEvent(void) {
 void handle_commands(void) {
   TelemetryRateCommand *trate_cmd;
   TrackingFilterCommand *trkflt_cmd;
+  ObjectSegmentationCommand *objseg_cmd;
+  AutoFireCommand *af_cmd;
+  AutoDriveCommand *adrv_cmd;
   if(command_ready) {
       last_command = command_buffer[0];
       switch(last_command) {
@@ -92,20 +118,31 @@ void handle_commands(void) {
               break;
           case CMD_ID_TRKFLT:
               trkflt_cmd = (TrackingFilterCommand *)command_buffer;
-              setTrackingFilterParams(trkflt_cmd->inner.alpha,
+              tracked_object.setTrackingFilterParams(trkflt_cmd->inner.alpha,
                                       trkflt_cmd->inner.beta,
-                                      trkflt_cmd->inner.min_object_size,
-                                      trkflt_cmd->inner.max_object_size,
-                                      trkflt_cmd->inner.edge_call_threshold,
                                       trkflt_cmd->inner.min_num_updates,
                                       trkflt_cmd->inner.track_lost_dt,
                                       trkflt_cmd->inner.max_off_track,
-                                      trkflt_cmd->inner.max_start_distance,
-                                      trkflt_cmd->inner.xtol,
-                                      trkflt_cmd->inner.ytol,
-                                      trkflt_cmd->inner.steer_p,
-                                      trkflt_cmd->inner.drive_p);
+                                      trkflt_cmd->inner.max_start_distance);
+          case CMD_ID_OBJSEG:
+              objseg_cmd = (ObjectSegmentationCommand *)command_buffer;
+              setObjectSegmentationParams(
+                                      objseg_cmd->inner.min_object_size,
+                                      objseg_cmd->inner.max_object_size,
+                                      objseg_cmd->inner.edge_call_threshold);
               break;
+          case CMD_ID_AF:
+              af_cmd = (AutoFireCommand *)command_buffer;
+              tracked_object.setAutoFireParams(af_cmd->inner.xtol,
+                                               af_cmd->inner.ytol);
+              break;
+          case CMD_ID_ADRV:
+              adrv_cmd = (AutoDriveCommand *)command_buffer;
+              setDriveControlParams(adrv_cmd->inner.steer_p,
+                                    adrv_cmd->inner.steer_d,
+                                    adrv_cmd->inner.drive_p,
+                                    adrv_cmd->inner.drive_d);
+
           default:
               invalid_command++;
               break;

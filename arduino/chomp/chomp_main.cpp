@@ -14,6 +14,7 @@
 #include "command.h"
 #include "imu.h"
 #include "selfright.h"
+#include "autodrive.h"
 
 uint32_t start_time, loop_speed_min, loop_speed_avg, loop_speed_max, loop_count;
 void reset_loop_stats(void) {
@@ -68,6 +69,9 @@ uint32_t sensor_period=5000L;
 uint32_t drive_telem_interval=20000L;
 uint32_t leddar_max_request_period=100000L;
 
+// parameters written in command
+Track tracked_object;
+
 void chompLoop() {
     if(micros() - last_sensor_time>sensor_period) {
         readSensors();
@@ -95,13 +99,14 @@ void chompLoop() {
         const Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
         getMinimumDetections(&minDetections);
 
-        trackObject(*minDetections);
+        trackObject(*minDetections, tracked_object);
 
         // get targeting RC command. reset targeting if RC state changes.
         targeting_enabled = getTargetingEnable();
 
         // auto centering code
-        new_autodrive = pidSteer(drive_range, &steer_bias, &drive_bias);
+        new_autodrive = pidSteer(tracked_object, 
+                                 drive_range, &drive_bias, &steer_bias);
 
         // Send subsampled leddar telem
         if (micros() - last_leddar_telem_time > leddar_telemetry_interval){
@@ -117,7 +122,7 @@ void chompLoop() {
     uint16_t current_rc_bitfield = getRcBitfield();
     if (radio_working) {
         wdt_reset();
-        // React to RC state changes
+        // React to RC state changes (change since last time this call was made)
         int16_t diff = getRcBitfieldChanges();
         hammer_intensity = getHammerIntensity();
         if( !(current_rc_bitfield & FLAME_PULSE_BIT) && !(current_rc_bitfield & FLAME_CTRL_BIT) ){
