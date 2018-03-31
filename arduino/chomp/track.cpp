@@ -8,7 +8,7 @@ Track::Track() :
         last_update(micros()),
         last_predict(micros()),
         alpha(10000), beta(16384),
-        track_lost_dt(500000),
+        track_lost_dt(100000),
         min_num_updates(3),
         xtol(200),
         ytol(200),
