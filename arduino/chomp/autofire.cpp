@@ -2,7 +2,7 @@
 #include "autofire.h"
 #include "imu.h"
 
-extern uint8_t* HAMMER_INTENSITIES_ANGLE;
+extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
 
 static int32_t xtol = 200, ytol=200, ttol=5;
 static int32_t max_omegaZ = 50;
