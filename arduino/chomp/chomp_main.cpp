@@ -191,8 +191,8 @@ void chompLoop() {
     // check for autodrive
     if(new_autodrive || new_rc) {
         if(targeting_enabled) {
-            left_drive_value += steer_bias - drive_bias;
-            right_drive_value += steer_bias + drive_bias;
+            left_drive_value += -steer_bias - drive_bias;
+            right_drive_value += -steer_bias + drive_bias;
             // values passed by reference to capture clamping
             drive(left_drive_value, right_drive_value);
         }
