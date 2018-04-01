@@ -5,8 +5,10 @@
 
 extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
 
-static int32_t xtol = 200, ytol=200, ttol=5;
+static int32_t xtol = 200, ytol=200;
 static int32_t max_omegaZ = 1787;   // rad/s * 2048 = 50 deg/sec
+static uint32_t autofire_telem_interval = 100000;
+static uint32_t last_autofire_telem = 0;
 
 int32_t swingDuration(int16_t hammer_intensity) {
     int16_t hammer_angle = HAMMER_INTENSITIES_ANGLE[hammer_intensity];
@@ -47,13 +49,18 @@ enum AutofireState willHit(const Track &tracked_object,
     else if(!valid) st = AF_NO_TARGET;
     else if(!hit) st =   AF_NO_HIT;
     else st =            AF_HIT;
+    if(now - last_autofire_telem > autofire_telem_interval) {
+        sendAutofireTelemetry(st, swing, x/16, y/16);
+    }
     return st;
 }
 
 void setAutoFireParams(int16_t p_xtol,
                        int16_t p_ytol,
-                       int16_t p_ttol){
+                       int16_t p_max_omegaz,
+                       int16_t telemetry_interval){
     xtol = p_xtol;
     ytol = p_ytol;
-    ttol = p_ttol;
+    max_omegaZ = p_max_omegaz;
+    telemetry_interval = telemetry_interval;
 }

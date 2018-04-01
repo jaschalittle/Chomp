@@ -323,11 +323,17 @@ bool sendTrackingTelemetry(int16_t detection_x,
 
 struct AutofireTelemetryInner {
     int8_t state;
+    int32_t swing;
+    int32_t x;
+    int32_t y;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_AF, AutofireTelemetryInner> AFTelemetry;
-bool sendAutofireTelemetry(enum AutofireState st) {
+bool sendAutofireTelemetry(enum AutofireState st, int32_t swing, int32_t x, int32_t y) {
     CHECK_ENABLED(TLM_ID_TRK);
     AFTelemetry tlm;
     tlm.inner.state = st;
+    tlm.inner.swing = swing;
+    tlm.inner.x = x;
+    tlm.inner.y = y;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }

@@ -229,7 +229,6 @@ void chompLoop() {
                      drive_range);
         telemetryIMU();
         telemetrySelfRight();
-        sendAutofireTelemetry(autofire);
         last_telem_time = micros();
     }
     if(now-last_drive_telem_time > drive_telem_interval) {

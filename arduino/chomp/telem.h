@@ -66,5 +66,5 @@ bool sendTrackingTelemetry(int16_t detection_x,
                            int32_t rx,
                            int32_t ry,
                            int32_t best_distance);
-bool sendAutofireTelemetry(enum AutofireState st);
+bool sendAutofireTelemetry(enum AutofireState st, int32_t swing, int32_t x, int32_t y);
 #endif //TELEM_H
