@@ -7,10 +7,10 @@ Track::Track() :
         num_updates(0),
         last_update(micros()),
         last_predict(micros()),
-        alpha(10000), beta(16384),
-        track_lost_dt(100000),
+        alpha(20000), beta(20000),
+        track_lost_dt(250000),
         min_num_updates(3),
-        max_off_track(600L*600L),
+        max_off_track(300L*300L),
         max_start_distance(6000L*6000L)
         { }
 
@@ -94,8 +94,8 @@ void Track::update(const Object& best_match, int16_t omegaZ) {
         // correct:
         x += alpha*rx/32767;
         y += alpha*ry/32767;
-        vx += beta*rx/16384;
-        vy += beta*ry/16384;
+        vx += beta*rx/4096;
+        vy += beta*ry/4096;
     }
     num_updates++;
     last_update = best_match.Time;
