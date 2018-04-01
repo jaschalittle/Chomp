@@ -39,7 +39,7 @@ bool pidSteer(const Track &tracked_object,
         bias += -steer_d * tracked_object.vy/16384L;
         int16_t omegaZ = 0;
         if(getOmegaZ(&omegaZ)) {
-            bias -= gyro_gain*omegaZ/32768L;
+            bias -= gyro_gain*omegaZ/1024;
         }
         *steer_bias  = clip(bias, -steer_max, steer_max);
 
