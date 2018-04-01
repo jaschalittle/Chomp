@@ -38,8 +38,10 @@ static volatile uint16_t LEFT_RC_pwm_val = 1500;
 static volatile uint32_t LEFT_RC_prev_time = 0;
 static volatile uint16_t RIGHT_RC_pwm_val = 1500;
 static volatile uint32_t RIGHT_RC_prev_time = 0;
+static bool TARGETING_ENABLE_pinstate = false;
 static volatile uint16_t TARGETING_ENABLE_pwm_val = 1500;
 static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
+static bool DRIVE_DISTANCE_pinstate = false;
 static volatile int DRIVE_DISTANCE_pwm_val = 1500;
 static volatile int DRIVE_DISTANCE_prev_time = 0;
 
@@ -51,7 +53,7 @@ ISR(PCINT0_vect) {
     PBLAST = PINB;
     uint8_t left_rc_bit = 1 << PINB6;
     uint8_t right_rc_bit = 1 << PINB7;
-    
+
     // These can come in simultaneously so don't make this an if/else.
     if (PBNOW & left_rc_bit) {
         if (PINB & left_rc_bit) { // Rising
@@ -71,30 +73,31 @@ ISR(PCINT0_vect) {
     }
 }
 
-static void TARGETING_ENABLE_falling(); // forward decl
-static void TARGETING_ENABLE_rising() {
-    attachInterrupt(TARGETING_ENABLE_int, TARGETING_ENABLE_falling, FALLING);
-    TARGETING_ENABLE_prev_time = micros();
-}
-void TARGETING_ENABLE_falling() {
-    attachInterrupt(TARGETING_ENABLE_int, TARGETING_ENABLE_rising, RISING);
-    TARGETING_ENABLE_pwm_val = micros() - TARGETING_ENABLE_prev_time;
+static void TARGETING_ENABLE_change() {
+    bool pinstate = digitalRead(TARGETING_ENABLE_PIN);
+    if(!TARGETING_ENABLE_pinstate && pinstate) {
+        TARGETING_ENABLE_prev_time = micros();
+    }
+    if(TARGETING_ENABLE_pinstate && !pinstate) {
+        TARGETING_ENABLE_pwm_val = micros() - TARGETING_ENABLE_prev_time;
+    }
+    TARGETING_ENABLE_pinstate = pinstate;
     NEW_RC = true;
 }
 
-static void DRIVE_DISTANCE_Falling();
-static void DRIVE_DISTANCE_Rising(){
-    attachInterrupt(DRIVE_DISTANCE_int, DRIVE_DISTANCE_Falling, FALLING );
-    DRIVE_DISTANCE_prev_time = micros();
-}
-static void DRIVE_DISTANCE_Falling(){
-    attachInterrupt(DRIVE_DISTANCE_int, DRIVE_DISTANCE_Rising, RISING);
-    DRIVE_DISTANCE_pwm_val = micros() - DRIVE_DISTANCE_prev_time;
+static void DRIVE_DISTANCE_change(){
+    bool pinstate = digitalRead(DRIVE_DISTANCE_PIN);
+    if(!DRIVE_DISTANCE_pinstate && pinstate) {
+        DRIVE_DISTANCE_prev_time = micros();
+    }
+    if(DRIVE_DISTANCE_pinstate && !pinstate) {
+        DRIVE_DISTANCE_pwm_val = micros() - DRIVE_DISTANCE_prev_time;
+    }
+    DRIVE_DISTANCE_pinstate = pinstate;
 }
 
 void rcInit() {
     attachRCInterrupts();
-    attachInterrupt(DRIVE_DISTANCE_int, DRIVE_DISTANCE_Rising, RISING);
 }
 
 // Set up all RC interrupts
@@ -104,7 +107,8 @@ static void attachRCInterrupts(){
     pinMode(TARGETING_ENABLE_PIN, INPUT_PULLUP);
 
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        attachInterrupt(TARGETING_ENABLE_int, TARGETING_ENABLE_rising, RISING);
+        attachInterrupt(TARGETING_ENABLE_int, TARGETING_ENABLE_change, CHANGE);
+        attachInterrupt(DRIVE_DISTANCE_int, DRIVE_DISTANCE_change, CHANGE);
 
         PCICR |= 0b00000001; // Enables Ports B Pin Change Interrupts
         PCMSK0 |= 0b11000000; // Mask interrupts to PCINT6 and PCINT7
