@@ -17,7 +17,8 @@ uint32_t enabled_telemetry=(
     _LBV(TLM_ID_PWM)|
     _LBV(TLM_ID_SRT)|
     _LBV(TLM_ID_TRK)|
-    _LBV(TLM_ID_AF)
+    _LBV(TLM_ID_AF)|
+    _LBV(TLM_ID_ACK)
     );
 
 
@@ -321,11 +322,26 @@ struct AutofireTelemetryInner {
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_AF, AutofireTelemetryInner> AFTelemetry;
 bool sendAutofireTelemetry(enum AutofireState st, int32_t swing, int32_t x, int32_t y) {
-    CHECK_ENABLED(TLM_ID_TRK);
+    CHECK_ENABLED(TLM_ID_AF);
     AFTelemetry tlm;
     tlm.inner.state = st;
     tlm.inner.swing = swing;
     tlm.inner.x = (int16_t)clip(x, -32768L, 32767L);
     tlm.inner.y = (int16_t)clip(y, -32768L, 32767L);
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+
+struct CommandAcknolwedgeInner {
+    int8_t cmdid;
+    int16_t valid;
+    int16_t invalid;
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_ACK, CommandAcknolwedgeInner> ACKTelemetry;
+bool sendCommandAcknowledge(uint8_t command, uint16_t valid, uint16_t invalid) {
+    CHECK_ENABLED(TLM_ID_ACK);
+    ACKTelemetry tlm;
+    tlm.inner.cmdid = command;
+    tlm.inner.valid = valid;
+    tlm.inner.invalid = invalid;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }

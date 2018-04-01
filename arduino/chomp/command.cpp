@@ -179,5 +179,6 @@ void handle_commands(void) {
       }
       command_length = 0;
       command_ready = false;
+      sendCommandAcknowledge(last_command, valid_command, invalid_command);
   }
 }
