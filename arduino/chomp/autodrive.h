@@ -10,3 +10,6 @@ void setDriveControlParams(int16_t p_steer_p,
 
 bool pidSteer(const Track &tracked_object,
               int16_t depth, int16_t *drive_bias, int16_t *steer_bias);
+
+
+void restoreDriveControlParameters();

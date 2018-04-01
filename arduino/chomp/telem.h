@@ -30,8 +30,6 @@ extern uint32_t enabled_telemetry;
 
 #define _LBV(bit) (1L << (bit))
 
-#define IS_TLM_ENABLED(TLM_ID) (enabled_telemetry & _LBV(TLM_ID))
-
 // Forward decls
 struct Detection;
 
@@ -69,4 +67,13 @@ bool sendTrackingTelemetry(int16_t detection_x,
 bool sendAutofireTelemetry(enum AutofireState st, int32_t swing, int32_t x, int32_t y);
 bool sendCommandAcknowledge(uint8_t cmdid, uint16_t valid_commands, uint16_t invalid_commands);
 bool sendAutodriveTelemetry(int16_t steer_bias, int16_t drive_bias, int16_t theta, int16_t vtheta);
+bool isTimeToSendLeddarTelem(uint32_t now);
+bool isTimeToSendTelemetry(uint32_t now);
+bool isTimeToSendDriveTelemetry(uint32_t now);
+void restoreTelemetryParameters(void);
+void setTelemetryParams(uint32_t telemetry_interval,
+                        uint32_t leddar_telemetry_interval,
+                        uint32_t drive_telem_interval,
+                        uint32_t enabled_telemetry);
+bool isTLMEnabled(uint8_t tlm_id);
 #endif //TELEM_H

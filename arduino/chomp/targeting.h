@@ -12,4 +12,5 @@ void setObjectSegmentationParams(int16_t p_min_object_size,
                                  int16_t p_max_object_size,
                                  int16_t p_edge_call_threshold);
 
+void restoreObjectSegmentationParameters(void);
 #endif  // CHUMP_TARGETING_H

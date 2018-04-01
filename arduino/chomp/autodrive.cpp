@@ -1,20 +1,36 @@
 #include <Arduino.h>
+#include <avr/eeprom.h>
 #include "targeting.h"
 #include "utils.h"
 #include "imu.h"
 #include "telem.h"
 
+static void saveDriveControlParameters();
 
-static int32_t steer_p = 3500;
-static int32_t steer_d = 0;
-static int32_t steer_max = 400;
-static int32_t gyro_gain = 0;
-static int32_t drive_p = 400;
-static int32_t drive_d = 0;
-static int32_t drive_max = 700;
-static uint32_t autodrive_telem_interval = 10000;
+struct DriveControlParams {
+    int32_t steer_p;
+    int32_t steer_d;
+    int32_t steer_max;
+    int32_t gyro_gain;
+    int32_t drive_p;
+    int32_t drive_d;
+    int32_t drive_max;
+    uint32_t autodrive_telem_interval;
+} __attribute__((packed));
+
+static struct DriveControlParams EEMEM saved_params = {
+    .steer_p = 3500,
+    .steer_d = 0,
+    .steer_max = 400,
+    .gyro_gain = 0,
+    .drive_p = 400,
+    .drive_d = 0,
+    .drive_max = 700,
+    .autodrive_telem_interval = 10000,
+};
+
+static struct DriveControlParams params;
 static uint32_t last_autodrive_telem = 0;
-
 
 void setDriveControlParams(int16_t p_steer_p,
                            int16_t p_steer_d,
@@ -24,13 +40,14 @@ void setDriveControlParams(int16_t p_steer_p,
                            int16_t p_drive_d,
                            int16_t p_drive_max
                            ) {
-    steer_p = p_steer_p;
-    steer_d = p_steer_d;
-    gyro_gain = p_gyro_gain;
-    steer_max = p_steer_max;
-    drive_p = p_drive_p;
-    drive_d = p_drive_d;
-    drive_max = p_drive_max;
+    params.steer_p = p_steer_p;
+    params.steer_d = p_steer_d;
+    params.gyro_gain = p_gyro_gain;
+    params.steer_max = p_steer_max;
+    params.drive_p = p_drive_p;
+    params.drive_d = p_drive_d;
+    params.drive_max = p_drive_max;
+    saveDriveControlParameters();
 }
 
 bool pidSteer(const Track &tracked_object,
@@ -41,18 +58,18 @@ bool pidSteer(const Track &tracked_object,
         int32_t bias;
         int32_t theta = tracked_object.angle();
         int32_t vtheta = tracked_object.vtheta();
-        bias  = steer_p * theta/16384L;
-        bias += steer_d * vtheta/16384L;
+        bias  = params.steer_p * theta/16384L;
+        bias += params.steer_d * vtheta/16384L;
         int16_t omegaZ = 0;
         if(getOmegaZ(&omegaZ)) {
-            bias += -gyro_gain*omegaZ/1024;
+            bias += -params.gyro_gain*omegaZ/1024;
         }
-        *steer_bias  = clip(bias, -steer_max, steer_max);
+        *steer_bias  = clip(bias, -params.steer_max, params.steer_max);
 
-        bias  = drive_p * (tracked_object.x-(int32_t)depth*16L)/16384L;
-        bias += drive_d * tracked_object.vx/16384L;
-        *drive_bias  = clip(bias, -drive_max, drive_max);
-        if(now - last_autodrive_telem > autodrive_telem_interval) {
+        bias  = params.drive_p * (tracked_object.x-(int32_t)depth*16L)/16384L;
+        bias += params.drive_d * tracked_object.vx/16384L;
+        *drive_bias  = clip(bias, -params.drive_max, params.drive_max);
+        if(now - last_autodrive_telem > params.autodrive_telem_interval) {
             sendAutodriveTelemetry(*steer_bias,
                                    *drive_bias,
                                    clip(theta, -32768L, 32767L),
@@ -60,4 +77,12 @@ bool pidSteer(const Track &tracked_object,
         }
     }
     return valid;
+}
+
+void saveDriveControlParameters() {
+    eeprom_write_block(&params, &saved_params, sizeof(struct DriveControlParams));
+}
+
+void restoreDriveControlParameters() {
+    eeprom_read_block(&params, &saved_params, sizeof(struct DriveControlParams));
 }

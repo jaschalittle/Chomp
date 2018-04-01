@@ -2,6 +2,25 @@
 #include "track.h"
 #include "utils.h"
 
+struct TrackingFilterParameters {
+    int16_t alpha, beta;  // position, velocity filter
+    uint32_t track_lost_dt; // timeout for no observations
+    uint32_t min_num_updates; // minimum number before trusted
+    int32_t max_off_track; // squared distance in mm
+    int32_t max_start_distance; // squared distance in mm
+} __attribute__((packed));
+
+
+struct TrackingFilterParameters EEMEM saved_tracking_params = {
+    .alpha = 10000,
+    .beta = 10000,
+    .track_lost_dt = 250000,
+    .min_num_updates = 3,
+    .max_off_track = 1000L*1000L,
+    .max_start_distance = 6000L*6000L
+};
+
+
 Track::Track() :
         x(0), vx(0),
         y(0), vy(0),
@@ -150,4 +169,27 @@ void Track::setTrackingFilterParams(int16_t p_alpha, int16_t p_beta,
     max_start_distance = (int32_t)p_max_start_distance*p_max_start_distance;
     alpha = p_alpha;
     beta = p_beta;
+    saveTrackingFilterParams();
 }
+
+void Track::saveTrackingFilterParams(void) {
+    struct TrackingFilterParameters p;
+    p.alpha = alpha;
+    p.beta = beta;
+    p.min_num_updates = min_num_updates;
+    p.track_lost_dt = track_lost_dt;
+    p.max_off_track = max_off_track;
+    p.max_start_distance = max_start_distance;
+    eeprom_write_block(&p, &saved_tracking_params, sizeof(struct TrackingFilterParameters));
+}
+
+void Track::restoreTrackingFilterParams(void) {
+    struct TrackingFilterParameters p;
+    eeprom_read_block(&p, &saved_tracking_params, sizeof(struct TrackingFilterParameters));
+    alpha = p.alpha;
+    beta = p.beta;
+    min_num_updates = p.min_num_updates;
+    track_lost_dt = p.track_lost_dt;
+    max_off_track = p.max_off_track;
+    max_start_distance = p.max_start_distance;
+ }

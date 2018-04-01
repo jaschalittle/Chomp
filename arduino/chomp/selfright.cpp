@@ -9,6 +9,8 @@
 
 extern HardwareSerial& DriveSerial;
 
+static void saveSelfRightParameters();
+
 void selfRightExtendLeft(){
     if (weaponsEnabled()){
         safeDigitalWrite(SELF_RIGHT_LEFT_EXTEND_DO, HIGH);
@@ -82,13 +84,27 @@ enum SelfRightState {
 enum Orientation checked_orientation;
 static enum SelfRightState self_right_state = UPRIGHT;
 String hammer_command;
-uint16_t min_hammer_forward_angle = 166;
-uint16_t max_hammer_forward_angle = 252;
-uint16_t min_hammer_back_angle = 10;
-uint16_t max_hammer_back_angle = 20;
-uint32_t max_hammer_move_duration = 2000000L;
-uint32_t max_reorient_duration = 3000000L;
-uint32_t min_retract_duration = 1000000L;
+struct SelfRightParams {
+    uint16_t min_hammer_forward_angle;
+    uint16_t max_hammer_forward_angle;
+    uint16_t min_hammer_back_angle;
+    uint16_t max_hammer_back_angle;
+    uint32_t max_hammer_move_duration;
+    uint32_t max_reorient_duration;
+    uint32_t min_retract_duration;
+} __attribute__((packed));
+
+static struct SelfRightParams EEMEM saved_params = {
+    .min_hammer_forward_angle = 166,
+    .max_hammer_forward_angle = 252,
+    .min_hammer_back_angle = 10,
+    .max_hammer_back_angle = 20,
+    .max_hammer_move_duration = 2000000L,
+    .max_reorient_duration = 3000000L,
+    .min_retract_duration = 1000000L
+};
+
+static struct SelfRightParams params;
 uint32_t hammer_move_start;
 uint32_t reorient_start;
 uint32_t retract_start;
@@ -103,21 +119,22 @@ void setSelfRightParameters(
         uint32_t p_min_retract_duration
         )
 {
-     min_hammer_forward_angle = p_min_hammer_forward_angle;
-     max_hammer_forward_angle = p_max_hammer_forward_angle;
-     min_hammer_back_angle = p_min_hammer_back_angle;
-     max_hammer_back_angle = p_max_hammer_back_angle;
-     max_hammer_move_duration = p_max_hammer_move_duration;
-     max_reorient_duration = p_max_reorient_duration;
-     min_retract_duration = p_min_retract_duration;
+     params.min_hammer_forward_angle = p_min_hammer_forward_angle;
+     params.max_hammer_forward_angle = p_max_hammer_forward_angle;
+     params.min_hammer_back_angle = p_min_hammer_back_angle;
+     params.max_hammer_back_angle = p_max_hammer_back_angle;
+     params.max_hammer_move_duration = p_max_hammer_move_duration;
+     params.max_reorient_duration = p_max_reorient_duration;
+     params.min_retract_duration = p_min_retract_duration;
+     saveSelfRightParameters();
  }
 
 
 // state tests
 static bool hammerIsForward() {
     uint16_t hammer_position = getAngle();
-    return (hammer_position > min_hammer_forward_angle &&
-            hammer_position < max_hammer_forward_angle);
+    return (hammer_position > params.min_hammer_forward_angle &&
+            hammer_position < params.max_hammer_forward_angle);
 }
 
 
@@ -127,8 +144,8 @@ static bool hammerIsRetracted(void) {
 
 
 static bool hammerIsBack(void) {
-    return (min_hammer_back_angle<getAngle() &&
-            getAngle() < max_hammer_back_angle);
+    return (params.min_hammer_back_angle<getAngle() &&
+            getAngle() < params.max_hammer_back_angle);
 }
 
 // actions
@@ -139,10 +156,10 @@ static void startHammerForward(void) {
     int16_t hammer_position = getAngle();
     // negative when motion should occur in fire direction,
     // positive when hammer is past min_hammer_angle
-    int16_t fire_distance = hammer_position - min_hammer_forward_angle;
+    int16_t fire_distance = hammer_position - params.min_hammer_forward_angle;
     // negative when motion should occur in retract direction,
     // positive when hammer is before max_hammer_angle
-    int16_t retract_distance = max_hammer_forward_angle - hammer_position;
+    int16_t retract_distance = params.max_hammer_forward_angle - hammer_position;
 
     hammer_move_start = micros();
     if(retract_distance<fire_distance) {
@@ -167,7 +184,7 @@ static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
     if(hammerIsRetracted()) {
         stopElectricHammerMove();
         result = WAIT_RETRACT;
-    } else if((micros() - hammer_move_start)>max_hammer_move_duration) {
+    } else if((micros() - hammer_move_start)>params.max_hammer_move_duration) {
         stopElectricHammerMove();
         result = WAIT_RETRACT;
     } else {
@@ -211,7 +228,7 @@ static enum SelfRightState checkHammerForward(const enum SelfRightState state)
         selfRightSafe();
         result = WAIT_HAMMER_RETRACT;
     } else if(hammerIsForward() ||
-              (micros() - hammer_move_start > max_hammer_move_duration)) {
+              (micros() - hammer_move_start > params.max_hammer_move_duration)) {
         stopElectricHammerMove();
         result = EXTEND;
     } else {
@@ -246,7 +263,7 @@ static enum SelfRightState checkUpright(const enum SelfRightState state)
         startBarRetract();
         startHammerRetract();
         result = WAIT_HAMMER_RETRACT;
-    } else if((micros() - reorient_start) > max_reorient_duration) {
+    } else if((micros() - reorient_start) > params.max_reorient_duration) {
         startBarRetract();
         result = WAIT_LOCKOUT_RETRACT;
     }
@@ -256,7 +273,7 @@ static enum SelfRightState checkUpright(const enum SelfRightState state)
 static enum SelfRightState waitMinimumRetract(const enum SelfRightState state)
 {
     enum SelfRightState result=state;
-    if((micros() - retract_start) > min_retract_duration) {
+    if((micros() - retract_start) > params.min_retract_duration) {
         selfRightSafe();
         if(state == WAIT_RETRACT)
         {
@@ -315,7 +332,14 @@ void autoSelfRight(bool enabled) {
     }
 }
 
-
 void telemetrySelfRight() {
     sendSelfRightTelem(self_right_state);
+}
+
+void saveSelfRightParameters() {
+    eeprom_write_block(&params, &saved_params, sizeof(struct SelfRightParams));
+}
+
+void restoreSelfRightParameters() {
+    eeprom_read_block(&params, &saved_params, sizeof(struct SelfRightParams));
 }

@@ -35,6 +35,8 @@ struct Track
                              uint32_t p_track_lost_dt,
                              int16_t p_max_off_track,
                              int16_t p_max_start_distance);
+    void saveTrackingFilterParams(void);
+    void restoreTrackingFilterParams(void);
 };
 
 

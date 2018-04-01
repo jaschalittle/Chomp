@@ -5,10 +5,23 @@
 
 extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
 
-static int32_t xtol = 200, ytol=200;
-static int32_t max_omegaZ = 1787;   // rad/s * 2048 = 50 deg/sec
-static uint32_t autofire_telem_interval = 100000;
+struct AutofireParameters {
+    int32_t xtol, ytol;
+    int32_t max_omegaZ;   // rad/s * 2048 = 50 deg/sec
+    uint32_t autofire_telem_interval;
+} __attribute__((packed));
+
+static struct AutofireParameters params;
 static uint32_t last_autofire_telem = 0;
+
+static struct AutofireParameters EEMEM saved_params = {
+    .xtol = 200,
+    .ytol=200,
+    .max_omegaZ = 1787,   // rad/s * 2048 = 50 deg/sec
+    .autofire_telem_interval = 100000,
+};
+
+static void saveAutofireParameters(void);
 
 int32_t swingDuration(int16_t hammer_intensity) {
     int16_t hammer_angle = HAMMER_INTENSITIES_ANGLE[hammer_intensity];
@@ -21,7 +34,7 @@ bool omegaZLockout(int32_t *omegaZ) {
     int16_t rawOmegaZ;
     bool imu_valid = getOmegaZ(&rawOmegaZ);
     *omegaZ = (int32_t)rawOmegaZ*35L/16L;
-    return imu_valid && abs(*omegaZ)>max_omegaZ;
+    return imu_valid && abs(*omegaZ)>params.max_omegaZ;
 }
 
 int8_t nsteps=3;
@@ -42,14 +55,14 @@ enum AutofireState willHit(const Track &tracked_object,
         for(int s=0;s<nsteps;s++) {
             tracked_object.project(dt, dt*omegaZ/1000000, &x, &y);
         }
-        hit = (x>0) && (x/16<depth) && abs(y/16)<ytol;
+        hit = (x>0) && (x/16<depth) && abs(y/16)<params.ytol;
     }
     enum AutofireState st;
     if(lockout) st =     AF_OMEGAZ_LOCKOUT;
     else if(!valid) st = AF_NO_TARGET;
     else if(!hit) st =   AF_NO_HIT;
     else st =            AF_HIT;
-    if(now - last_autofire_telem > autofire_telem_interval) {
+    if(now - last_autofire_telem > params.autofire_telem_interval) {
         sendAutofireTelemetry(st, swing, x/16, y/16);
     }
     return st;
@@ -59,8 +72,17 @@ void setAutoFireParams(int16_t p_xtol,
                        int16_t p_ytol,
                        int16_t p_max_omegaz,
                        int16_t telemetry_interval){
-    xtol = p_xtol;
-    ytol = p_ytol;
-    max_omegaZ = p_max_omegaz;
+    params.xtol = p_xtol;
+    params.ytol = p_ytol;
+    params.max_omegaZ = p_max_omegaz;
     telemetry_interval = telemetry_interval;
+    saveAutofireParameters();
+}
+
+void saveAutofireParameters(void) {
+    eeprom_write_block(&params, &saved_params, sizeof(struct AutofireParameters));
+}
+
+void restoreAutofireParameters(void) {
+    eeprom_read_block(&params, &saved_params, sizeof(struct AutofireParameters));
 }

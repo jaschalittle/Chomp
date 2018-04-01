@@ -51,7 +51,7 @@ void driveTelem(void) {
     static int idx = 0;
     static int16_t volts[NUM_DRIVES];
     char volt_buffer[VOLTAGE_RESPONSE_LENGTH];
-    if(IS_TLM_ENABLED(TLM_ID_DRV)) {
+    if(isTLMEnabled(TLM_ID_DRV)) {
         while(DriveSerial.available()) DriveSerial.read();
         String request("@0");
         request += (idx+1);

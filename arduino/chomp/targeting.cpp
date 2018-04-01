@@ -15,14 +15,24 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
                               uint32_t now,
                               Object (&objects)[8]);
 
+static void saveObjectSegmentationParameters();
+
 static int8_t selectObject(const Object (&objects)[8], uint8_t num_objects,
                            const struct Track &tracked_object,
                            int32_t *selected_distance);
+struct ObjectSegmentationParameters {
+    int32_t min_object_size; // object sizes are in mm
+    int32_t max_object_size;   // mm of circumferential size
+    int32_t edge_call_threshold; // cm for edge in leddar returns
+} __attribute__((packed));
 
-// object sizes are in mm
-static int32_t min_object_size = 200;
-static int32_t max_object_size = 1800;   // mm of circumferential size
-static int32_t edge_call_threshold = 60; // cm for edge in leddar returns
+static struct ObjectSegmentationParameters object_params;
+
+struct ObjectSegmentationParameters EEMEM saved_object_params = {
+    .min_object_size = 200, // object sizes are in mm
+    .max_object_size = 1800,   // mm of circumferential size
+    .edge_call_threshold = 60 // cm for edge in leddar returns
+};
 
 void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS],
                  struct Track& tracked_object) {
@@ -78,12 +88,12 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
     // this currently will not call a more distant object obscured by a nearer object, even if both edges of more distant object are visible
     for (uint8_t i = 1; i < 16; i++) {
         int16_t delta = (int16_t) min_detections[i].Distance - last_seg_distance;
-        if (delta < -edge_call_threshold) {
+        if (delta < -object_params.edge_call_threshold) {
             left_edge = i;
             min_obj_distance = min_detections[i].Distance;
             max_obj_distance = min_detections[i].Distance;
             objects[num_objects].SumDistance = 0;
-        } else if (delta > edge_call_threshold) {
+        } else if (delta > object_params.edge_call_threshold) {
             // call object if there is an unmatched left edge
             if (left_edge >= right_edge) {
                 right_edge = i;
@@ -93,7 +103,7 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
                 objects[num_objects].RightEdge = right_edge;
                 objects[num_objects].Time = now;
                 int16_t size = objects[num_objects].size();
-                if(size>min_object_size && size<max_object_size) {
+                if(size>object_params.min_object_size && size<object_params.max_object_size) {
                     num_objects++;
                 }
             }
@@ -114,7 +124,7 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
         objects[num_objects].RightEdge = right_edge;
         objects[num_objects].Time = now;
         int16_t size = objects[num_objects].size();
-        if(size>min_object_size && size<max_object_size) {
+        if(size>object_params.min_object_size && size<object_params.max_object_size) {
             num_objects++;
         }
     }
@@ -160,9 +170,19 @@ static int8_t selectObject(const Object (&objects)[8], uint8_t num_objects,
 void setObjectSegmentationParams(int16_t p_min_object_size,
                                  int16_t p_max_object_size,
                                  int16_t p_edge_call_threshold){
-    min_object_size    = p_min_object_size;
-    max_object_size    = p_max_object_size;
-    edge_call_threshold= p_edge_call_threshold;
+    object_params.min_object_size    = p_min_object_size;
+    object_params.max_object_size    = p_max_object_size;
+    object_params.edge_call_threshold= p_edge_call_threshold;
+    saveObjectSegmentationParameters();
+}
+
+static void saveObjectSegmentationParameters() {
+    eeprom_write_block(&object_params, &saved_object_params,
+                       sizeof(struct ObjectSegmentationParameters));
 }
 
 
+void restoreObjectSegmentationParameters() {
+    eeprom_read_block(&object_params, &saved_object_params,
+                       sizeof(struct ObjectSegmentationParameters));
+}

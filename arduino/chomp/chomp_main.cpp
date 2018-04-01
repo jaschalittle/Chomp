@@ -35,6 +35,28 @@ void update_loop_stats() {
 }
 
 
+static uint32_t last_request_time = micros();
+static uint32_t last_sensor_time = micros();
+static int16_t steer_bias = 0; // positive turns left, negative turns right
+static int16_t drive_bias = 0;
+static bool new_autodrive = false;
+static enum AutofireState autofire = AF_NO_TARGET;
+
+extern uint16_t leddar_overrun;
+extern uint16_t leddar_crc_error;
+extern uint16_t sbus_overrun;
+extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
+
+uint32_t sensor_period=5000L;
+uint32_t leddar_max_request_period=100000L;
+
+uint32_t manual_self_right_retract_start = 0;
+uint32_t manual_self_right_retract_duration = 1000000;
+uint32_t manual_self_right_dead_duration = 250000;
+
+// parameters written in command
+Track tracked_object;
+
 void chompSetup() {
     // Come up safely
     safeState();
@@ -47,37 +69,15 @@ void chompSetup() {
     sensorSetup();
     initializeIMU();
     reset_loop_stats();
+    restoreDriveControlParameters();
+    restoreObjectSegmentationParameters();
+    tracked_object.restoreTrackingFilterParams();
+    restoreAutofireParameters();
+    restoreSelfRightParameters();
+    restoreTelemetryParameters();
     debug_print("STARTUP");
     start_time = micros();
 }
-
-static uint32_t last_request_time = micros();
-static uint32_t last_telem_time = micros();
-static uint32_t last_drive_telem_time = micros();
-static uint32_t last_leddar_telem_time = micros();
-static uint32_t last_sensor_time = micros();
-static int16_t steer_bias = 0; // positive turns left, negative turns right
-static int16_t drive_bias = 0;
-static bool new_autodrive = false;
-static enum AutofireState autofire = AF_NO_TARGET;
-
-extern uint16_t leddar_overrun;
-extern uint16_t leddar_crc_error;
-extern uint16_t sbus_overrun;
-extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
-
-uint32_t telemetry_interval=100000L;
-uint32_t leddar_telemetry_interval=100000L;
-uint32_t sensor_period=5000L;
-uint32_t drive_telem_interval=20000L;
-uint32_t leddar_max_request_period=100000L;
-
-uint32_t manual_self_right_retract_start = 0;
-uint32_t manual_self_right_retract_duration = 1000000;
-uint32_t manual_self_right_dead_duration = 250000;
-
-// parameters written in command
-Track tracked_object;
 
 void chompLoop() {
     if(micros() - last_sensor_time>sensor_period) {
@@ -130,11 +130,8 @@ void chompLoop() {
         }
 
         // Send subsampled leddar telem
-        if (micros() - last_leddar_telem_time > leddar_telemetry_interval){
-          bool success = sendLeddarTelem(*minDetections, raw_detection_count);
-          if (success){
-            last_leddar_telem_time = micros();
-          }
+        if (isTimeToSendLeddarTelem(micros())){
+            sendLeddarTelem(*minDetections, raw_detection_count);
         }
     }
 
@@ -231,7 +228,7 @@ void chompLoop() {
 
     // send telemetry
     uint32_t now = micros();
-    if (now - last_telem_time > telemetry_interval){
+    if (isTimeToSendTelemetry(now)) {
         // get targeting RC command.
         sendSensorTelem(getPressure(), getAngle());
         sendSystemTelem(loop_speed_min, loop_speed_avg/loop_count,
@@ -250,11 +247,9 @@ void chompLoop() {
                      drive_range);
         telemetryIMU();
         telemetrySelfRight();
-        last_telem_time = micros();
     }
-    if(now-last_drive_telem_time > drive_telem_interval) {
+    if(isTimeToSendDriveTelemetry(now)) {
         driveTelem();
-        last_drive_telem_time = now;
     }
 
 

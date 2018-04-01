@@ -3,6 +3,9 @@
 #include "MPU6050.h"
 #include "imu.h"
 
+static void saveIMUParameters(void);
+static void restoreIMUParameters(void);
+
 //TelemetryMessageStream telemetry_stream;
 static const int16_t stable_orientation[NUM_STABLE_ORIENTATIONS][3] = {
     {    0,     0,  2048},  // upright
@@ -19,17 +22,32 @@ MPU6050 IMU;
 int16_t acceleration[3], angular_rate[3];
 int16_t temperature;
 uint32_t last_imu_process;
-uint32_t imu_period=100000;
-int32_t stationary_threshold=200;
-int32_t min_valid_accum = 3800000;
-int32_t max_valid_accum = 5000000;
 bool possibly_stationary, stationary, imu_read_valid;
 size_t best_orientation=NUM_STABLE_ORIENTATIONS;
 int32_t best_accum;
 int32_t sum_angular_rate;
 
+struct IMUParameters {
+    int8_t dlpf_mode;
+    uint32_t imu_period;
+    int32_t stationary_threshold;
+    int32_t min_valid_accum;
+    int32_t max_valid_accum;
+} __attribute__((packed));
+
+static struct IMUParameters params;
+
+static struct IMUParameters EEMEM saved_params = {
+    .dlpf_mode=MPU6050_DLPF_BW_20,
+    .imu_period=100000,
+    .stationary_threshold=200,
+    .min_valid_accum = 3800000,
+    .max_valid_accum = 5000000
+};
+
 
 void initializeIMU(void) {
+    restoreIMUParameters();
     I2c.begin();
     I2c.setSpeed(false);
     I2c.timeOut(2);
@@ -49,7 +67,7 @@ void processIMU(void) {
     // NUM_STABLE_ORIENTATIONS when all have been tested
     static uint8_t imu_step = NUM_STABLE_ORIENTATIONS;
     // maximum dot product seen so far
-    static int32_t max_accum = min_valid_accum;
+    static int32_t max_accum = params.min_valid_accum;
     // corresponding orientation
     static uint8_t max_orientation = ORN_UNKNOWN;
 
@@ -70,7 +88,7 @@ void processIMU(void) {
         // if this was the last one, record the best result
         if(++imu_step == NUM_STABLE_ORIENTATIONS) {
             best_accum = max_accum;
-            if(min_valid_accum < max_accum && max_accum<max_valid_accum) {
+            if(params.min_valid_accum < max_accum && max_accum<params.max_valid_accum) {
                 best_orientation = max_orientation;
                 stationary = true;
             } else {
@@ -81,7 +99,7 @@ void processIMU(void) {
     }
     // if enough time has passed, read the IMU
     uint32_t now = micros();
-    if(now-last_imu_process > imu_period) {
+    if(now-last_imu_process > params.imu_period) {
         last_imu_process = now;
         uint8_t imu_err = IMU.getMotion6(
             &acceleration[0], &acceleration[1], &acceleration[2],
@@ -98,12 +116,12 @@ void processIMU(void) {
                             abs(angular_rate[1]) +
                             abs(angular_rate[2]));
         // still might have large acceleration and small angular rates
-        possibly_stationary = sum_angular_rate<stationary_threshold;
+        possibly_stationary = sum_angular_rate<params.stationary_threshold;
         // if possibly stationary, trigger a new orientation calculation
         // on the next call
         if(possibly_stationary) {
             imu_step = 0;
-            max_accum = min_valid_accum;
+            max_accum = params.min_valid_accum;
             max_orientation = ORN_UNKNOWN;
         } else {
             // if not stationary, refuse to guess
@@ -134,4 +152,15 @@ bool getOmegaZ(int16_t *omega_z) {
 
 void setIMUParameters(int8_t dlpf) {
     IMU.setDLPFMode(dlpf);
+    params.dlpf_mode = dlpf;
+    saveIMUParameters();
 }
+
+void saveIMUParameters(void) {
+    eeprom_write_block(&params, &saved_params, sizeof(struct IMUParameters));
+}
+
+void restoreIMUParameters(void) {
+    eeprom_read_block(&params, &saved_params, sizeof(struct IMUParameters));
+}
+

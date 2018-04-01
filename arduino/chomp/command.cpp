@@ -18,10 +18,6 @@ enum Commands {
     CMD_ID_SRT = 16,
 };
 
-extern uint32_t telemetry_interval;
-extern uint32_t leddar_telemetry_interval;
-extern uint32_t drive_telem_interval;
-extern uint32_t enabled_telemetry;
 extern Track tracked_object;
 
 const uint16_t CMD_TERMINATOR=0x6666;
@@ -138,11 +134,12 @@ void handle_commands(void) {
       switch(last_command) {
           case CMD_ID_TRATE:
               trate_cmd = (TelemetryRateCommand *)command_buffer;
-              telemetry_interval = trate_cmd->inner.small_telem_period;
-              leddar_telemetry_interval = trate_cmd->inner.leddar_telem_period;
-              drive_telem_interval = trate_cmd->inner.drive_telem_period;
-              enabled_telemetry = trate_cmd->inner.enabled_messages;
-              debug_print(String("enabled_telemetry=")+String(enabled_telemetry, 16));
+              setTelemetryParams(trate_cmd->inner.small_telem_period,
+                                 trate_cmd->inner.leddar_telem_period,
+                                 trate_cmd->inner.drive_telem_period,
+                                 trate_cmd->inner.enabled_messages);
+              debug_print(String("enabled_telemetry=")+
+                          String(trate_cmd->inner.enabled_messages, 16));
               valid_command++;
               break;
           case CMD_ID_TRKFLT:

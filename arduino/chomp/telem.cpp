@@ -6,21 +6,41 @@
 #include "DMASerial.h"
 #include "utils.h"
 
+static void saveTelemetryParmeters(void);
+
 extern DMASerial& Xbee;
 
 const uint16_t TLM_TERMINATOR=0x6666;
 
-#define CHECK_ENABLED(TLM_ID) if(!(enabled_telemetry & _LBV(TLM_ID))) return false;
+#define CHECK_ENABLED(TLM_ID) if(!(params.enabled_telemetry & _LBV(TLM_ID))) return false;
+#define IS_TLM_ENABLED(TLM_ID) (params.enabled_telemetry & _LBV(TLM_ID))
 
-uint32_t enabled_telemetry=(
-    _LBV(TLM_ID_SBS)|
-    _LBV(TLM_ID_PWM)|
-    _LBV(TLM_ID_SRT)|
-    _LBV(TLM_ID_TRK)|
-    _LBV(TLM_ID_AF)|
-    _LBV(TLM_ID_ACK)
-    );
+struct TelemetryParameters {
+    uint32_t telemetry_interval;
+    uint32_t leddar_telemetry_interval;
+    uint32_t drive_telem_interval;
+    uint32_t enabled_telemetry;
+} __attribute__((packed));
 
+static struct TelemetryParameters EEMEM saved_params = {
+    .telemetry_interval=100000L,
+    .leddar_telemetry_interval=100000L,
+    .drive_telem_interval=20000L,
+    .enabled_telemetry=(
+            _LBV(TLM_ID_SBS)|
+            _LBV(TLM_ID_PWM)|
+            _LBV(TLM_ID_SRT)|
+            _LBV(TLM_ID_TRK)|
+            _LBV(TLM_ID_AF)|
+            _LBV(TLM_ID_ACK)
+            )
+};
+
+static struct TelemetryParameters params;
+
+static uint32_t last_telem_time = micros();
+static uint32_t last_drive_telem_time = micros();
+static uint32_t last_leddar_telem_time = micros();
 
 template <uint8_t packet_id, typename packet_inner> struct TelemetryPacket{
     uint8_t pkt_id;
@@ -121,6 +141,13 @@ void debug_print(const String &msg){
     sendDebugMessageTelem(msg.c_str());
 }
 
+bool isTimeToSendTelemetry(uint32_t now) {
+    bool send = now - last_telem_time > params.telemetry_interval;
+    if(send) {
+        last_telem_time = now;
+    }
+    return send;
+}
 
 struct LeddarTelemetryInner {
     uint16_t state;
@@ -140,6 +167,13 @@ bool sendLeddarTelem(const Detection (&min_detections)[LEDDAR_SEGMENTS], unsigne
   }
   return Xbee.enqueue((unsigned char *)&leddar_tlm, sizeof(leddar_tlm),
                       NULL, NULL);
+}
+bool isTimeToSendLeddarTelem(uint32_t now) {
+    bool send = now - last_leddar_telem_time > params.leddar_telemetry_interval;
+    if(send) {
+        last_leddar_telem_time = now;
+    }
+    return send;
 }
 
 
@@ -286,6 +320,14 @@ bool sendDriveTelem(int16_t const (&vwheel)[4], int16_t vweapon) {
     tlm.inner.weapons_voltage = vweapon;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
+bool isTimeToSendDriveTelemetry(uint32_t now) {
+    bool send = now-last_drive_telem_time > params.drive_telem_interval;
+    send &= IS_TLM_ENABLED(TLM_ID_DRV);
+    if(send) {
+        last_drive_telem_time = now;
+    }
+    return send;
+}
 
 struct TrackingTelemetryInner {
     int16_t detection_x;
@@ -362,5 +404,28 @@ bool sendAutodriveTelemetry(int16_t steer_bias, int16_t drive_bias, int16_t thet
     tlm.inner.theta = theta;
     tlm.inner.vtheta = vtheta;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+
+void setTelemetryParams(uint32_t telemetry_interval,
+                        uint32_t leddar_telemetry_interval,
+                        uint32_t drive_telem_interval,
+                        uint32_t enabled_telemetry) {
+    params.telemetry_interval = telemetry_interval;
+    params.leddar_telemetry_interval = leddar_telemetry_interval;
+    params.drive_telem_interval = drive_telem_interval;
+    params.enabled_telemetry = enabled_telemetry;
+    saveTelemetryParmeters();
+}
+
+static void saveTelemetryParmeters(void) {
+    eeprom_write_block(&params, &saved_params, sizeof(struct TelemetryParameters));
+}
+
+void restoreTelemetryParameters(void) {
+    eeprom_read_block(&params, &saved_params, sizeof(struct TelemetryParameters));
+}
+
+bool isTLMEnabled(uint8_t tlm_id) {
+    return IS_TLM_ENABLED(tlm_id);
 }
 

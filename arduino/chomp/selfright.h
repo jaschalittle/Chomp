@@ -17,3 +17,4 @@ void setSelfRightParameters(
         uint32_t p_max_reorient_duration,
         uint32_t p_min_retract_duration
         );
+void restoreSelfRightParameters();
