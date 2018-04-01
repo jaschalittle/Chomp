@@ -13,6 +13,7 @@ static uint32_t last_sbus_time = 0;
 static uint32_t radio_lost_timeout = 100000;
 static uint8_t sbus_idx;
 static uint8_t sbusData[25];
+static bool new_packet = false;
 uint16_t sbus_overrun;
 static uint16_t sbusChannels [17];  // could initialize this with failsafe values for extra safety
 static bool failsafe = true;
@@ -29,21 +30,15 @@ ISR(USART3_RX_vect)
     if(dt>1000) {
         sbus_idx = 0;
     }
-    if(sbus_idx>0 || c=='\x0f') {
+    if(!new_packet && (sbus_idx>0 || c=='\x0f')) {
         sbusData[sbus_idx++] = c;
     }
     if(sbus_idx == 25) {
         if(sbusData[0] == '\x0f' && sbusData[24] == 0) {
-            bool fail = parseSbus();
-            if(!fail) {
-                computeRCBitfield();
-            } else {
-                bitfield = 0;
-                setWeaponsEnabled(false);
-            }
-            last_parse_time = now;
+            new_packet = true;
         } else {
             sbus_overrun++;
+
         }
         sbus_idx = 0;
     }
@@ -54,6 +49,19 @@ ISR(USART3_UDRE_vect)
 {
 }
 
+static void processSbus(void) {
+    if(new_packet) {
+        bool fail = parseSbus();
+        if(!fail) {
+            computeRCBitfield();
+        } else {
+            bitfield = 0;
+            setWeaponsEnabled(false);
+        }
+        last_parse_time = micros();
+        new_packet = false;
+    }
+}
 
 void SBusInit() {
     // Try u2x mode first
@@ -86,14 +94,9 @@ static void setWeaponsEnabled(bool state)
 }
 
 bool sbusGood(void) {
-    int32_t last;
-    bool fail;
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        last = last_parse_time;
-        fail = failsafe;
-    }
-    bool timeout = ((micros() - last) > radio_lost_timeout);
-    bool working = !(fail || timeout);
+    processSbus();
+    bool timeout = ((micros() - last_parse_time) > radio_lost_timeout);
+    bool working = !(failsafe || timeout);
     if(!working) {
         setWeaponsEnabled(false);
     }
