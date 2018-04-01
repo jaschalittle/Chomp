@@ -21,10 +21,6 @@ bool weaponsEnabled(){
     return g_enabled;
 }
 
-bool autofireEnabled(char bitfield){
-    return bitfield & AUTO_HAMMER_ENABLE_BIT;
-}
-
 // hammer moving with electric motor
 static bool hammer_in_motion = false;
 

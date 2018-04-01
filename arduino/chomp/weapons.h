@@ -13,8 +13,6 @@ static const uint16_t RETRACT_COMPLETE_ANGLE = 20 + RELATIVE_TO_BACK;  // angle 
 
 bool weaponsEnabled();
 
-bool autofireEnabled(char bitfield);
-
 void retract( bool check_velocity = true );
 
 void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire );
