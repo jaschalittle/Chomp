@@ -42,7 +42,7 @@ enum AutofireState willHit(const Track &tracked_object,
         for(int s=0;s<nsteps;s++) {
             tracked_object.project(dt, dt*omegaZ/1000000, &x, &y);
         }
-        hit = abs(x/16-depth)<xtol && abs(y/16)<ytol;
+        hit = (x/16<depth) && abs(y/16)<ytol;
     }
     enum AutofireState st;
     if(lockout) st =     AF_OMEGAZ_LOCKOUT;
