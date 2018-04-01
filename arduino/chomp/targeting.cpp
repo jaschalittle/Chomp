@@ -47,10 +47,7 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS],
                               tracked_object.x/16,
                               tracked_object.vx/16,
                               tracked_object.y/16,
-                              tracked_object.vy/16,
-                              tracked_object.rx,
-                              tracked_object.ry,
-                              best_distance);
+                              tracked_object.vy/16);
     // below is called if no objects called in current Leddar return
     } else {
         tracked_object.updateNoObs(micros(), omegaZ);
@@ -59,10 +56,7 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS],
                               tracked_object.x/16,
                               tracked_object.vx/16,
                               tracked_object.y/16,
-                              tracked_object.vy/16,
-                              0,
-                              0,
-                              0);
+                              tracked_object.vy/16);
     }
 }
 

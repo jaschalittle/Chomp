@@ -4,6 +4,7 @@
 #include "leddar_io.h"
 #include "pins.h"
 #include "DMASerial.h"
+#include "utils.h"
 
 extern DMASerial& Xbee;
 
@@ -288,13 +289,10 @@ bool sendDriveTelem(int16_t const (&vwheel)[4], int16_t vweapon) {
 struct TrackingTelemetryInner {
     int16_t detection_x;
     int16_t detection_y;
-    int32_t filtered_x;
-    int32_t filtered_vx;
-    int32_t filtered_y;
-    int32_t filtered_vy;
-    int32_t rx;
-    int32_t ry;
-    int32_t best_distance;
+    int16_t filtered_x;
+    int16_t filtered_vx;
+    int16_t filtered_y;
+    int16_t filtered_vy;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_TRK, TrackingTelemetryInner> TRKTelemetry;
 bool sendTrackingTelemetry(int16_t detection_x,
@@ -302,21 +300,15 @@ bool sendTrackingTelemetry(int16_t detection_x,
                            int32_t filtered_x,
                            int32_t filtered_vx,
                            int32_t filtered_y,
-                           int32_t filtered_vy,
-                           int32_t rx,
-                           int32_t ry,
-                           int32_t best_distance) {
+                           int32_t filtered_vy) {
     CHECK_ENABLED(TLM_ID_TRK);
     TRKTelemetry tlm;
     tlm.inner.detection_x = detection_x;
     tlm.inner.detection_y = detection_y;
-    tlm.inner.filtered_x = filtered_x;
-    tlm.inner.filtered_vx = filtered_vx;
-    tlm.inner.filtered_y = filtered_y;
-    tlm.inner.filtered_vy = filtered_vy;
-    tlm.inner.rx = rx;
-    tlm.inner.ry = ry;
-    tlm.inner.best_distance = best_distance;
+    tlm.inner.filtered_x = (int16_t)clip(filtered_x, -32768L, 32767L);
+    tlm.inner.filtered_vx = (int16_t)clip(filtered_vx, -32768L, 32767L);
+    tlm.inner.filtered_y = (int16_t)clip(filtered_y, -32768L, 32767L);
+    tlm.inner.filtered_vy = (int16_t)clip(filtered_vy, -32768L, 32767L);
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 
@@ -324,8 +316,8 @@ bool sendTrackingTelemetry(int16_t detection_x,
 struct AutofireTelemetryInner {
     int8_t state;
     int32_t swing;
-    int32_t x;
-    int32_t y;
+    int16_t x;
+    int16_t y;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_AF, AutofireTelemetryInner> AFTelemetry;
 bool sendAutofireTelemetry(enum AutofireState st, int32_t swing, int32_t x, int32_t y) {
@@ -333,7 +325,7 @@ bool sendAutofireTelemetry(enum AutofireState st, int32_t swing, int32_t x, int3
     AFTelemetry tlm;
     tlm.inner.state = st;
     tlm.inner.swing = swing;
-    tlm.inner.x = x;
-    tlm.inner.y = y;
+    tlm.inner.x = (int16_t)clip(x, -32768L, 32767L);
+    tlm.inner.y = (int16_t)clip(y, -32768L, 32767L);
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
