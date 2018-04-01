@@ -6,7 +6,7 @@
 extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
 
 static int32_t xtol = 200, ytol=200, ttol=5;
-static int32_t max_omegaZ = 50;
+static int32_t max_omegaZ = 1787;   // rad/s * 2048 = 50 deg/sec
 
 int32_t swingDuration(int16_t hammer_intensity) {
     int16_t hammer_angle = HAMMER_INTENSITIES_ANGLE[hammer_intensity];
@@ -14,26 +14,31 @@ int32_t swingDuration(int16_t hammer_intensity) {
     return 230L + (3L*x*x*x)/1024L;
 }
 
-bool omegaZLockout(int16_t *omegaZ) {
+bool omegaZLockout(int32_t *omegaZ) {
     *omegaZ = 0;
-    bool imu_valid = getOmegaZ(omegaZ);
-    return imu_valid && *omegaZ>max_omegaZ;
+    int16_t rawOmegaZ;
+    bool imu_valid = getOmegaZ(&rawOmegaZ);
+    *omegaZ = (int32_t)rawOmegaZ*35L/16L;
+    return imu_valid && abs(*omegaZ)>max_omegaZ;
 }
 
 int8_t nsteps=3;
 enum AutofireState willHit(const Track &tracked_object,
                            int16_t depth, int16_t hammer_intensity) {
-    int16_t rawOmegaZ=0;
+    int32_t omegaZ=0;
+    uint32_t now = micros();
     bool hit = false;
-    bool lockout = omegaZLockout(&rawOmegaZ);
-    bool valid = tracked_object.valid(micros());
+    bool lockout = omegaZLockout(&omegaZ);
+    bool valid = tracked_object.valid(now);
+    int32_t swing = 0;
+    int32_t x=0, y=0;
     if(valid && !lockout) {
-        int32_t swing=swingDuration(hammer_intensity)*1000;
-        int32_t x=tracked_object.x, y=tracked_object.y;
+        swing=swingDuration(hammer_intensity)*1000;
+        x=tracked_object.x;
+        y=tracked_object.y;
         int32_t dt=swing/nsteps;
-        int32_t omegaZ = (int32_t)rawOmegaZ*35L/16;
         for(int s=0;s<nsteps;s++) {
-            tracked_object.project(dt, dt*omegaZ, &x, &y);
+            tracked_object.project(dt, dt*omegaZ/1000000, &x, &y);
         }
         hit = abs(x/16-depth)<xtol && abs(y/16)<ytol;
     }
