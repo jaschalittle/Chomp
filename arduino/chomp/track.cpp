@@ -70,8 +70,6 @@ int32_t Track::predict(uint32_t now, int16_t omegaZ) {
 }
 
 void Track::update(const Object& best_match, int16_t omegaZ) {
-    //int32_t ma = best_match.angle();
-    //int32_t mr = best_match.radius();
     int32_t mx = best_match.xcoord();
     int32_t my = best_match.ycoord();
     if(!recent_update(best_match.Time)) {
@@ -81,7 +79,6 @@ void Track::update(const Object& best_match, int16_t omegaZ) {
         vy = 0;
         num_updates = 0;
     } else {
-        predict(best_match.Time, omegaZ);
         //
         // residual:
         // rx = mr*cos(ma) - x
