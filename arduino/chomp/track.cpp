@@ -127,7 +127,7 @@ int16_t Track::angle(void) const {
     }
 }
 
-void Track::setTrackingFilterParams(int16_t alpha, int16_t beta,
+void Track::setTrackingFilterParams(int16_t p_alpha, int16_t p_beta,
                              int8_t p_min_num_updates,
                              uint32_t p_track_lost_dt,
                              int16_t p_max_off_track,
@@ -137,7 +137,7 @@ void Track::setTrackingFilterParams(int16_t alpha, int16_t beta,
     track_lost_dt      = p_track_lost_dt;
     max_off_track      = (int32_t)p_max_off_track*p_max_off_track;
     max_start_distance = (int32_t)p_max_start_distance*p_max_start_distance;
-    alpha = alpha;
-    beta = beta;
+    alpha = p_alpha;
+    beta = p_beta;
 }
 
