@@ -4,12 +4,11 @@
 #include "pins.h"
 #include "weapons.h"
 #include "utils.h"
-#include <avr/interrupt.h>
 #include <util/atomic.h>
 
 enum RCinterrupts {
-    DRIVE_DISTANCE = digitalPinToInterrupt(DRIVE_DISTANCE_PIN),
-    TARGETING_ENABLE = digitalPinToInterrupt(TARGETING_ENABLE_PIN),
+    DRIVE_DISTANCE_int = digitalPinToInterrupt(DRIVE_DISTANCE_PIN),
+    TARGETING_ENABLE_int = digitalPinToInterrupt(TARGETING_ENABLE_PIN),
 };
 
 
@@ -86,29 +85,29 @@ ISR(PCINT0_vect) {
 
 static void TARGETING_ENABLE_falling(); // forward decl
 static void TARGETING_ENABLE_rising() {
-    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_falling, FALLING);
+    attachInterrupt(TARGETING_ENABLE_int, TARGETING_ENABLE_falling, FALLING);
     TARGETING_ENABLE_prev_time = micros();
 }
 void TARGETING_ENABLE_falling() {
-    attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
+    attachInterrupt(TARGETING_ENABLE_int, TARGETING_ENABLE_rising, RISING);
     TARGETING_ENABLE_pwm_val = micros() - TARGETING_ENABLE_prev_time;
     NEW_RC = true;
 }
 
 static void DRIVE_DISTANCE_Falling();
 static void DRIVE_DISTANCE_Rising(){
-    attachInterrupt(WEAPONS_ENABLE, DRIVE_DISTANCE_Falling, FALLING );
+    attachInterrupt(DRIVE_DISTANCE_int, DRIVE_DISTANCE_Falling, FALLING );
     DRIVE_DISTANCE_prev_time = micros();
 }
 static void DRIVE_DISTANCE_Falling(){
-    attachInterrupt(WEAPONS_ENABLE, DRIVE_DISTANCE_Rising, RISING);
+    attachInterrupt(DRIVE_DISTANCE_int, DRIVE_DISTANCE_Rising, RISING);
     DRIVE_DISTANCE_pwm_val = micros() - DRIVE_DISTANCE_prev_time;
 }
 
 void rcInit() {
     Sbus.begin(100000);
     attachRCInterrupts();
-    attachInterrupt(DRIVE_DISTANCE, DRIVE_DISTANCE_Rising, RISING);
+    attachInterrupt(DRIVE_DISTANCE_int, DRIVE_DISTANCE_Rising, RISING);
     last_parse_time = micros();
 }
 
@@ -119,7 +118,7 @@ static void attachRCInterrupts(){
     pinMode(TARGETING_ENABLE_PIN, INPUT_PULLUP);
 
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        attachInterrupt(TARGETING_ENABLE, TARGETING_ENABLE_rising, RISING);
+        attachInterrupt(TARGETING_ENABLE_int, TARGETING_ENABLE_rising, RISING);
 
         PCICR |= 0b00000001; // Enables Ports B Pin Change Interrupts
         PCMSK0 |= 0b11000000; // Mask interrupts to PCINT6 and PCINT7
