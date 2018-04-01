@@ -165,7 +165,7 @@ size_t getRawDetections(const Detection **detections) {
   return good_detections;
 }
 
-#define MIN_OBJECT_DISTANCE 30
+#define MIN_OBJECT_DISTANCE 20
 void calculateMinimumDetections(size_t good_detections) {
   for (size_t i=0; i < LEDDAR_SEGMENTS; i++) {
     MinimumDetections[i].reset();
