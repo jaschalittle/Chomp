@@ -332,9 +332,9 @@ bool sendAutofireTelemetry(enum AutofireState st, int32_t swing, int32_t x, int3
 }
 
 struct CommandAcknolwedgeInner {
-    int8_t cmdid;
-    int16_t valid;
-    int16_t invalid;
+    uint8_t cmdid;
+    uint16_t valid;
+    uint16_t invalid;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_ACK, CommandAcknolwedgeInner> ACKTelemetry;
 bool sendCommandAcknowledge(uint8_t command, uint16_t valid, uint16_t invalid) {
