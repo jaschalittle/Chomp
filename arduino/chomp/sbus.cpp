@@ -1,22 +1,74 @@
 #include <Arduino.h>
+#include <util/atomic.h>
 #include "pins.h"
 #include "weapons.h"
+#include "wiring_private.h"
+#include "telem.h"
 
+static void setWeaponsEnabled(bool state);
 static uint16_t computeRCBitfield();
-static bool bufferSbusData();
 static bool parseSbus();
 
-extern HardwareSerial& Sbus;
-
+static uint32_t last_sbus_time = 0;
+static uint32_t radio_lost_timeout = 100000;
+static uint8_t sbus_idx;
+static uint8_t sbusData[25];
+uint16_t sbus_overrun;
+static uint16_t sbusChannels [17];  // could initialize this with failsafe values for extra safety
+static bool failsafe = true;
 static uint32_t last_parse_time = 0;
-static uint32_t radio_lost_timeout = 10000;
-
 static uint16_t bitfield;
 static uint16_t last_bitfield;
 
+ISR(USART3_RX_vect)
+{
+    uint8_t c = UDR3;
+    uint32_t now = micros();
+    int32_t dt = now-last_sbus_time;
+    last_sbus_time = now;
+    if(dt>1000) {
+        sbus_idx = 0;
+    }
+    if(sbus_idx>0 || c=='\x0f') {
+        sbusData[sbus_idx++] = c;
+    }
+    if(sbus_idx == 25) {
+        if(sbusData[0] == '\x0f' && sbusData[24] == 0) {
+            bool fail = parseSbus();
+            if(!fail) {
+                computeRCBitfield();
+            } else {
+                bitfield = 0;
+                setWeaponsEnabled(false);
+            }
+            last_parse_time = now;
+        } else {
+            sbus_overrun++;
+        }
+        sbus_idx = 0;
+    }
+}
+
+
+ISR(USART3_UDRE_vect)
+{
+}
+
 
 void SBusInit() {
-    Sbus.begin(100000);
+    // Try u2x mode first
+    uint32_t baud = 100000;
+    uint16_t baud_setting = (F_CPU / 4 / baud - 1) / 2;
+    UCSR3A = 1 << U2X0;
+
+    // assign the baud_setting, a.k.a. ubrr (USART Baud Rate Register)
+    UBRR3H = baud_setting >> 8;
+    UBRR3L = baud_setting;
+
+    UCSR3C = SERIAL_8N1;
+
+    sbi(UCSR3B, RXEN0);
+    sbi(UCSR3B, RXCIE0);
     last_parse_time = micros();
 }
 
@@ -34,16 +86,13 @@ static void setWeaponsEnabled(bool state)
 }
 
 bool sbusGood(void) {
-    bool ready = bufferSbusData();
-    bool fail = false;
-    if(ready) {
-        fail = parseSbus();
-        last_parse_time = micros();
-        if(!fail) {
-            computeRCBitfield();
-        }
+    int32_t last;
+    bool fail;
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        last = last_parse_time;
+        fail = failsafe;
     }
-    bool timeout = (micros() - last_parse_time) > radio_lost_timeout;
+    bool timeout = ((micros() - last) > radio_lost_timeout);
     bool working = !(fail || timeout);
     if(!working) {
         setWeaponsEnabled(false);
@@ -51,45 +100,7 @@ bool sbusGood(void) {
     return working;
 }
 
-uint16_t sbus_overrun = 0;
-static uint8_t sbusData[25] = {0};
-uint32_t last_sbus_time = 0;
-uint8_t sbus_idx = 0;
-static bool bufferSbusData() {
-  // returns number of bytes available for reading from serial receive buffer, which is 64 bytes
-  if(Sbus.available()>25) {
-    while(Sbus.available()) {
-        Sbus.read();
-    }
-    sbus_overrun++;
-    return false;
-  }
-  while(Sbus.available()) {
-    if(sbus_idx == 25) {
-        sbus_overrun++;
-        sbus_idx = 0;
-    }
-    uint8_t c = Sbus.read();
-    last_sbus_time = micros();
-    if(((sbus_idx == 0) && (c == 0x0f)) ||
-        (sbus_idx>0 && sbus_idx<25)) {
-        sbusData[sbus_idx++] = c;
-    }
-  }
-  if(sbus_idx==25) {
-      sbus_idx = 0;
-      return true;
-  }
-  if((micros() - last_sbus_time)>1000) {
-      last_sbus_time = micros();
-      sbus_idx = 0;
-  }
-  return false;
-}
-
-static uint16_t sbusChannels [17];  // could initialize this with failsafe values for extra safety
 static bool parseSbus(){
-    bool failsafe = true;
     if (sbusData[0] == 0x0F && sbusData[24] == 0x00) {
         // perverse little endian-ish packet structure-- low bits come in first byte, remaining high bits
         // in next byte
@@ -132,16 +143,6 @@ static bool parseSbus(){
 #define MANUAL_SELF_RIGHT_RIGHT_THRESHOLD 1500
 
 #define DANGER_MODE_THRESHOLD 1500
-
-uint16_t getRcBitfield() {
-    return bitfield;
-}
-
-uint16_t getRcBitfieldChanges() {
-    uint16_t changes = bitfield ^ last_bitfield;
-    last_bitfield = bitfield;
-    return changes;
-}
 
 static uint16_t computeRCBitfield() {
   bitfield = 0;
@@ -191,9 +192,29 @@ static uint16_t computeRCBitfield() {
   return bitfield;
 }
 
+uint16_t getRcBitfield() {
+    uint16_t bits;
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        bits = bitfield;
+    }
+    return bits;
+}
+
+uint16_t getRcBitfieldChanges() {
+    uint16_t changes;
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        changes = bitfield ^ last_bitfield;
+        last_bitfield = bitfield;
+    }
+    return changes;
+}
+
 // WARNING - this function assumes that you have successfully received an SBUS packet!
 uint16_t getHammerIntensity(){
-  uint16_t channel_val = sbusChannels[INTENSITY];
+  uint16_t channel_val;
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      channel_val = sbusChannels[INTENSITY];
+  }
   if (channel_val < 172) { channel_val = 172; } else if (channel_val > 1811) { channel_val = 1811; }
   // Taranis throttle has been tuned for linearity, 9 steps on throttle lines. intensity is 0-based, 0-8.
   uint16_t intensity = (channel_val - 172 + 102) / 205;
@@ -202,7 +223,10 @@ uint16_t getHammerIntensity(){
 
 // 300-908, 600 mm neutral
 uint16_t getRange() {
-  uint16_t channel_val = sbusChannels[RANGE];
+  uint16_t channel_val;
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      channel_val = sbusChannels[RANGE];
+  }
   if (channel_val < 172) { channel_val = 172; } else if (channel_val > 1811) { channel_val = 1811; }
   uint16_t range = (channel_val - 172) * 15 / 28 + 300;
   return range;
