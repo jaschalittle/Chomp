@@ -228,7 +228,7 @@ TELEMETRY CHOMP AUTOF LITTLE_ENDIAN "Autofire"
 
 COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
     APPEND_ID_PARAMETER CMDID 8 UINT 10 10 10 "Command ID which must be 10"
-    APPEND_PARAMETER SPERIOD 32 UINT 10000 30000000 50000 "Interval between small telemetry transmissions"
+    APPEND_PARAMETER SPERIOD 32 UINT 10000 30000000 100000 "Interval between small telemetry transmissions"
         UNITS "microseconds" "us"
     APPEND_PARAMETER LPERIOD 32 UINT 10000 30000000 100000 "Interval between LEDDAR telemetry transmissions"
         UNITS "microseconds" "us"

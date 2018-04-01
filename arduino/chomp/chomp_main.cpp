@@ -66,7 +66,7 @@ extern uint16_t leddar_crc_error;
 extern uint16_t sbus_overrun;
 extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
 
-uint32_t telemetry_interval=50000L;
+uint32_t telemetry_interval=100000L;
 uint32_t leddar_telemetry_interval=100000L;
 uint32_t sensor_period=5000L;
 uint32_t drive_telem_interval=20000L;
