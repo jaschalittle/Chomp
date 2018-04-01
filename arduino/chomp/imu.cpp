@@ -131,3 +131,7 @@ bool getOmegaZ(int16_t *omega_z) {
     }
     return imu_read_valid;
 }
+
+void setIMUParameters(int8_t dlpf) {
+    IMU.setDLPFMode(dlpf);
+}

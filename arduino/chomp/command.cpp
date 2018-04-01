@@ -4,6 +4,7 @@
 #include "targeting.h"
 #include "autodrive.h"
 #include "autofire.h"
+#include "imu.h"
 
 #define MAXIMUM_COMMAND_LENGTH 64
 enum Commands {
@@ -11,7 +12,8 @@ enum Commands {
     CMD_ID_TRKFLT = 11,
     CMD_ID_OBJSEG = 12,
     CMD_ID_AF = 13,
-    CMD_ID_ADRV = 14
+    CMD_ID_ADRV = 14,
+    CMD_ID_IMUP = 15
 };
 
 extern uint32_t telemetry_interval;
@@ -78,6 +80,11 @@ struct TrackingFilterInner {
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_TRKFLT, TrackingFilterInner> TrackingFilterCommand;
 
+struct IMUParameterInner {
+    int8_t dlpf;
+} __attribute__((packed));
+typedef CommandPacket<CMD_ID_IMUP, IMUParameterInner> IMUParameterCommand;
+
 
 static uint8_t command_buffer[MAXIMUM_COMMAND_LENGTH];
 static size_t command_length=0;
@@ -112,6 +119,7 @@ void handle_commands(void) {
   ObjectSegmentationCommand *objseg_cmd;
   AutoFireCommand *af_cmd;
   AutoDriveCommand *adrv_cmd;
+  IMUParameterCommand *imup_cmd;
   if(command_ready) {
       last_command = command_buffer[0];
       switch(last_command) {
@@ -158,6 +166,11 @@ void handle_commands(void) {
                                     adrv_cmd->inner.drive_p,
                                     adrv_cmd->inner.drive_d,
                                     adrv_cmd->inner.drive_max);
+              valid_command++;
+              break;
+          case CMD_ID_IMUP:
+              imup_cmd = (IMUParameterCommand *)command_buffer;
+              setIMUParameters(imup_cmd->inner.dlpf);
               valid_command++;
               break;
           default:

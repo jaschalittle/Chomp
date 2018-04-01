@@ -18,3 +18,4 @@ void telemetryIMU(void);
 bool isStationary(void);
 bool getOmegaZ(int16_t *omega_z);
 enum Orientation getOrientation(void);
+void setIMUParameters(int8_t dlpf);
