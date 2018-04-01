@@ -256,8 +256,8 @@ static void electricHammerMove(RCBitfield control, int16_t speed){
     String movecmd = startElectricHammerMove(speed);
     uint32_t inter_sbus_time = micros();
     while ((micros() - inter_sbus_time) < 30000UL) {
-        bool radio_working = processSbusData();
-        if (radio_working) {
+        bool working = sbusGood();
+        if (working) {
             wdt_reset();
             uint16_t current_rc_bitfield = getRcBitfield();
             if (!(current_rc_bitfield & control)){

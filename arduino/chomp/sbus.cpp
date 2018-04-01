@@ -33,7 +33,7 @@ static void setWeaponsEnabled(bool state)
     }
 }
 
-bool processSbusData(void) {
+bool sbusGood(void) {
     bool ready = bufferSbusData();
     bool fail = false;
     if(ready) {
@@ -44,11 +44,11 @@ bool processSbusData(void) {
         }
     }
     bool timeout = (micros() - last_parse_time) > radio_lost_timeout;
-    bool radio_working = !(fail || timeout);
-    if(!radio_working) {
+    bool working = !(fail || timeout);
+    if(!working) {
         setWeaponsEnabled(false);
     }
-    return radio_working;
+    return working;
 }
 
 uint16_t sbus_overrun = 0;

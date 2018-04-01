@@ -36,7 +36,7 @@ enum RCBitfield {
 
 void SBusInit(void);
 
-bool processSbusData(void);
+bool sbusGood(void);
 
 uint16_t getHammerIntensity();
 

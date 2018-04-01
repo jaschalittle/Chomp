@@ -82,8 +82,8 @@ void chompLoop() {
     }
 
     // check for data from weapons radio
-    bool radio_working = processSbusData();
-    if (radio_working) {
+    bool working = sbusGood();
+    if (working) {
         wdt_reset();
     }
     uint16_t current_rc_bitfield = getRcBitfield();
