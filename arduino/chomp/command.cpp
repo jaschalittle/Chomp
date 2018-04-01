@@ -148,6 +148,7 @@ void handle_commands(void) {
                                       objseg_cmd->inner.min_object_size,
                                       objseg_cmd->inner.max_object_size,
                                       objseg_cmd->inner.edge_call_threshold);
+              valid_command++;
               break;
           case CMD_ID_AF:
               af_cmd = (AutoFireCommand *)command_buffer;
