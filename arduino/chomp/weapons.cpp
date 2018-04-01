@@ -58,7 +58,8 @@ void retract( bool check_velocity ){
         retract_time = micros();
         String movecmd = startElectricHammerMove(1000);
         while (micros() - retract_time < RETRACT_TIMEOUT && angle > RETRACT_COMPLETE_ANGLE) {
-            bool working = sbusGood();
+            // process sbus data and check if weaponsEnabled has changed state
+            sbusGood();
             sensor_read_time = micros();
             readAngle(&angle);
             // Ensure that loop step takes 1 ms or more (without this it takes quite a bit less)
