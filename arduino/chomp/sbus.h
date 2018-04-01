@@ -1,7 +1,4 @@
-#ifndef RC_H
-#define RC_H
-
-#include "pins.h"
+#pragma once
 
 enum SBUSChannels {
     WEAPONS_ENABLE = 0,
@@ -37,25 +34,15 @@ enum RCBitfield {
     WEAPONS_ENABLE_BIT = 32768
 };
 
-void rcInit();
+void SBusInit(void);
 
 bool processSbusData(void);
-
-bool newRc();
-
-int16_t getLeftRc();
-
-int16_t getRightRc();
-
-bool getTargetingEnable();
 
 uint16_t getHammerIntensity();
 
 uint16_t getRange();
-int16_t getDriveDistance();
 
 uint16_t getRcBitfield();
-uint16_t getRcBitfieldChanges();
-void safeState();
 
-#endif // RC_H
+uint16_t getRcBitfieldChanges();
+

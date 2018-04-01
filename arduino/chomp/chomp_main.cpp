@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "chomp_main.h"
-#include "rc.h"
+#include "rc_pwm.h"
+#include "sbus.h"
 #include "leddar_io.h"
 #include "sensors.h"
 #include "xbee.h"
@@ -40,6 +41,7 @@ void chompSetup() {
     wdt_enable(WDTO_4S);
     xbeeInit();
     rcInit();
+    SBusInit();
     driveSetup();
     leddarWrapperInit();
     sensorSetup();

@@ -1,6 +1,6 @@
 #ifndef WEAPONS_H
 #define WEAPONS_H
-#include "rc.h"
+#include "sbus.h"
 
 #define RELATIVE_TO_FORWARD 221  // offset of axle anfle from 180 when hammer forward on floor. actual angle read 221
 #define RELATIVE_TO_VERTICAL 32  // offset of axle angle from 90 when hammer arms vertical. actual angle read 122

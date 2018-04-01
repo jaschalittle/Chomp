@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "weapons.h"
-#include "rc.h"
+#include "rc_pwm.h"
 #include "sensors.h"
 #include "pins.h"
 #include "utils.h"
