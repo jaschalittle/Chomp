@@ -102,6 +102,38 @@
           <Node Text="MiniCAN Send Rate (ms)" Value="100">
             <Nodes />
           </Node>
+          <Node Text="CANOpen TPDO Send Rate">
+            <Nodes>
+              <Node Text="TPDO 1 Send Rate (ms)" Value="0">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 2 Send Rate (ms)" Value="0">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 3 Send Rate (ms)" Value="0">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 4 Send Rate (ms)" Value="0">
+                <Nodes />
+              </Node>
+            </Nodes>
+          </Node>
+          <Node Text="CANOpen Transmission Type">
+            <Nodes>
+              <Node Text="TPDO 1 Transmission Type" Value="255">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 2 Transmission Type" Value="255">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 3 Transmission Type" Value="255">
+                <Nodes />
+              </Node>
+              <Node Text="TPDO 4 Transmission Type" Value="255">
+                <Nodes />
+              </Node>
+            </Nodes>
+          </Node>
           <Node Text="CANOpen Autostart" Value="0">
             <Nodes />
           </Node>
@@ -592,6 +624,9 @@
               <Node Text="Over Voltage Limit (V)" Value="600">
                 <Nodes />
               </Node>
+              <Node Text="Over Voltage Hysteresis (V)" Value="50">
+                <Nodes />
+              </Node>
               <Node Text="Under Voltage Limit (V)" Value="420">
                 <Nodes />
               </Node>
@@ -607,10 +642,13 @@
       </Node>
       <Node Text="Motor Configuration">
         <Nodes>
+          <Node Text="Motor Direction" Value="0">
+            <Nodes />
+          </Node>
           <Node Text="Number of Pole Pairs" Value="2">
             <Nodes />
           </Node>
-          <Node Text="Closed Loop Feedback Sensor" Value="0">
+          <Node Text="Closed Loop Feedback Sensor" Value="1">
             <Nodes />
           </Node>
           <Node Text="Stall Detection" Value="2">
@@ -640,6 +678,9 @@
           </Node>
           <Node Text="Sinusoidal Settings">
             <Nodes>
+              <Node Text="Swap Windings" Value="0">
+                <Nodes />
+              </Node>
               <Node Text="Sinusoidal Angle Sensor" Value="0">
                 <Nodes />
               </Node>
@@ -686,18 +727,18 @@
           </Node>
           <Node Text="Speed &amp;amp; Acceleration">
             <Nodes>
-              <Node Text="Max Speed (RPM)" Value="1000">
+              <Node Text="Max Speed (RPM)" Value="9000">
                 <Nodes />
               </Node>
-              <Node Text="Acceleration (RPM/s)" Value="20000">
+              <Node Text="Acceleration (RPM/s)" Value="500000">
                 <Nodes />
               </Node>
-              <Node Text="Decceleration (RPM/s)" Value="20000">
+              <Node Text="Decceleration (RPM/s)" Value="500000">
                 <Nodes />
               </Node>
             </Nodes>
           </Node>
-          <Node Text="Operating Mode" Value="0">
+          <Node Text="Operating Mode" Value="1">
             <Nodes />
           </Node>
           <Node Text="Closed Loop Parameters">
@@ -705,13 +746,13 @@
               <Node Text="Position Mode Velocity (RPM)" Value="1000">
                 <Nodes />
               </Node>
-              <Node Text="Position Turns Min to Max" Value="10000">
+              <Node Text="Position Turns Min to Max" Value="333333">
                 <Nodes />
               </Node>
-              <Node Text="Proportional Gain" Value="20">
+              <Node Text="Proportional Gain" Value="0">
                 <Nodes />
               </Node>
-              <Node Text="Integral Gain" Value="20">
+              <Node Text="Integral Gain" Value="2">
                 <Nodes />
               </Node>
               <Node Text="Differential Gain" Value="0">
@@ -720,7 +761,7 @@
               <Node Text="Integrator Limit (%)" Value="100">
                 <Nodes />
               </Node>
-              <Node Text="Loop Error Detection" Value="2">
+              <Node Text="Loop Error Detection" Value="3">
                 <Nodes />
               </Node>
             </Nodes>
