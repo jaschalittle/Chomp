@@ -5,13 +5,13 @@
 #include "telem.h"
 
 
-static int32_t steer_p = 512;
+static int32_t steer_p = 3500;
 static int32_t steer_d = 0;
-static int32_t steer_max = 500;
+static int32_t steer_max = 400;
 static int32_t gyro_gain = 0;
-static int32_t drive_p = 256;
+static int32_t drive_p = 400;
 static int32_t drive_d = 0;
-static int32_t drive_max = 500;
+static int32_t drive_max = 700;
 static uint32_t autodrive_telem_interval = 10000;
 static uint32_t last_autodrive_telem = 0;
 

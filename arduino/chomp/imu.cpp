@@ -38,7 +38,7 @@ void initializeIMU(void) {
     debug_print(String("IMU.getDeviceID() = ") + IMU.getDeviceID());
     IMU.setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
     IMU.setFullScaleAccelRange(MPU6050_ACCEL_FS_16);
-    IMU.setDLPFMode(MPU6050_DLPF_BW_5);
+    IMU.setDLPFMode(MPU6050_DLPF_BW_20);
     last_imu_process = micros();
 }
 
