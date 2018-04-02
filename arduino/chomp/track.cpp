@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "track.h"
+#include "utils.h"
 
 Track::Track() :
         x(0), vx(0),
@@ -51,14 +52,14 @@ void Track::project(int32_t dt, int32_t dtheta, int32_t *px, int32_t *py) const 
     // x = x + dt*vx/1e6 - (x*dtheta*dtheta/2048/2 - y*dtheta)/2048
     int32_t lx=*px;
     int32_t ly=*py;
-    *px = lx + ((dt/1000)*vx)/1000 - (lx*dtheta*dtheta/4096L - ly*dtheta)/2048L;
+    *px = lx + ((dt/1000)*vx)/1000 - ((lx*dtheta/1024L)*dtheta/4L - ly*dtheta)/2048L;
     // y = y + dt*vy/1e6 + r*(sin(theta-dtheta) - sin(theta));
     // y = y + dt*vy/1e6 + r*(sin(theta)*cos(dtheta) - cos(theta)*sin(dtheta) - sin(theta));
     // y = y + dt*vy/1e6 + r*((y/r)*cos(dtheta) - (x/r)*sin(dtheta) - (y/r));
     // y = y + dt*vy/1e6 + (y*cos(dtheta) - x*sin(dtheta) - y);
     // y = y + dt*vy/1e6 + (y*(cos(dtheta)-1) - x*sin(dtheta));
     // y = y + dt*vy/1e6 - (y*(dtheta*dtheta/2048/2) + x*dtheta)/2048;
-    *py = ly + ((dt/1000)*vy)/1000 - (ly*dtheta*dtheta/4096L + lx*dtheta)/2048L;
+    *py = ly + ((dt/1000)*vy)/1000 - ((ly*dtheta/1024L)*dtheta/4L + lx*dtheta)/2048L;
 }
 
 int32_t Track::predict(uint32_t now, int16_t omegaZ) {
@@ -95,7 +96,9 @@ void Track::update(const Object& best_match, int16_t omegaZ) {
         x += alpha*rx/32767;
         y += alpha*ry/32767;
         vx += beta*rx/4096;
+        vx = clip(vx, -10000L*16, 10000L*16);
         vy += beta*ry/4096;
+        vy = clip(vy, -10000L*16, 10000L*16);
     }
     num_updates++;
     last_update = best_match.Time;
