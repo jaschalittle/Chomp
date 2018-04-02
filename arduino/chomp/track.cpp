@@ -116,9 +116,20 @@ bool Track::valid(uint32_t now) const {
     return recent_update(micros()) && (num_updates>min_num_updates);
 }
 
-int16_t Track::angle(void) const {
+int32_t Track::angle(void) const {
     if(valid(micros())) {
-        return (y/x - (((((y*y)/x)*y)/x)/x)/3L)*2048L;
+        // arctan(y/x)
+        return ((y*2048L)/x - ((((((y*(y/16L))/x)*y)/x)*2048L)/x)*16L/3L);
+    } else {
+        return 0;
+    }
+}
+
+int32_t Track::vtheta(void) const {
+    if(valid(micros())) {
+        // d/dt arctan(y/x) = (1/(1+(y/x)**2))*(vy/x - y*vx/x**2)
+        // (vy*x-vx*y)/(x**2+y**2)
+        return vy*2048/x; // (vy*x - vx*y)*128L/(x*x/16L + y*y/16L);
     } else {
         return 0;
     }

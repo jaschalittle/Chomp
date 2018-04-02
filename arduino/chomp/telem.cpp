@@ -345,3 +345,22 @@ bool sendCommandAcknowledge(uint8_t command, uint16_t valid, uint16_t invalid) {
     tlm.inner.invalid = invalid;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
+
+
+struct AutodriveTelemetryInner {
+    int16_t steer_bias;
+    int16_t drive_bias;
+    int16_t theta;
+    int16_t vtheta;
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_ADRV, AutodriveTelemetryInner> ADRVTelemetry;
+bool sendAutodriveTelemetry(int16_t steer_bias, int16_t drive_bias, int16_t theta, int16_t vtheta) {
+    CHECK_ENABLED(TLM_ID_ADRV);
+    ADRVTelemetry tlm;
+    tlm.inner.steer_bias = steer_bias;
+    tlm.inner.drive_bias = drive_bias;
+    tlm.inner.theta = theta;
+    tlm.inner.vtheta = vtheta;
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+

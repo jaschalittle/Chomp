@@ -10,7 +10,7 @@ enum TelemetryPacketId {
     TLM_ID_TRK=4,
     TLM_ID_AF=5,
     TLM_ID_ACK=6,
-    // =7,
+    TLM_ID_ADRV=7,
     TLM_ID_DRV=8,
     // =9,
     TLM_ID_SNS=10,
@@ -68,4 +68,5 @@ bool sendTrackingTelemetry(int16_t detection_x,
                            int32_t filtered_vy);
 bool sendAutofireTelemetry(enum AutofireState st, int32_t swing, int32_t x, int32_t y);
 bool sendCommandAcknowledge(uint8_t cmdid, uint16_t valid_commands, uint16_t invalid_commands);
+bool sendAutodriveTelemetry(int16_t steer_bias, int16_t drive_bias, int16_t theta, int16_t vtheta);
 #endif //TELEM_H
