@@ -41,11 +41,11 @@ bool pidSteer(const Track &tracked_object,
         int32_t bias;
         int32_t theta = tracked_object.angle();
         int32_t vtheta = tracked_object.vtheta();
-        bias  = -steer_p * theta/16384L;
-        bias += -steer_d * vtheta/16384L;
+        bias  = steer_p * theta/16384L;
+        bias += steer_d * vtheta/16384L;
         int16_t omegaZ = 0;
         if(getOmegaZ(&omegaZ)) {
-            bias += gyro_gain*omegaZ/1024;
+            bias += -gyro_gain*omegaZ/1024;
         }
         *steer_bias  = clip(bias, -steer_max, steer_max);
 

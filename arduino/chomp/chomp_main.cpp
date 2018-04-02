@@ -56,7 +56,7 @@ static uint32_t last_telem_time = micros();
 static uint32_t last_drive_telem_time = micros();
 static uint32_t last_leddar_telem_time = micros();
 static uint32_t last_sensor_time = micros();
-static int16_t steer_bias = 0; // positive turns right, negative turns left
+static int16_t steer_bias = 0; // positive turns left, negative turns right
 static int16_t drive_bias = 0;
 static bool new_autodrive = false;
 static enum AutofireState autofire = AF_NO_TARGET;
@@ -191,8 +191,8 @@ void chompLoop() {
     // check for autodrive
     if(new_autodrive || new_rc) {
         if(targeting_enabled) {
-            left_drive_value += -steer_bias - drive_bias;
-            right_drive_value += -steer_bias + drive_bias;
+            left_drive_value += steer_bias - drive_bias;
+            right_drive_value += steer_bias + drive_bias;
             // values passed by reference to capture clamping
             drive(left_drive_value, right_drive_value);
         }
