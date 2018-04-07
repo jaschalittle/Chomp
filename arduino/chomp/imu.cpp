@@ -10,8 +10,8 @@ static const int16_t stable_orientation[NUM_STABLE_ORIENTATIONS][3] = {
     {-2027,     0,   287},  // right
     {    0, -1925,  -614},  // front
     {    0,   205, -2037},  // top
-    { 1966,   409,  -614},  // top right
-    {-1966,   409,  -614},  // top left 
+    {-1966,   409,  -614},  // top right
+    { 1966,   409,  -614},  // top left 
     {  163,  1925,   614},  // tail
 };
 

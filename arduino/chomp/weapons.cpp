@@ -185,7 +185,7 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
             // If we're *not* in autochomp mode, and the hammer is at a funny angle, it probably
             // means we're in a weird spot and maybe want to unstick ourselves with a
             // minimum-intensity danger fire.
-            noAngleFire(/* hammer intensity */1, false);
+            noAngleFire(/* hammer intensity */1, false, /*delay*/ true, /*vent*/ true);
             return;
         }
 
@@ -201,7 +201,7 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
 }
 
 const uint8_t NO_ANGLE_SWING_DURATION = 185; // total estimated time in ms of a swing (to calculate vent time)
-void noAngleFire( uint16_t hammer_intensity, bool flame_pulse){
+void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool wait, bool vent){
     if (weaponsEnabled() && !hammer_in_motion){
         if (flame_pulse){
             flameStart();
@@ -218,15 +218,19 @@ void noAngleFire( uint16_t hammer_intensity, bool flame_pulse){
         safeDigitalWrite(THROW_VALVE_DO, LOW);
 
         // Wait the estimated remaining time in the swing and then vent
-        delay(NO_ANGLE_SWING_DURATION - throw_duration);
-        safeDigitalWrite(VENT_VALVE_DO, LOW);
+        if (vent) {
+            delay(NO_ANGLE_SWING_DURATION - throw_duration);
+            safeDigitalWrite(VENT_VALVE_DO, LOW);
+        }
 
         if (flame_pulse) {
             flameEnd();
         }
         
-        // Stay in this function for the full second to make sure we're not moving, before we allow the user to possibly retract
-        delay( 500 - NO_ANGLE_SWING_DURATION );
+        if (wait) {
+            // Stay in this function for the full second to make sure we're not moving, before we allow the user to possibly retract
+            delay( 500 - NO_ANGLE_SWING_DURATION );
+        }
     }
 }
 

@@ -17,7 +17,7 @@ void retract( bool check_velocity = true );
 
 void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire );
 
-void noAngleFire( uint16_t hammer_intensity, bool flame_pulse);
+void noAngleFire( uint16_t hammer_intensity, bool flame_pulse, bool wait, bool vent);
 
 void gentleFire( RCBitfield control );
 
