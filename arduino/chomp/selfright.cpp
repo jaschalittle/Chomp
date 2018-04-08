@@ -25,12 +25,12 @@ void selfRightRight(){
 }
 
 
-// static void selfRightBoth(){
-//     if (weaponsEnabled()){
-//         safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
-//         safeDigitalWrite(SELF_RIGHT_RIGHT_DO, HIGH);
-//     }
-// }
+void selfRightBoth(){
+     if (weaponsEnabled()){
+         safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
+         safeDigitalWrite(SELF_RIGHT_RIGHT_DO, HIGH);
+     }
+ }
 
 
 void selfRightOff(){
