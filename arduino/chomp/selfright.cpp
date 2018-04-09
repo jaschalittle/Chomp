@@ -25,12 +25,12 @@ void selfRightRight(){
 }
 
 
-// static void selfRightBoth(){
-//     if (weaponsEnabled()){
-//         safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
-//         safeDigitalWrite(SELF_RIGHT_RIGHT_DO, HIGH);
-//     }
-// }
+void selfRightBoth(){
+     if (weaponsEnabled()){
+         safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
+         safeDigitalWrite(SELF_RIGHT_RIGHT_DO, HIGH);
+     }
+ }
 
 
 void selfRightOff(){
@@ -135,9 +135,9 @@ static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
 
 static enum SelfRightState doExtend(const enum SelfRightState state)
 {
-    if(checked_orientation == ORN_LEFT) {
+    if((checked_orientation == ORN_LEFT) || (checked_orientation == ORN_TOP_LEFT)) {
         selfRightLeft();
-    } else if(checked_orientation == ORN_RIGHT) {
+    } else if((checked_orientation == ORN_RIGHT) || (checked_orientation == ORN_TOP_RIGHT)) {
         selfRightRight();
     }
     reorient_start = micros();
@@ -150,13 +150,13 @@ static enum SelfRightState checkOrientation(const enum SelfRightState state)
     enum SelfRightState result = state;
     checked_orientation = getOrientation();
     if((checked_orientation == ORN_LEFT) ||
-       (checked_orientation == ORN_RIGHT)) {
-        if(hammerIsBack()) {
-            result = EXTEND;
-        } else {
-            startHammerForward();
-            result = WAIT_HAMMER_FORWARD;
-        }
+       (checked_orientation == ORN_RIGHT) ||
+       (checked_orientation == ORN_TOP_LEFT) ||
+       (checked_orientation == ORN_TOP_RIGHT)) {
+         //startHammerForward();
+         //result = WAIT_HAMMER_FORWARD;
+         noAngleFire(/*intensity*/ 2, /*flame*/ false, /*delay*/ false, /*vent*/ false);
+         result = EXTEND;
     }
     return result;
 }
@@ -185,10 +185,14 @@ static enum SelfRightState checkUpright(const enum SelfRightState state)
     enum SelfRightState result=state;
     if(getOrientation() == ORN_UPRIGHT) {
         selfRightSafe();
+        // Make sure we're vented
+        safeDigitalWrite(VENT_VALVE_DO, LOW);
         startHammerRetract();
         result = WAIT_HAMMER_RETRACT;
     } else if((micros() - reorient_start) > max_reorient_duration) {
         selfRightSafe();
+        // Make sure we're vented
+        safeDigitalWrite(VENT_VALVE_DO, LOW);
         result = LOCK_OUT;
     }
     return result;
@@ -199,6 +203,8 @@ void autoSelfRight(bool enabled) {
     if(!weaponsEnabled() || !enabled) {
         if(self_right_state != UPRIGHT) {
             selfRightSafe();
+	    // Make sure we're vented
+	    safeDigitalWrite(VENT_VALVE_DO, LOW);
         }
         if(self_right_state == WAIT_HAMMER_FORWARD ||
            self_right_state == WAIT_HAMMER_RETRACT) {

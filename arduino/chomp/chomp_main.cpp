@@ -56,6 +56,10 @@ static uint32_t last_telem_time = micros();
 static uint32_t last_drive_telem_time = micros();
 static uint32_t last_leddar_telem_time = micros();
 static uint32_t last_sensor_time = micros();
+
+static bool selfright_end_needed = false;
+static uint32_t selfright_start_time = 0;
+
 static int16_t steer_bias = 0; // positive turns left, negative turns right
 static int16_t drive_bias = 0;
 static bool new_autodrive = false;
@@ -76,6 +80,12 @@ uint32_t leddar_max_request_period=100000L;
 Track tracked_object;
 
 void chompLoop() {
+    if(selfright_end_needed && (micros() - selfright_start_time > 2000000L)){
+        safeDigitalWrite(VENT_VALVE_DO, LOW);
+        selfRightSafe();
+        selfright_end_needed = false;
+    }
+
     if(micros() - last_sensor_time>sensor_period) {
         readSensors();
         last_sensor_time = micros();
@@ -154,7 +164,7 @@ void chompLoop() {
     // Manual hammer fire
     if( (diff & HAMMER_FIRE_BIT) && (current_rc_bitfield & HAMMER_FIRE_BIT)){
         if (current_rc_bitfield & DANGER_CTRL_BIT){
-          noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
+          noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, /*delay*/ true, /*vent*/ true);
         } else {
           fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/);
         }
@@ -172,15 +182,13 @@ void chompLoop() {
     if( (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
         gentleRetract(GENTLE_HAM_R_BIT);
     }
-    if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
-        selfRightLeft();
-    }
+    
+    // Temporary replacement for fight - do a low-intensity self-right fire instead of piston actuation.
     if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
-        selfRightRight();
-    }
-    if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
-       !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
-        selfRightOff();
+        selfright_start_time = micros();
+        selfright_end_needed = true;
+        noAngleFire(/*intensity*/ 2, /*flame*/ false, /*delay*/ false, /*vent*/ false);
+        selfRightBoth();
     }
 
     // always sent in telemetry, cache values here
