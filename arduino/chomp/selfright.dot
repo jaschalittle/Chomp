@@ -10,6 +10,8 @@ Start -> UPRIGHT;
 Disable [shape="ellipse" label="Weapons or SelfRighting\nDisabled"]
 Disable -> UPRIGHT
 
+HAMMER_RETRACT [label="Retract Hammer\nand bars"]
+
 UPRIGHT -> CHECK_HAMMER_POSITION [label="ORN_LEFT or ORN_RIGHT"
                                   color="green"];
 UPRIGHT -> UPRIGHT [label="right side up"];
@@ -35,11 +37,14 @@ WAIT_UPRIGHT -> GIVE_UP [label="3.0 second time out"
                           color="orange"];
 
 GIVE_UP [label="Retract bar"];
-GIVE_UP -> LOCK_OUT [color="orange"];
+GIVE_UP -> WAIT_LOCKOUT_RETRACT [color="orange"];
+WAIT_LOCKOUT_RETRACT -> LOCK_OUT [color="orange"];
 
-HAMMER_RETRACT -> UPRIGHT [label="hammer retracted"
+HAMMER_RETRACT -> WAIT_RETRACT [label="hammer retracted"
                            color="green"];
-HAMMER_RETRACT -> UPRIGHT [label="2.0 second time out"
+
+WAIT_RETRACT -> UPRIGHT
+HAMMER_RETRACT -> WAIT_RETRACT [label="2.0 second time out"
                            color="red"];
 
 LOCK_OUT -> UPRIGHT [label="right side up"

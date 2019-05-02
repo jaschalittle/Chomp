@@ -9,41 +9,62 @@
 
 extern HardwareSerial& DriveSerial;
 
-void selfRightLeft(){
+void selfRightExtendLeft(){
     if (weaponsEnabled()){
-        safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
-        safeDigitalWrite(SELF_RIGHT_RIGHT_DO, LOW);
+        safeDigitalWrite(SELF_RIGHT_LEFT_EXTEND_DO, HIGH);
+    }
+}
+
+void selfRightRetractLeft(){
+    if(weaponsEnabled()){
+        safeDigitalWrite(SELF_RIGHT_LEFT_RETRACT_DO, HIGH);
     }
 }
 
 
-void selfRightRight(){
+void selfRightExtendRight(){
     if (weaponsEnabled()){
-        safeDigitalWrite(SELF_RIGHT_LEFT_DO, LOW);
-        safeDigitalWrite(SELF_RIGHT_RIGHT_DO, HIGH);
+        safeDigitalWrite(SELF_RIGHT_RIGHT_EXTEND_DO, HIGH);
     }
 }
 
+void selfRightRetractRight(){
+    if (weaponsEnabled()){
+        safeDigitalWrite(SELF_RIGHT_RIGHT_RETRACT_DO, HIGH);
+    }
+}
 
-// static void selfRightBoth(){
-//     if (weaponsEnabled()){
-//         safeDigitalWrite(SELF_RIGHT_LEFT_DO, HIGH);
-//         safeDigitalWrite(SELF_RIGHT_RIGHT_DO, HIGH);
-//     }
-// }
+void selfRightExtendBoth(){
+     if (weaponsEnabled()){
+         safeDigitalWrite(SELF_RIGHT_LEFT_EXTEND_DO, HIGH);
+         safeDigitalWrite(SELF_RIGHT_RIGHT_EXTEND_DO, HIGH);
+     }
+}
 
+void selfRightRetractBoth(){
+     if (weaponsEnabled()){
+         safeDigitalWrite(SELF_RIGHT_LEFT_RETRACT_DO, HIGH);
+         safeDigitalWrite(SELF_RIGHT_RIGHT_RETRACT_DO, HIGH);
+     }
+}
 
 void selfRightOff(){
-    digitalWrite(SELF_RIGHT_LEFT_DO, LOW);
-    digitalWrite(SELF_RIGHT_RIGHT_DO, LOW);
+    digitalWrite(SELF_RIGHT_LEFT_EXTEND_DO, LOW);
+    digitalWrite(SELF_RIGHT_RIGHT_EXTEND_DO, LOW);
+    digitalWrite(SELF_RIGHT_LEFT_RETRACT_DO, LOW);
+    digitalWrite(SELF_RIGHT_RIGHT_RETRACT_DO, LOW);
 }
 
 
 void selfRightSafe(){
-    digitalWrite(SELF_RIGHT_LEFT_DO, LOW);
-    digitalWrite(SELF_RIGHT_RIGHT_DO, LOW);
-    pinMode(SELF_RIGHT_LEFT_DO, OUTPUT);
-    pinMode(SELF_RIGHT_RIGHT_DO, OUTPUT);
+    digitalWrite(SELF_RIGHT_LEFT_EXTEND_DO, LOW);
+    digitalWrite(SELF_RIGHT_RIGHT_EXTEND_DO, LOW);
+    digitalWrite(SELF_RIGHT_LEFT_RETRACT_DO, LOW);
+    digitalWrite(SELF_RIGHT_RIGHT_RETRACT_DO, LOW);
+    pinMode(SELF_RIGHT_LEFT_EXTEND_DO, OUTPUT);
+    pinMode(SELF_RIGHT_RIGHT_EXTEND_DO, OUTPUT);
+    pinMode(SELF_RIGHT_LEFT_RETRACT_DO, OUTPUT);
+    pinMode(SELF_RIGHT_RIGHT_RETRACT_DO, OUTPUT);
 }
 
 
@@ -53,7 +74,9 @@ enum SelfRightState {
     EXTEND,
     LOCK_OUT,
     WAIT_HAMMER_RETRACT,
-    WAIT_UPRIGHT
+    WAIT_UPRIGHT,
+    WAIT_RETRACT,
+    WAIT_LOCKOUT_RETRACT
 };
 
 enum Orientation checked_orientation;
@@ -66,7 +89,9 @@ uint16_t max_hammer_back_angle = 20;
 uint32_t max_hammer_move_duration = 2000000L;
 uint32_t hammer_move_start;
 uint32_t max_reorient_duration = 3000000L;
+uint32_t min_retract_duration = 1000000L;
 uint32_t reorient_start;
+uint32_t retract_start;
 
 
 // state tests
@@ -79,7 +104,7 @@ static bool hammerIsForward() {
 
 static bool hammerIsRetracted(void) {
     return (getAngle() <= RETRACT_COMPLETE_ANGLE);
- }
+}
 
 
 static bool hammerIsBack(void) {
@@ -117,16 +142,15 @@ static void startHammerRetract(void)
     hammer_command = startElectricHammerMove(1000);
 }
 
-
 static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
 {
     enum SelfRightState result = state;
     if(hammerIsRetracted()) {
         stopElectricHammerMove();
-        result = UPRIGHT;
+        result = WAIT_RETRACT;
     } else if((micros() - hammer_move_start)>max_hammer_move_duration) {
         stopElectricHammerMove();
-        result = UPRIGHT;
+        result = WAIT_RETRACT;
     } else {
         DriveSerial.println(hammer_command);
     }
@@ -135,15 +159,14 @@ static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
 
 static enum SelfRightState doExtend(const enum SelfRightState state)
 {
-    if(checked_orientation == ORN_LEFT) {
-        selfRightLeft();
-    } else if(checked_orientation == ORN_RIGHT) {
-        selfRightRight();
+    if((checked_orientation == ORN_LEFT) || (checked_orientation == ORN_TOP_LEFT)) {
+        selfRightExtendLeft();
+    } else if((checked_orientation == ORN_RIGHT) || (checked_orientation == ORN_TOP_RIGHT)) {
+        selfRightExtendRight();
     }
     reorient_start = micros();
     return WAIT_UPRIGHT;
 }
-
 
 static enum SelfRightState checkOrientation(const enum SelfRightState state)
 {
@@ -160,7 +183,6 @@ static enum SelfRightState checkOrientation(const enum SelfRightState state)
     }
     return result;
 }
-
 
 static enum SelfRightState checkHammerForward(const enum SelfRightState state)
 {
@@ -179,21 +201,40 @@ static enum SelfRightState checkHammerForward(const enum SelfRightState state)
     return result;
 }
 
-
 static enum SelfRightState checkUpright(const enum SelfRightState state)
 {
     enum SelfRightState result=state;
     if(getOrientation() == ORN_UPRIGHT) {
-        selfRightSafe();
+        selfRightRetractBoth();
+        retract_start = micros();
+        // Make sure we're vented
+        safeDigitalWrite(VENT_VALVE_DO, LOW);
         startHammerRetract();
         result = WAIT_HAMMER_RETRACT;
     } else if((micros() - reorient_start) > max_reorient_duration) {
-        selfRightSafe();
-        result = LOCK_OUT;
+        selfRightRetractBoth();
+        retract_start = micros();
+        result = WAIT_LOCKOUT_RETRACT;
     }
     return result;
 }
 
+static enum SelfRightState waitMinimumRetract(const enum SelfRightState state)
+{
+    enum SelfRightState result=state;
+    if((micros() - retract_start) > min_retract_duration) {
+        selfRightSafe();
+        if(state == WAIT_RETRACT)
+        {
+            result = UPRIGHT;
+        }
+        else if(state == WAIT_LOCKOUT_RETRACT)
+        {
+            result = LOCK_OUT;
+        }
+    }
+    return result;
+}
 
 void autoSelfRight(bool enabled) {
     if(!weaponsEnabled() || !enabled) {
@@ -227,6 +268,12 @@ void autoSelfRight(bool enabled) {
             break;
         case WAIT_HAMMER_RETRACT:
             self_right_state = checkHammerRetracted(self_right_state);
+            break;
+        case WAIT_RETRACT:
+            self_right_state = waitMinimumRetract(self_right_state);
+            break;
+        case WAIT_LOCKOUT_RETRACT:
+            self_right_state = waitMinimumRetract(self_right_state);
             break;
         default:
             self_right_state = UPRIGHT;
