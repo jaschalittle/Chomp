@@ -18,17 +18,24 @@
 #define DRIVE_DISTANCE_PIN 2       // Drive radio ch6
 #define TARGETING_ENABLE_PIN 3     // Drive radio ch5
 
-#define ENABLE_VALVE_DO 4
-#define VENT_VALVE_DO 5
+#define ENABLE_VALVE_DO 10
+#define VENT_VALVE_DO 11
 
-#define IGNITER_DO 6
-#define PROPANE_DO 7
+#define IGNITER_DO 5
+#define PROPANE_DO A6
 
-#define RETRACT_VALVE_DO 8
-#define THROW_VALVE_DO 9
+#define RETRACT_VALVE_DO A7
+#define THROW_VALVE_DO 4
 
-#define SELF_RIGHT_RIGHT_DO 10
-#define SELF_RIGHT_LEFT_DO 11
+#define SELF_RIGHT_RIGHT_EXTEND_DO 9
+#define SELF_RIGHT_RIGHT_RETRACT_DO 8
+#define SELF_RIGHT_LEFT_EXTEND_DO A10
+#define SELF_RIGHT_LEFT_RETRACT_DO A11
+
+#define VACUUM_VALVE_DO A8
+#define AUX1_2A_DO 6
+#define AUX2_2A_DO 7
+#define AUX3_2A_DO A9
 
 // These are handled as pin change interrupts on the PINB bank
 #define LEFT_RC_PIN 12             // Drive radio ch1
