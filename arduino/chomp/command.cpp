@@ -5,6 +5,7 @@
 #include "autodrive.h"
 #include "autofire.h"
 #include "imu.h"
+#include "selfright.h"
 
 #define MAXIMUM_COMMAND_LENGTH 64
 enum Commands {
@@ -13,7 +14,8 @@ enum Commands {
     CMD_ID_OBJSEG = 12,
     CMD_ID_AF = 13,
     CMD_ID_ADRV = 14,
-    CMD_ID_IMUP = 15
+    CMD_ID_IMUP = 15,
+    CMD_ID_SRT = 16,
 };
 
 extern uint32_t telemetry_interval;
@@ -85,6 +87,16 @@ struct IMUParameterInner {
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_IMUP, IMUParameterInner> IMUParameterCommand;
 
+struct SelfRightCommandInner {
+    uint16_t min_hammer_forward_angle;
+    uint16_t max_hammer_forward_angle;
+    uint16_t min_hammer_back_angle;
+    uint16_t max_hammer_back_angle;
+    uint32_t max_hammer_move_duration;
+    uint32_t max_reorient_duration;
+    uint32_t min_retract_duration;
+};
+typedef CommandPacket<CMD_ID_SRT, SelfRightCommandInner> SelfRightCommand;
 
 static uint8_t command_buffer[MAXIMUM_COMMAND_LENGTH];
 static size_t command_length=0;
@@ -120,6 +132,7 @@ void handle_commands(void) {
   AutoFireCommand *af_cmd;
   AutoDriveCommand *adrv_cmd;
   IMUParameterCommand *imup_cmd;
+  SelfRightCommand *srt_cmd;
   if(command_ready) {
       last_command = command_buffer[0];
       switch(last_command) {
@@ -173,6 +186,18 @@ void handle_commands(void) {
               imup_cmd = (IMUParameterCommand *)command_buffer;
               setIMUParameters(imup_cmd->inner.dlpf);
               valid_command++;
+              break;
+          case CMD_ID_SRT:
+              srt_cmd = (SelfRightCommand *)command_buffer;
+              setSelfRightParameters(
+                      srt_cmd->inner.min_hammer_forward_angle,
+                      srt_cmd->inner.max_hammer_forward_angle,
+                      srt_cmd->inner.min_hammer_back_angle,
+                      srt_cmd->inner.max_hammer_back_angle,
+                      srt_cmd->inner.max_hammer_move_duration,
+                      srt_cmd->inner.max_reorient_duration,
+                      srt_cmd->inner.min_retract_duration
+                      );
               break;
           default:
               invalid_command++;

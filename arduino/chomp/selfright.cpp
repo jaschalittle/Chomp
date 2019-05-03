@@ -87,11 +87,30 @@ uint16_t max_hammer_forward_angle = 252;
 uint16_t min_hammer_back_angle = 10;
 uint16_t max_hammer_back_angle = 20;
 uint32_t max_hammer_move_duration = 2000000L;
-uint32_t hammer_move_start;
 uint32_t max_reorient_duration = 3000000L;
 uint32_t min_retract_duration = 1000000L;
+uint32_t hammer_move_start;
 uint32_t reorient_start;
 uint32_t retract_start;
+
+void setSelfRightParameters(
+        uint16_t p_min_hammer_forward_angle,
+        uint16_t p_max_hammer_forward_angle,
+        uint16_t p_min_hammer_back_angle,
+        uint16_t p_max_hammer_back_angle,
+        uint32_t p_max_hammer_move_duration,
+        uint32_t p_max_reorient_duration,
+        uint32_t p_min_retract_duration
+        )
+{
+     min_hammer_forward_angle = p_min_hammer_forward_angle;
+     max_hammer_forward_angle = p_max_hammer_forward_angle;
+     min_hammer_back_angle = p_min_hammer_back_angle;
+     max_hammer_back_angle = p_max_hammer_back_angle;
+     max_hammer_move_duration = p_max_hammer_move_duration;
+     max_reorient_duration = p_max_reorient_duration;
+     min_retract_duration = p_min_retract_duration;
+ }
 
 
 // state tests
