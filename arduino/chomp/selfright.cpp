@@ -201,19 +201,34 @@ static enum SelfRightState checkHammerForward(const enum SelfRightState state)
     return result;
 }
 
+void startBarRetract(void)
+{
+    if(checked_orientation == ORN_RIGHT)
+    {
+        selfRightRetractRight();
+    }
+    else if(checked_orientation == ORN_LEFT)
+    {
+        selfRightRetractLeft();
+    }
+    else
+    {
+        selfRightRetractBoth();
+    }
+    retract_start = micros();
+}
+
 static enum SelfRightState checkUpright(const enum SelfRightState state)
 {
     enum SelfRightState result=state;
     if(getOrientation() == ORN_UPRIGHT) {
-        selfRightRetractBoth();
-        retract_start = micros();
         // Make sure we're vented
         safeDigitalWrite(VENT_VALVE_DO, LOW);
+        startBarRetract();
         startHammerRetract();
         result = WAIT_HAMMER_RETRACT;
     } else if((micros() - reorient_start) > max_reorient_duration) {
-        selfRightRetractBoth();
-        retract_start = micros();
+        startBarRetract();
         result = WAIT_LOCKOUT_RETRACT;
     }
     return result;
