@@ -72,6 +72,10 @@ uint32_t sensor_period=5000L;
 uint32_t drive_telem_interval=20000L;
 uint32_t leddar_max_request_period=100000L;
 
+uint32_t manual_self_right_retract_start = 0;
+uint32_t manual_self_right_retract_duration = 1000000;
+uint32_t manual_self_right_dead_duration = 250000;
+
 // parameters written in command
 Track tracked_object;
 
@@ -173,14 +177,31 @@ void chompLoop() {
         gentleRetract(GENTLE_HAM_R_BIT);
     }
     if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
-        selfRightLeft();
+        selfRightOff();
+        selfRightExtendLeft();
+        manual_self_right_retract_start = 0;
     }
     if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
-        selfRightRight();
+        selfRightOff();
+        selfRightExtendRight();
+        manual_self_right_retract_start = 0;
     }
     if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
        !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
         selfRightOff();
+        manual_self_right_retract_start = micros() | 1;
+    }
+    if(manual_self_right_retract_start > 0)
+    {
+        if(micros() - manual_self_right_retract_start > manual_self_right_retract_duration)
+        {
+            selfRightOff();
+            manual_self_right_retract_start = 0;
+        }
+        else if(micros() - manual_self_right_retract_start > manual_self_right_dead_duration)
+        {
+            selfRightRetractBoth();
+        }
     }
 
     // always sent in telemetry, cache values here
