@@ -1,6 +1,10 @@
 void selfRightSafe();
-void selfRightLeft();
-void selfRightRight();
+void selfRightExtendLeft();
+void selfRightExtendRight();
+void selfRightExtendBoth();
+void selfRightRetractLeft();
+void selfRightRetractRight();
+void selfRightRetractBoth();
 void selfRightOff();
 void autoSelfRight(bool enabled);
 void telemetrySelfRight();
