@@ -5,12 +5,19 @@ node [shape="box"];
 LOCK_OUT [shape="octagon"];
 
 Start [shape="circle"];
-Start -> UPRIGHT;
+Start -> Disable;
 
-Disable [shape="ellipse" label="Weapons or SelfRighting\nDisabled"]
-Disable -> UPRIGHT
+W_DISABLE [shape="circle" label="Weapons\nDisabled"];
+W_DISABLE -> Disable;
+SR_DISABLE [shape="circle" label="Self Right\nDisabled"];
+SR_DISABLE -> Disable;
 
-HAMMER_RETRACT [label="Retract Hammer\nand bars"]
+Disable [shape="ellipse" label="Disabled"]
+Disable -> UPRIGHT [label="Weapons and\nSelf Right\nEnabled"]
+
+Disable -> Disable
+
+HAMMER_RETRACT [label="Retract Hammer\nand extended bar"]
 
 UPRIGHT -> CHECK_HAMMER_POSITION [label="ORN_LEFT or ORN_RIGHT"
                                   color="green"];
@@ -36,7 +43,7 @@ WAIT_UPRIGHT -> HAMMER_RETRACT [label="right side up"
 WAIT_UPRIGHT -> GIVE_UP [label="3.0 second time out"
                           color="orange"];
 
-GIVE_UP [label="Retract bar"];
+GIVE_UP [label="Retract\nExtended bar"];
 GIVE_UP -> WAIT_LOCKOUT_RETRACT [color="orange"];
 WAIT_LOCKOUT_RETRACT -> LOCK_OUT [color="orange"];
 
