@@ -60,6 +60,8 @@ bool sendSelfRightTelem(uint8_t state);
 bool sendDriveTelem(int16_t const (&vwheel)[4], int16_t vweapon);
 bool sendTrackingTelemetry(int16_t detection_x,
                            int16_t detection_y,
+                           int32_t detection_angle,
+                           int32_t detection_radius,
                            int32_t filtered_x,
                            int32_t filtered_vx,
                            int32_t filtered_y,

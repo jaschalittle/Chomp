@@ -332,6 +332,8 @@ bool isTimeToSendDriveTelemetry(uint32_t now) {
 struct TrackingTelemetryInner {
     int16_t detection_x;
     int16_t detection_y;
+    int32_t detection_angle;
+    int32_t detection_radius;
     int16_t filtered_x;
     int16_t filtered_vx;
     int16_t filtered_y;
@@ -340,6 +342,8 @@ struct TrackingTelemetryInner {
 typedef TelemetryPacket<TLM_ID_TRK, TrackingTelemetryInner> TRKTelemetry;
 bool sendTrackingTelemetry(int16_t detection_x,
                            int16_t detection_y,
+                           int32_t detection_angle,
+                           int32_t detection_radius,
                            int32_t filtered_x,
                            int32_t filtered_vx,
                            int32_t filtered_y,
@@ -348,6 +352,8 @@ bool sendTrackingTelemetry(int16_t detection_x,
     TRKTelemetry tlm;
     tlm.inner.detection_x = detection_x;
     tlm.inner.detection_y = detection_y;
+    tlm.inner.detection_angle = detection_angle;
+    tlm.inner.detection_radius = detection_radius;
     tlm.inner.filtered_x = (int16_t)clip(filtered_x, -32768L, 32767L);
     tlm.inner.filtered_vx = (int16_t)clip(filtered_vx, -32768L, 32767L);
     tlm.inner.filtered_y = (int16_t)clip(filtered_y, -32768L, 32767L);

@@ -58,6 +58,8 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS],
         }
         sendTrackingTelemetry(objects[best_object].xcoord(),
                               objects[best_object].ycoord(),
+                              objects[best_object].angle(),
+                              objects[best_object].radius(),
                               tracked_object.x/16,
                               tracked_object.vx/16,
                               tracked_object.y/16,
@@ -66,6 +68,8 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS],
     } else {
         tracked_object.updateNoObs(micros(), omegaZ);
         sendTrackingTelemetry(0,
+                              0,
+                              0,
                               0,
                               tracked_object.x/16,
                               tracked_object.vx/16,
