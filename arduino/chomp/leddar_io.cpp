@@ -5,8 +5,6 @@
 
 // MAX_DETECTIONS should be <255
 #define MAX_DETECTIONS 50
-#define AMPLITUDE_THRESHOLDING_RANGE 125
-#define LEDDAR_AMPLITUDE_THRESHOLD 50
 
 extern HardwareSerial& LeddarSerial;
 
@@ -141,20 +139,17 @@ uint8_t parseDetections(){
   good_detections = 0;
   // Parse out detection info
   for ( uint16_t i = 0; i < detection_count; i++){
-    uint8_t offset = 3 + 5*i;
-    uint16_t *current = (uint16_t*)(receivedData + offset);
-    uint16_t distance = current[0];
-    uint16_t amplitude = current[1];
+      uint8_t offset = 3 + 5*i;
+      uint16_t *current = (uint16_t*)(receivedData + offset);
+      uint16_t distance = current[0];
+      uint16_t amplitude = current[1];
 
-    // filter near detections that are of insufficient amplitude
-    if (distance > AMPLITUDE_THRESHOLDING_RANGE || amplitude > LEDDAR_AMPLITUDE_THRESHOLD) {
       // flip the segment ID since we're upside down
       uint8_t segment = (LEDDAR_SEGMENTS-1) - (receivedData[offset+4]/LEDDAR_SEGMENTS);
       RawDetections[good_detections].Distance = distance;
       RawDetections[good_detections].Amplitude = amplitude;
       RawDetections[good_detections].Segment = segment;
       good_detections++;
-    }
   }
 
   return good_detections;
