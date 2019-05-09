@@ -31,4 +31,6 @@ void calculateMinimumDetections(size_t good_detections);
 size_t getRawDetections(const Detection **detections);
 size_t getMinimumDetections(const Detection (**detections)[LEDDAR_SEGMENTS]);
 
+void setLeddarParameters(uint16_t min_object_distance);
+ 
 #endif  // LEDDAR_IO_H
