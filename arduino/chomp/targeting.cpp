@@ -96,6 +96,8 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
         if (delta < -object_params.edge_call_threshold) {
             left_edge = i;
             objects[num_objects].SumDistance = 0;
+            objects[num_objects].SumIntensity = 0;
+            objects[num_objects].SumAngleIntensity = 0;
         } else if (delta > object_params.edge_call_threshold) {
             // call object if there is an unmatched left edge
             if (left_edge > right_edge) {
@@ -111,6 +113,8 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
             }
         }
         objects[num_objects].SumDistance += min_detections[i].Distance;
+        objects[num_objects].SumIntensity += min_detections[i].Amplitude;
+        objects[num_objects].SumAngleIntensity += (int32_t) i * min_detections[i].Amplitude;
         last_seg_distance = min_detections[i].Distance;
     }
 

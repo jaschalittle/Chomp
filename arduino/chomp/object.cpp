@@ -18,8 +18,9 @@ int16_t Object::radius(void) const {
 
 // angle in radians scaled by 2048
 int16_t Object::angle(void) const {
-    // 2048*.108/2 = 110.59
-    return -(((LeftEdge + RightEdge) - 16)*111);
+    // 2048*.108 = 221.2
+    // 7.5*221.2 = 1659
+    return SumAngleIntensity * (int32_t)221 / SumIntensity - (int32_t)1659;
 }
 
 

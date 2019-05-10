@@ -3,6 +3,8 @@
 struct Object
 {
     uint16_t SumDistance;
+    int32_t SumIntensity;
+    int32_t SumAngleIntensity;
     int8_t LeftEdge, RightEdge;
     uint32_t Time;
 
