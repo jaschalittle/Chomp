@@ -12,8 +12,8 @@ struct TrackingFilterParameters {
 
 
 struct TrackingFilterParameters EEMEM saved_tracking_params = {
-    .alpha = 10000,
-    .beta = 10000,
+    .alpha = 9000,
+    .beta = 8192,
     .track_lost_dt = 250000,
     .min_num_updates = 3,
     .max_off_track = 1000L*1000L,
