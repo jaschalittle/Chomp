@@ -370,5 +370,6 @@ COMMAND CHOMP SRTP LITTLE_ENDIAN "Self Right Parameters"
 
 COMMAND CHOMP LDDR LITTLE_ENDIAN "LEDDAR Parameters"
     APPEND_ID_PARAMETER CMDID 8 UINT 17 17 17 "Command ID which must be 17"
-    APPEND_PARAMETER MINOD 16 INT 0 100 20 "Detections closer than this are ignored"
+    APPEND_PARAMETER MINDD 16 INT 0 100 20 "Detections closer than this are ignored"
+    APPEND_PARAMETER MAXDD 16 INT 0 1000 600 "Detections farther than this are ignored"
  

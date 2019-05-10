@@ -55,11 +55,13 @@ static const uint8_t CRC_LO[] =
 };
 
 struct LeddarParameters {
-    int16_t min_object_distance;
+    int16_t min_detection_distance;
+    int16_t max_detection_distance;
 } __attribute__((packed));
 
 static struct LeddarParameters EEMEM saved_params = {
-    .min_object_distance = 20,
+    .min_detection_distance = 20,
+    .max_detection_distance = 600,
 };
 
 static struct LeddarParameters params;
@@ -181,7 +183,8 @@ void calculateMinimumDetections(size_t good_detections) {
   for (uint8_t i = 0; i < good_detections; i++) {
     uint8_t segment = RawDetections[i].Segment;
     if (RawDetections[i].Distance < MinimumDetections[segment].Distance &&
-        RawDetections[i].Distance > params.min_object_distance) {
+        RawDetections[i].Distance > params.min_detection_distance &&
+        RawDetections[i].Distance < params.max_detection_distance){
       MinimumDetections[segment] = RawDetections[i];
     }
   }
@@ -192,9 +195,11 @@ size_t getMinimumDetections(const Detection (**detections)[LEDDAR_SEGMENTS]) {
  return LEDDAR_SEGMENTS;
 }
 
-void setLeddarParameters(uint16_t min_object_distance)
+void setLeddarParameters(int16_t min_detection_distance,
+                         int16_t max_detection_distance)
 {
-    params.min_object_distance = min_object_distance;
+    params.min_detection_distance = min_detection_distance;
+    params.max_detection_distance = max_detection_distance;
     saveLeddarParmeters();
 }
 

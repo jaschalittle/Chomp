@@ -96,7 +96,8 @@ struct SelfRightCommandInner {
 typedef CommandPacket<CMD_ID_SRT, SelfRightCommandInner> SelfRightCommand;
 
 struct LeddarCommandInner {
-    uint16_t min_object_distance;
+    uint16_t min_detection_distance;
+    uint16_t max_detection_distance;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_LDDR, LeddarCommandInner> LeddarCommand;
 
@@ -205,7 +206,8 @@ void handle_commands(void) {
               break;
           case CMD_ID_LDDR:
               leddar_cmd = (LeddarCommand *)command_buffer;
-              setLeddarParameters(leddar_cmd->inner.min_object_distance);
+              setLeddarParameters(leddar_cmd->inner.min_detection_distance,
+                                  leddar_cmd->inner.max_detection_distance);
               break;
           default:
               invalid_command++;
