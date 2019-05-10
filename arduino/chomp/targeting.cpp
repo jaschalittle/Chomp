@@ -89,8 +89,9 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
     int16_t right_edge = 0;
     int16_t left_edge = 0;
     uint8_t num_objects = 0;
-    // this currently will not call a more distant object obscured by a nearer object, even if both edges of more distant object are visible
-    for (uint8_t i = 1; i < 16; i++) {
+    // this currently will not call a more distant object obscured by a nearer
+    // object, even if both edges of more distant object are visible
+    for (uint8_t i = 1; i < LEDDAR_SEGMENTS; i++) {
         int16_t delta = (int16_t) min_detections[i].Distance - last_seg_distance;
         if (delta < -object_params.edge_call_threshold) {
             left_edge = i;
@@ -103,7 +104,8 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
                 objects[num_objects].RightEdge = right_edge;
                 objects[num_objects].Time = now;
                 int16_t size = objects[num_objects].size();
-                if(size>object_params.min_object_size && size<object_params.max_object_size) {
+                if(size>object_params.min_object_size &&
+                   size<object_params.max_object_size) {
                     num_objects++;
                 }
             }
@@ -137,7 +139,7 @@ static int8_t selectObject(const Object (&objects)[8], uint8_t num_objects,
     int32_t best_distance;
     uint32_t now = objects[best_match].Time;
     if(tracked_object.recent_update(now)) {
-        // have a track, find the closes detection
+        // have a track, find the closest detection
         best_distance = tracked_object.distanceSq(objects[best_match]);
         for (uint8_t i = 1; i < num_objects; i++) {
             int32_t distance;
