@@ -35,7 +35,7 @@ int16_t Object::ycoord(void) const {
 }
 
 // distance squared in mm
-int32_t Object::distanceSq(const Object &other) const {
+inline int32_t Object::distanceSq(const Object &other) const {
     int32_t r = radius(), ro=other.radius();
     int32_t a = angle(), ao=other.angle();
     // x = radius()*cos(angle());
