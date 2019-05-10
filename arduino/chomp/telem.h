@@ -71,7 +71,7 @@ bool sendTrackingTelemetry(int16_t detection_x,
                            int32_t filtered_vy);
 bool sendAutofireTelemetry(enum AutofireState st, int32_t swing, int32_t x, int32_t y);
 bool sendCommandAcknowledge(uint8_t cmdid, uint16_t valid_commands, uint16_t invalid_commands);
-bool sendAutodriveTelemetry(int16_t steer_bias, int16_t drive_bias, int16_t theta, int16_t vtheta);
+bool sendAutodriveTelemetry(int16_t steer_bias, int16_t drive_bias, int16_t theta, int16_t vtheta, int16_t r, int16_t vr);
 bool isTimeToSendLeddarTelem(uint32_t now);
 bool isTimeToSendTelemetry(uint32_t now);
 bool isTimeToSendDriveTelemetry(uint32_t now);

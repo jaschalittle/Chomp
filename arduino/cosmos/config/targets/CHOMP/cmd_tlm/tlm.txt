@@ -242,6 +242,11 @@ TELEMETRY CHOMP ADRV LITTLE_ENDIAN "Autodrive telemetry"
        POLY_READ_CONVERSION 0.0 0.0280
    APPEND_ITEM VTHETA 16 INT "Computed filter angular velocity"
        POLY_READ_CONVERSION 0.0 0.0280
+   APPEND_ITEM RADIUS 16 INT "Computed filter radius"
+       POLY_READ_CONVERSION 0.0 0.001
+   APPEND_ITEM VRADIUS 16 INT "Computed filter radial velocity"
+       POLY_READ_CONVERSION 0.0 0.001
+
 
 TELEMETRY CHOMP OBJM LITTLE_ENDIAN "Object measured telemetry"
    APPEND_ID_ITEM PKTID 8 UINT 21 "Packet ID which must be 21"

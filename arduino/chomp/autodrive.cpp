@@ -100,7 +100,9 @@ bool pidSteer(const Track &tracked_object,
             sendAutodriveTelemetry(*steer_bias,
                                    *drive_bias,
                                    clip(theta, -32768L, 32767L),
-                                   clip(vtheta, -32768L, 32767L));
+                                   clip(vtheta, -32768L, 32767L),
+                                   clip(tracked_r / 4, -32768L, 32767L),
+                                   clip(tracked_vr / 4, -32768L, 32767L));
         }
     }
     return valid;

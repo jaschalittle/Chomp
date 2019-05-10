@@ -400,15 +400,19 @@ struct AutodriveTelemetryInner {
     int16_t drive_bias;
     int16_t theta;
     int16_t vtheta;
+    int16_t radius;
+    int16_t vradius;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_ADRV, AutodriveTelemetryInner> ADRVTelemetry;
-bool sendAutodriveTelemetry(int16_t steer_bias, int16_t drive_bias, int16_t theta, int16_t vtheta) {
+bool sendAutodriveTelemetry(int16_t steer_bias, int16_t drive_bias, int16_t theta, int16_t vtheta, int16_t r, int16_t vr) {
     CHECK_ENABLED(TLM_ID_ADRV);
     ADRVTelemetry tlm;
     tlm.inner.steer_bias = steer_bias;
     tlm.inner.drive_bias = drive_bias;
     tlm.inner.theta = theta;
     tlm.inner.vtheta = vtheta;
+    tlm.inner.radius = r;
+    tlm.inner.vradius = vr;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 
