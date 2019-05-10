@@ -84,8 +84,6 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
                               Object (&objects)[8]) {
     // call all objects in frame by detecting edges
     int16_t last_seg_distance = min_detections[0].Distance;
-    int16_t min_obj_distance = min_detections[0].Distance;
-    int16_t max_obj_distance = min_detections[0].Distance;
     int16_t right_edge = 0;
     int16_t left_edge = 0;
     uint8_t num_objects = 0;
@@ -94,15 +92,11 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
         int16_t delta = (int16_t) min_detections[i].Distance - last_seg_distance;
         if (delta < -object_params.edge_call_threshold) {
             left_edge = i;
-            min_obj_distance = min_detections[i].Distance;
-            max_obj_distance = min_detections[i].Distance;
             objects[num_objects].SumDistance = 0;
         } else if (delta > object_params.edge_call_threshold) {
             // call object if there is an unmatched left edge
             if (left_edge >= right_edge) {
                 right_edge = i;
-                objects[num_objects].MinDistance = min_obj_distance;
-                objects[num_objects].MaxDistance = max_obj_distance;
                 objects[num_objects].LeftEdge = left_edge;
                 objects[num_objects].RightEdge = right_edge;
                 objects[num_objects].Time = now;
@@ -112,8 +106,6 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
                 }
             }
         }
-        min_obj_distance = min(min_obj_distance, min_detections[i].Distance);
-        max_obj_distance = max(max_obj_distance, min_detections[i].Distance);
         objects[num_objects].SumDistance += min_detections[i].Distance;
         last_seg_distance = min_detections[i].Distance;
     }

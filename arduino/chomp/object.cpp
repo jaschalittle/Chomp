@@ -1,13 +1,13 @@
 #include "object.h"
 // size in mm
-// r = average radius = (min+max)/2
+// r = average radius = sum/(right - left)
 // (pi/180)*LEDDAR_FOV/LEDDAR_SEGMENTS = (pi/180)*99/16 ~ 0.108
 // theta = (left-right)*0.108
-// circumferential size = theta*r = (left-right)*(min+max)*0.108/2
+// circumferential size = theta*r = (left-right)*sum/(right - left)*0.108/2
 // leddar reports ranges in cm, so multiply this expression by 10
 // to get mm
 int16_t Object::size(void) const {
-    return (RightEdge-LeftEdge)*(MaxDistance+MinDistance)/4;
+    return SumDistance/2;
 }
 
 // average radius in mm

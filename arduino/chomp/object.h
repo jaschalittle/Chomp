@@ -2,12 +2,12 @@
 #include <stdint.h>
 struct Object
 {
-    uint16_t MinDistance, MaxDistance, SumDistance;
+    uint16_t SumDistance;
     int8_t LeftEdge, RightEdge;
     uint32_t Time;
 
     // Default constructor
-    Object() : MinDistance(10000), MaxDistance(0), SumDistance(0),
+    Object() : SumDistance(0),
                LeftEdge(0), RightEdge(0),
                Time(0) { }
     int16_t size(void) const;
