@@ -98,7 +98,7 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
             objects[num_objects].SumDistance = 0;
         } else if (delta > object_params.edge_call_threshold) {
             // call object if there is an unmatched left edge
-            if (left_edge >= right_edge) {
+            if (left_edge > right_edge) {
                 right_edge = i;
                 objects[num_objects].LeftEdge = left_edge;
                 objects[num_objects].RightEdge = right_edge;
@@ -112,21 +112,6 @@ static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS]
         }
         objects[num_objects].SumDistance += min_detections[i].Distance;
         last_seg_distance = min_detections[i].Distance;
-    }
-
-    // call object after loop if no matching right edge seen for a left edge-- end of loop can be a right edge. do not call entire FOV an object
-    if ((left_edge > 0 && left_edge > right_edge) ||
-        (left_edge == 0 && right_edge == 0)){
-        right_edge = LEDDAR_SEGMENTS;
-        objects[num_objects].MinDistance = min_obj_distance;
-        objects[num_objects].MaxDistance = max_obj_distance;
-        objects[num_objects].LeftEdge = left_edge;
-        objects[num_objects].RightEdge = right_edge;
-        objects[num_objects].Time = now;
-        int16_t size = objects[num_objects].size();
-        if(size>object_params.min_object_size && size<object_params.max_object_size) {
-            num_objects++;
-        }
     }
 
     return num_objects;
