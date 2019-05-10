@@ -435,3 +435,66 @@ bool isTLMEnabled(uint8_t tlm_id) {
     return IS_TLM_ENABLED(tlm_id);
 }
 
+struct ObjectsCalcuatedInner {
+   uint8_t num_objects;
+   int16_t object_radius[8];
+   int16_t object_angle[8];
+   int16_t object_x[8];
+   int16_t object_y[8];
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_OBJC, ObjectsCalcuatedInner> ObjectsCalculatedTelemetry;
+struct ObjectsMeasuredInner {
+   uint8_t num_objects;
+   uint8_t left_edge[8];
+   uint8_t right_edge[8];
+   int16_t object_sum_distance[8];
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_OBJM, ObjectsMeasuredInner> ObjectsMeasuredTelemetry;
+bool sendObjectsCalculatedTelemetry(uint8_t num_objects, const Object (&objects)[8])
+{
+    CHECK_ENABLED(TLM_ID_OBJC);
+    ObjectsCalculatedTelemetry tlm;
+    tlm.inner.num_objects = num_objects;
+    int i=0;
+    for(; i<num_objects; i++)
+    {
+        tlm.inner.object_radius[i] = objects[i].radius();
+        tlm.inner.object_angle[i] = objects[i].angle();
+        tlm.inner.object_x[i] = objects[i].xcoord();
+        tlm.inner.object_y[i] = objects[i].ycoord();
+    }
+    for(; i<8; i++)
+    {
+        tlm.inner.object_radius[i] = -1;
+        tlm.inner.object_angle[i] = -1;
+        tlm.inner.object_x[i] = -1;
+        tlm.inner.object_y[i] = -1;
+    }
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+bool sendObjectsMeasuredTelemetry(uint8_t num_objects, const Object (&objects)[8])
+{
+    CHECK_ENABLED(TLM_ID_OBJM);
+    ObjectsMeasuredTelemetry tlm;
+    tlm.inner.num_objects = num_objects;
+    int i=0;
+    for(; i<num_objects; i++)
+    {
+        tlm.inner.left_edge[i] = objects[i].LeftEdge;
+        tlm.inner.right_edge[i] = objects[i].RightEdge;
+        tlm.inner.object_sum_distance[i] = objects[i].SumDistance;
+    }
+    for(; i<8; i++)
+    {
+        tlm.inner.left_edge[i] = -1;
+        tlm.inner.right_edge[i] = -1;
+        tlm.inner.object_sum_distance[i] = -1;
+    }
+    return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
+}
+bool sendObjectsTelemetry(uint8_t num_objects, const Object (&objects)[8])
+{
+    return (sendObjectsMeasuredTelemetry(num_objects, objects) +
+            sendObjectsCalculatedTelemetry(num_objects, objects));
+}
+

@@ -2,6 +2,7 @@
 #define TELEM_H
 #include "leddar_io.h"
 #include "autofire.h"
+#include "object.h"
 
 enum TelemetryPacketId {
     TLM_ID_HS=1,
@@ -24,6 +25,8 @@ enum TelemetryPacketId {
     TLM_ID_DMP=18,
     TLM_ID_ORN=19,
     TLM_ID_SRT=20,
+    TLM_ID_OBJM=21,
+    TLM_ID_OBJC=22,
 };
 
 extern uint32_t enabled_telemetry;
@@ -78,4 +81,5 @@ void setTelemetryParams(uint32_t telemetry_interval,
                         uint32_t drive_telem_interval,
                         uint32_t enabled_telemetry);
 bool isTLMEnabled(uint8_t tlm_id);
+bool sendObjectsTelemetry(uint8_t num_objects, const Object (&objects)[8]);
 #endif //TELEM_H

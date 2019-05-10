@@ -45,6 +45,8 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS],
     Object objects[8];
     uint8_t num_objects = segmentObjects(min_detections, now, objects);
 
+    sendObjectsTelemetry(num_objects, objects);
+
     if(num_objects>0) {
         tracked_object.predict(now, omegaZ);
         int32_t best_distance;
