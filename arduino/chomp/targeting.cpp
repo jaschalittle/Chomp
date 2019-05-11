@@ -11,10 +11,6 @@
 #include "utils.h"
 
 
-static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS],
-                              uint32_t now,
-                              Object (&objects)[8]);
-
 static void saveObjectSegmentationParameters();
 
 static int8_t selectObject(const Object (&objects)[8], uint8_t num_objects,
@@ -34,23 +30,18 @@ struct ObjectSegmentationParameters EEMEM saved_object_params = {
     .edge_call_threshold = 60 // cm for edge in leddar returns
 };
 
-void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS],
-                 struct Track& tracked_object) {
+int8_t trackObject(uint32_t now, struct Object (&objects)[8], uint8_t num_objects,
+                    struct Track& tracked_object) {
 
     int16_t omegaZ = 0;
     getOmegaZ(&omegaZ);
 
-    uint32_t now = micros();
 
-    Object objects[8];
-    uint8_t num_objects = segmentObjects(min_detections, now, objects);
-
-    sendObjectsTelemetry(num_objects, objects);
-
+    int8_t best_object = -1;
     if(num_objects>0) {
         tracked_object.predict(now, omegaZ);
         int32_t best_distance;
-        uint8_t best_object = selectObject(objects, num_objects, tracked_object, &best_distance);
+        best_object = selectObject(objects, num_objects, tracked_object, &best_distance);
         uint32_t now = objects[best_object].Time;
 
         if(tracked_object.wants_update(now, best_distance)) {
@@ -58,30 +49,15 @@ void trackObject(const Detection (&min_detections)[LEDDAR_SEGMENTS],
         } else {
            tracked_object.updateNoObs(now, omegaZ);
         }
-        sendTrackingTelemetry(objects[best_object].xcoord(),
-                              objects[best_object].ycoord(),
-                              objects[best_object].angle(),
-                              objects[best_object].radius(),
-                              tracked_object.x/16,
-                              tracked_object.vx/16,
-                              tracked_object.y/16,
-                              tracked_object.vy/16);
     // below is called if no objects called in current Leddar return
     } else {
         tracked_object.updateNoObs(micros(), omegaZ);
-        sendTrackingTelemetry(0,
-                              0,
-                              0,
-                              0,
-                              tracked_object.x/16,
-                              tracked_object.vx/16,
-                              tracked_object.y/16,
-                              tracked_object.vy/16);
     }
+    return best_object;
 }
 
 
-static uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS],
+uint8_t segmentObjects(const Detection (&min_detections)[LEDDAR_SEGMENTS],
                               uint32_t now,
                               Object (&objects)[8]) {
     // call all objects in frame by detecting edges

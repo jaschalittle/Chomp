@@ -105,6 +105,7 @@ void chompLoop() {
     // Check if data is available from the LEDDAR
     if (bufferDetections()){
 
+        uint32_t now = micros();
         // extract detections from LEDDAR packet
         uint8_t raw_detection_count = parseDetections();
 
@@ -116,8 +117,10 @@ void chompLoop() {
         const Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
         getMinimumDetections(&minDetections);
 
-        trackObject(*minDetections, tracked_object);
+        Object objects[8];
+        uint8_t num_objects = segmentObjects(*minDetections, now, objects);
 
+        int8_t best_object = trackObject(now, objects, num_objects, tracked_object);
 
         // auto centering code
         new_autodrive = pidSteer(tracked_object, 
@@ -130,8 +133,25 @@ void chompLoop() {
         }
 
         // Send subsampled leddar telem
-        if (isTimeToSendLeddarTelem(micros())){
+        if (isTimeToSendLeddarTelem(now)){
             sendLeddarTelem(*minDetections, raw_detection_count);
+            sendObjectsTelemetry(num_objects, objects);
+
+            if(best_object > 0)
+            {
+                sendTrackingTelemetry(
+                        objects[best_object].xcoord(), objects[best_object].ycoord(),
+                        objects[best_object].angle(), objects[best_object].radius(),
+                        tracked_object.x/16, tracked_object.vx/16,
+                        tracked_object.y/16, tracked_object.vy/16);
+            }
+            else
+            {
+                sendTrackingTelemetry(
+                        0, 0, 0, 0,
+                        tracked_object.x/16, tracked_object.vx/16,
+                        tracked_object.y/16, tracked_object.vy/16);
+            }
         }
     }
 
