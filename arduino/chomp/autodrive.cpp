@@ -19,14 +19,14 @@ struct DriveControlParams {
 } __attribute__((packed));
 
 static struct DriveControlParams EEMEM saved_params = {
-    .steer_p = 3500,
+    .steer_p = 3000,
     .steer_d = 0,
     .steer_max = 400,
     .gyro_gain = 0,
-    .drive_p = 400,
+    .drive_p = 1000,
     .drive_d = 0,
-    .drive_max = 700,
-    .autodrive_telem_interval = 10000,
+    .drive_max = 400,
+    .autodrive_telem_interval = 50000,
 };
 
 static struct DriveControlParams params;
