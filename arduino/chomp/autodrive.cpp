@@ -21,11 +21,11 @@ struct DriveControlParams {
 static struct DriveControlParams EEMEM saved_params = {
     .steer_p = 3000,
     .steer_d = 0,
-    .steer_max = 400,
+    .steer_max = 600,
     .gyro_gain = 0,
-    .drive_p = 1000,
+    .drive_p = 1500,
     .drive_d = 0,
-    .drive_max = 400,
+    .drive_max = 600,
     .autodrive_telem_interval = 50000,
 };
 
