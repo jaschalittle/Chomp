@@ -9,10 +9,14 @@ TELEMETRY CHOMP PWM LITTLE_ENDIAN "PWM"
     APPEND_ID_ITEM PKTID 8 UINT 16 "Packet ID which must be 18"
     APPEND_ITEM TARGETING_ENABLE 1 UINT "Autosteer"
     APPEND_ITEM PAD0 7 UINT
-    APPEND_ITEM LEFT_RC 16 INT "Right RC"
+    APPEND_ITEM LEFT_USEC 16 INT "Left pulse"
+        UNITS "microseconds" "us"
+    APPEND_ITEM LEFT_RC 16 INT "Left RC"
         UNITS "Percent" "%"
         POLY_READ_CONVERSION 0.0 0.1
-    APPEND_ITEM RIGHT_RC 16 INT "Target Enable"
+    APPEND_ITEM RIGHT_USEC 16 INT "Right pulse"
+        UNITS "microseconds" "us"
+    APPEND_ITEM RIGHT_RC 16 INT "Right RC"
         UNITS "Percent" "%"
         POLY_READ_CONVERSION 0.0 0.1
     APPEND_ITEM DRIVE_DISTANCE 16 INT "Drive Distance"

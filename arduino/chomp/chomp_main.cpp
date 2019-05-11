@@ -263,7 +263,9 @@ void chompLoop() {
         reset_loop_stats();
         int16_t hammer_angle = HAMMER_INTENSITIES_ANGLE[hammer_intensity];
         sendSbusTelem(current_rc_bitfield, hammer_angle, hammer_distance);
-        sendPWMTelem(targeting_enabled, left_drive_value, right_drive_value,
+        int16_t left_micros, right_micros;
+        getRCMicros(&left_micros, &right_micros);
+        sendPWMTelem(targeting_enabled, left_micros, left_drive_value, right_micros, right_drive_value,
                      drive_range);
         telemetryIMU();
         telemetrySelfRight();
