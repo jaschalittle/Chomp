@@ -25,7 +25,7 @@ struct TelemetryParameters {
 static struct TelemetryParameters EEMEM saved_params = {
     .telemetry_interval=100000L,
     .leddar_telemetry_interval=100000L,
-    .drive_telem_interval=20000L,
+    .drive_telem_interval=500000L,
     .enabled_telemetry=(
             _LBV(TLM_ID_SBS)|
             _LBV(TLM_ID_PWM)|
