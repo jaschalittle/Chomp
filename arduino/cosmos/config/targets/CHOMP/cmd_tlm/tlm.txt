@@ -332,6 +332,8 @@ COMMAND CHOMP OBJSEG LITTLE_ENDIAN "Object Segmentation Settings"
         UNITS "centimeters" "cm"
     APPEND_PARAMETER EDGE 16 INT 0 32767 60 "Object edge threshold"
         UNITS "centimeters" "cm"
+    APPEND_PARAMETER PAD 7 INT 0 0 0
+    APPEND_PARAMETER CLOSE 1 INT 0 1 1 "Only inspect closest object"
 
 
 COMMAND CHOMP AF LITTLE_ENDIAN "Auto Fire Settings"

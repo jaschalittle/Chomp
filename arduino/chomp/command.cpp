@@ -44,6 +44,7 @@ struct ObjectSegmentationInner {
     int16_t min_object_size;
     int16_t max_object_size;
     int16_t edge_call_threshold;
+    uint8_t closest_only:1;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_OBJSEG, ObjectSegmentationInner> ObjectSegmentationCommand;
 
@@ -165,7 +166,8 @@ void handle_commands(void) {
               setObjectSegmentationParams(
                                       objseg_cmd->inner.min_object_size,
                                       objseg_cmd->inner.max_object_size,
-                                      objseg_cmd->inner.edge_call_threshold);
+                                      objseg_cmd->inner.edge_call_threshold,
+                                      objseg_cmd->inner.closest_only);
               valid_command++;
               break;
           case CMD_ID_AF:
