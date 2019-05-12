@@ -59,7 +59,7 @@ int8_t trackObject(uint32_t now, struct Object (&objects)[8], uint8_t num_object
         uint32_t now = objects[best_object].Time;
 
         if(tracked_object.wants_update(now, best_distance)) {
-           tracked_object.update(objects[best_object], omegaZ);
+           tracked_object.update(objects[best_object]);
         } else {
            tracked_object.updateNoObs(now, omegaZ);
         }

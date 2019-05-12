@@ -89,7 +89,7 @@ int32_t Track::predict(uint32_t now, int16_t omegaZ) {
     return dt;
 }
 
-void Track::update(const Object& best_match, int16_t omegaZ) {
+void Track::update(const Object& best_match) {
     int32_t mx = best_match.xcoord();
     int32_t my = best_match.ycoord();
     if(!recent_update(best_match.Time)) {
