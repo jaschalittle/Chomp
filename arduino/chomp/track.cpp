@@ -135,7 +135,7 @@ bool Track::wants_update(uint32_t now, int32_t best_distance) {
 }
 
 bool Track::valid(uint32_t now) const {
-    return recent_update(micros()) && (num_updates>min_num_updates);
+    return recent_update(now) && (num_updates>min_num_updates);
 }
 
 int32_t Track::angle(void) const {
