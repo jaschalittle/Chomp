@@ -60,8 +60,6 @@ int8_t trackObject(uint32_t now, struct Object (&objects)[8], uint8_t num_object
 
         if(tracked_object.wants_update(now, best_distance)) {
            tracked_object.update(objects[best_object]);
-        } else {
-           tracked_object.updateNoObs(now, omegaZ);
         }
     // below is called if no objects called in current Leddar return
     } else {
