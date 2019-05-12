@@ -13,7 +13,6 @@ extern DMASerial& Xbee;
 const uint16_t TLM_TERMINATOR=0x6666;
 
 #define CHECK_ENABLED(TLM_ID) if(!(params.enabled_telemetry & _LBV(TLM_ID))) return false;
-#define IS_TLM_ENABLED(TLM_ID) (params.enabled_telemetry & _LBV(TLM_ID))
 
 struct TelemetryParameters {
     uint32_t telemetry_interval;
@@ -326,8 +325,8 @@ bool sendDriveTelem(int16_t const (&vwheel)[4], int16_t vweapon) {
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 bool isTimeToSendDriveTelemetry(uint32_t now) {
+    CHECK_ENABLED(TLM_ID_DRV);
     bool send = now-last_drive_telem_time > params.drive_telem_interval;
-    send &= IS_TLM_ENABLED(TLM_ID_DRV);
     if(send) {
         last_drive_telem_time = now;
     }
@@ -441,7 +440,8 @@ void restoreTelemetryParameters(void) {
 }
 
 bool isTLMEnabled(uint8_t tlm_id) {
-    return IS_TLM_ENABLED(tlm_id);
+    CHECK_ENABLED(tlm_id)
+    return true;
 }
 
 struct ObjectsCalcuatedInner {
