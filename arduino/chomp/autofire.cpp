@@ -15,8 +15,8 @@ static struct AutofireParameters params;
 static uint32_t last_autofire_telem = 0;
 
 static struct AutofireParameters EEMEM saved_params = {
-    .xtol = 200,
-    .ytol=200,
+    .xtol = 200,   // currently unused, front of box is depth
+    .ytol = 200,
     .max_omegaZ = 1787,   // rad/s * 2048 = 50 deg/sec
     .autofire_telem_interval = 100000,
 };
