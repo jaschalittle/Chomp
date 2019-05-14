@@ -137,7 +137,7 @@ void chompLoop() {
             sendLeddarTelem(*minDetections, raw_detection_count);
             sendObjectsTelemetry(num_objects, objects);
 
-            if(best_object > 0)
+            if(num_objects > 0)
             {
                 sendTrackingTelemetry(
                         objects[best_object].xcoord(), objects[best_object].ycoord(),
