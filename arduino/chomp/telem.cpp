@@ -62,6 +62,7 @@ struct SystemTelemetryInner {
     uint16_t command_overrun;
     uint16_t invalid_command;
     uint16_t valid_command;
+    uint32_t system_time;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_SYS, SystemTelemetryInner> SystemTelemetry;
 
@@ -85,6 +86,7 @@ bool sendSystemTelem(uint32_t loop_speed_min, uint32_t loop_speed_avg,
     tlm.inner.command_overrun = command_overrun;
     tlm.inner.invalid_command = invalid_command;
     tlm.inner.valid_command = valid_command;
+    tlm.inner.system_time = millis();
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 
