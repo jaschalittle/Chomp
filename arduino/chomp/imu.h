@@ -1,4 +1,4 @@
-#define NUM_STABLE_ORIENTATIONS 8
+#define NUM_STABLE_ORIENTATIONS 10
 
 enum Orientation {
     ORN_UPRIGHT = 0,
@@ -9,6 +9,8 @@ enum Orientation {
     ORN_TOP_RIGHT = 5,
     ORN_TOP_LEFT = 6,
     ORN_TAIL = 7,
+    ORN_FRL = 8,
+    ORN_FRR = 9,
     ORN_UNKNOWN=NUM_STABLE_ORIENTATIONS
 };
 

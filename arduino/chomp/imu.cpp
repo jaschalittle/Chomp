@@ -16,8 +16,9 @@ static const int16_t stable_orientation[NUM_STABLE_ORIENTATIONS][3] = {
     { 1966,   409,  -614},  // top right
     {-1966,   409,  -614},  // top left 
     {  163,  1925,   614},  // tail
+    { 1530, -1096,  -806},  // front left
+    {-1472, -1278,  -628}   // front right
 };
-
 MPU6050 IMU;
 int16_t acceleration[3], angular_rate[3];
 int16_t temperature;
