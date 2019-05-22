@@ -197,11 +197,15 @@ TELEMETRY CHOMP SRT LITTLE_ENDIAN "Self Righting"
     APPEND_ID_ITEM PKTID 8 UINT 20 "Packet ID which must be 20"
     APPEND_ITEM STATE 8 UINT "Self Right State"
         STATE UPRIGHT       0
-        STATE WAIT_HMR_FWD  1
+        STATE WAIT_HMR_POS  1
         STATE EXTEND        2
         STATE LOCK_OUT      3
         STATE WAIT_HMR_RETR 4
         STATE WAIT_UPRIGHT  5
+        STATE WAIT_VENT     6
+        STATE WAIT_LO_VENT  7
+        STATE WAIT_RETRACT  8
+        STATE WAIT_LO_RET   9
 
 TELEMETRY CHOMP DRV LITTLE_ENDIAN "Drive Telemetry"
     APPEND_ID_ITEM PKTID 8 UINT 8 "Packet ID which must be 8"
@@ -374,13 +378,12 @@ COMMAND CHOMP IMUP LITTLE_ENDIAN "IMU Parameters"
 
 COMMAND CHOMP SRTP LITTLE_ENDIAN "Self Right Parameters"
     APPEND_ID_PARAMETER CMDID 8 UINT 16 16 16 "Command ID which must be 16"
-    APPEND_PARAMETER MINHFA 16 INT 0 360 166 "min hammer forward angle"
-    APPEND_PARAMETER MAXHFA 16 INT 0 360 252 "max hammer forward_angle"
-    APPEND_PARAMETER MINHBA 16 INT 0 360 10 "min hammer back angle"
-    APPEND_PARAMETER MAXHBA 16 INT 0 360 20 "max hammer back angle"
+    APPEND_PARAMETER MINHSRA 16 INT 0 360 30 "min hammer self-right angle"
+    APPEND_PARAMETER MAXHSRA 16 INT 0 360 40 "max hammer self-right angle"
     APPEND_PARAMETER MAXHMD 32 INT 0 30000000 2000000 "max hammer move duration"
     APPEND_PARAMETER MAXROD 32 INT 0 60000000 3000000 "max reorient duration"
     APPEND_PARAMETER MINRETD 32 INT 0 10000000 1000000 "min retract duration"
+    APPEND_PARAMETER MINVNTD 32 INT 0 10000000 1000000 "min vent duration"
 
 COMMAND CHOMP LDDR LITTLE_ENDIAN "LEDDAR Parameters"
     APPEND_ID_PARAMETER CMDID 8 UINT 17 17 17 "Command ID which must be 17"

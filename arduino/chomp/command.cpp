@@ -86,13 +86,12 @@ struct IMUParameterInner {
 typedef CommandPacket<CMD_ID_IMUP, IMUParameterInner> IMUParameterCommand;
 
 struct SelfRightCommandInner {
-    uint16_t min_hammer_forward_angle;
-    uint16_t max_hammer_forward_angle;
-    uint16_t min_hammer_back_angle;
-    uint16_t max_hammer_back_angle;
+    uint16_t min_hammer_self_right_angle;
+    uint16_t max_hammer_self_right_angle;
     uint32_t max_hammer_move_duration;
     uint32_t max_reorient_duration;
     uint32_t min_retract_duration;
+    uint32_t min_vent_duration;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_SRT, SelfRightCommandInner> SelfRightCommand;
 
@@ -197,13 +196,12 @@ void handle_commands(void) {
           case CMD_ID_SRT:
               srt_cmd = (SelfRightCommand *)command_buffer;
               setSelfRightParameters(
-                      srt_cmd->inner.min_hammer_forward_angle,
-                      srt_cmd->inner.max_hammer_forward_angle,
-                      srt_cmd->inner.min_hammer_back_angle,
-                      srt_cmd->inner.max_hammer_back_angle,
+                      srt_cmd->inner.min_hammer_self_right_angle,
+                      srt_cmd->inner.max_hammer_self_right_angle,
                       srt_cmd->inner.max_hammer_move_duration,
                       srt_cmd->inner.max_reorient_duration,
-                      srt_cmd->inner.min_retract_duration
+                      srt_cmd->inner.min_retract_duration,
+                      srt_cmd->inner.min_vent_duration
                       );
               break;
           case CMD_ID_LDDR:
