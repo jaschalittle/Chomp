@@ -222,6 +222,7 @@ static enum SelfRightState checkHammerPositioned(const enum SelfRightState state
                                               params.max_hammer_self_right_angle) ||
               (micros() - hammer_move_start > params.max_hammer_move_duration)) {
         stopElectricHammerMove();
+        safeDigitalWrite(VENT_VALVE_DO, HIGH);
         result = EXTEND;
     } else {
         DriveSerial.println(hammer_command);
@@ -257,6 +258,7 @@ static enum SelfRightState checkUpright(const enum SelfRightState state)
         startHammerRetract();
         result = WAIT_HAMMER_RETRACT;
     } else if((micros() - reorient_start) > params.max_reorient_duration) {
+        safeDigitalWrite(VENT_VALVE_DO, LOW);
         selfRightSafe();
         extend_vent_start = micros();
         result = WAIT_LOCKOUT_VENT;
