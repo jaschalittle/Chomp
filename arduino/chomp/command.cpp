@@ -82,6 +82,12 @@ typedef CommandPacket<CMD_ID_TRKFLT, TrackingFilterInner> TrackingFilterCommand;
 
 struct IMUParameterInner {
     int8_t dlpf;
+    uint32_t imu_period;
+    int32_t stationary_threshold;
+    int32_t min_valid_cross;
+    int32_t max_valid_cross;
+    int16_t x_threshold;
+    int16_t z_threshold;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_IMUP, IMUParameterInner> IMUParameterCommand;
 
@@ -190,7 +196,13 @@ void handle_commands(void) {
               break;
           case CMD_ID_IMUP:
               imup_cmd = (IMUParameterCommand *)command_buffer;
-              setIMUParameters(imup_cmd->inner.dlpf);
+              setIMUParameters(
+                    imup_cmd->inner.dlpf, imup_cmd->inner.imu_period,
+                    imup_cmd->inner.stationary_threshold,
+                    imup_cmd->inner.min_valid_cross,
+                    imup_cmd->inner.max_valid_cross,
+                    imup_cmd->inner.x_threshold,
+                    imup_cmd->inner.z_threshold);
               valid_command++;
               break;
           case CMD_ID_SRT:

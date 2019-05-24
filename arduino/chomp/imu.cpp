@@ -6,34 +6,23 @@
 static void saveIMUParameters(void);
 static void restoreIMUParameters(void);
 
-//TelemetryMessageStream telemetry_stream;
-static const int16_t stable_orientation[NUM_STABLE_ORIENTATIONS][3] = {
-    {    0,     0,  2048},  // upright
-    { 2037,     0,   205},  // left
-    {-2027,     0,   287},  // right
-    {    0, -1925,  -614},  // front
-    {    0,   205, -2037},  // top
-    { 1966,   409,  -614},  // top right
-    {-1966,   409,  -614},  // top left 
-    {  163,  1925,   614},  // tail
-    { 1530, -1096,  -806},  // front left
-    {-1472, -1278,  -628}   // front right
-};
 MPU6050 IMU;
-int16_t acceleration[3], angular_rate[3];
-int16_t temperature;
+static int16_t acceleration[3], angular_rate[3];
+static int16_t temperature;
 uint32_t last_imu_process;
-bool possibly_stationary, stationary, imu_read_valid;
-size_t best_orientation=NUM_STABLE_ORIENTATIONS;
-int32_t best_accum;
-int32_t sum_angular_rate;
+bool stationary, imu_read_valid;
+static enum Orientation best_orientation;
+static int32_t sum_angular_rate;
+static int32_t cross_norm;
 
 struct IMUParameters {
     int8_t dlpf_mode;
     uint32_t imu_period;
     int32_t stationary_threshold;
-    int32_t min_valid_accum;
-    int32_t max_valid_accum;
+    int32_t min_valid_cross;
+    int32_t max_valid_cross;
+    int16_t x_threshold;
+    int16_t z_threshold;
 } __attribute__((packed));
 
 static struct IMUParameters params;
@@ -42,8 +31,10 @@ static struct IMUParameters EEMEM saved_params = {
     .dlpf_mode=MPU6050_DLPF_BW_20,
     .imu_period=100000,
     .stationary_threshold=200,
-    .min_valid_accum = 3800000,
-    .max_valid_accum = 5000000
+    .min_valid_cross = 3800000,
+    .max_valid_cross = 5000000,
+    .x_threshold = 1024,
+    .z_threshold = 1500,
 };
 
 
@@ -62,44 +53,11 @@ void initializeIMU(void) {
 }
 
 
-// State machine to distribute compute over several cycles
-void processIMU(void) {
-    // current orientation value to test
-    // NUM_STABLE_ORIENTATIONS when all have been tested
-    static uint8_t imu_step = NUM_STABLE_ORIENTATIONS;
-    // maximum dot product seen so far
-    static int32_t max_accum = params.min_valid_accum;
-    // corresponding orientation
-    static uint8_t max_orientation = ORN_UNKNOWN;
-
-    // First, check to see if the step is non-zero.
-    // If so, we are in the middle of checking
-    if(imu_step<NUM_STABLE_ORIENTATIONS && possibly_stationary) {
-        // Compute the current dot product
-        int32_t accum = 0;
-        for(uint8_t j=0;j<3;j++) {
-            accum += (((int32_t)acceleration[j])*
-                      ((int32_t)stable_orientation[imu_step][j]));
-        }
-        // If this is a new highest, write it down
-        if(accum>max_accum) {
-            max_accum = accum;
-            max_orientation = imu_step;
-        }
-        // if this was the last one, record the best result
-        if(++imu_step == NUM_STABLE_ORIENTATIONS) {
-            best_accum = max_accum;
-            if(params.min_valid_accum < max_accum && max_accum<params.max_valid_accum) {
-                best_orientation = max_orientation;
-                stationary = true;
-            } else {
-                best_orientation = ORN_UNKNOWN;
-                stationary = false;
-            }
-        }
-    }
+static bool  maybeReadIMU(void)
+{
     // if enough time has passed, read the IMU
     uint32_t now = micros();
+    bool possibly_stationary = false;
     if(now-last_imu_process > params.imu_period) {
         last_imu_process = now;
         uint8_t imu_err = IMU.getMotion6(
@@ -109,7 +67,7 @@ void processIMU(void) {
             imu_read_valid = false;
             stationary = false;
             best_orientation = ORN_UNKNOWN;
-            return;
+            return false;
         }
         imu_read_valid = true;
         temperature = IMU.getTemperature();
@@ -121,21 +79,56 @@ void processIMU(void) {
         // if possibly stationary, trigger a new orientation calculation
         // on the next call
         if(possibly_stationary) {
-            imu_step = 0;
-            max_accum = params.min_valid_accum;
-            max_orientation = ORN_UNKNOWN;
+            best_orientation = ORN_UNKNOWN;
         } else {
             // if not stationary, refuse to guess
             best_orientation = ORN_UNKNOWN;
             stationary = false;
         }
     }
+    return possibly_stationary;
 }
 
 
+// State machine to distribute compute over several cycles
+void processIMU(void) {
+    if(maybeReadIMU()) {
+        // Compute cross product with Zhat
+        // a = measured
+        // b = [0, 0, 1]
+        // cx = ay*bz - az*by
+        // cy = az*bx - ax*bz
+        // cz = ax*by - ay*bx
+        int32_t cross_x =  acceleration[1]; // *1g = *2048/2048
+        int32_t cross_y = -acceleration[0];
+        cross_norm = cross_x * cross_x + cross_y * cross_y;
+        if((params.min_valid_cross < cross_norm) &&
+           (cross_norm<params.max_valid_cross)) {
+            if(acceleration[0] > params.x_threshold)
+            {
+                best_orientation = ORN_LEFT;
+                stationary = true;
+            }
+            else if(acceleration[0] < -params.x_threshold)
+            {
+                best_orientation = ORN_RIGHT;
+                stationary = true;
+            }
+        }
+        else if(params.z_threshold < acceleration[2])
+        {
+            best_orientation = ORN_UPRIGHT;
+            stationary = true;
+        } else {
+            best_orientation = ORN_UNKNOWN;
+            stationary = false;
+        }
+    }
+}
+
 void telemetryIMU(void) {
     sendIMUTelem(acceleration, angular_rate, temperature);
-    sendORNTelem(stationary, best_orientation, best_accum, sum_angular_rate);
+    sendORNTelem(stationary, best_orientation, sum_angular_rate, cross_norm);
 }
 
 
@@ -151,9 +144,19 @@ bool getOmegaZ(int16_t *omega_z) {
     return imu_read_valid;
 }
 
-void setIMUParameters(int8_t dlpf) {
+void setIMUParameters(
+    int8_t dlpf, int32_t imu_period, int32_t stationary_threshold,
+    int32_t min_valid_cross, int32_t max_valid_cross, int16_t x_threshold,
+    int16_t z_threshold)
+{
     IMU.setDLPFMode(dlpf);
     params.dlpf_mode = dlpf;
+    params.imu_period = imu_period;
+    params.stationary_threshold = stationary_threshold;
+    params.min_valid_cross = min_valid_cross;
+    params.max_valid_cross = max_valid_cross;
+    params.x_threshold = x_threshold;
+    params.z_threshold = z_threshold;
     saveIMUParameters();
 }
 

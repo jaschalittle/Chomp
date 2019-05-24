@@ -287,18 +287,18 @@ struct ORNTelemInner {
     uint8_t padding:3;
     uint8_t orientation:4;
     uint8_t stationary:1;
-    int32_t best_accum;
     int32_t sum_angular_rate;
+    int32_t cross_norm;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_ORN, ORNTelemInner> ORNTelemetry;
-bool sendORNTelem(bool stationary, uint8_t orientation, int32_t best_accum, int32_t sum_angular_rate)
+bool sendORNTelem(bool stationary, uint8_t orientation, int32_t sum_angular_rate, int32_t cross_norm)
 {
     CHECK_ENABLED(TLM_ID_ORN);
     ORNTelemetry tlm;
     tlm.inner.stationary = stationary;
     tlm.inner.orientation = orientation;
-    tlm.inner.best_accum = best_accum;
     tlm.inner.sum_angular_rate = sum_angular_rate;
+    tlm.inner.cross_norm = cross_norm;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 

@@ -11,6 +11,13 @@ extern HardwareSerial& DriveSerial;
 
 static void saveSelfRightParameters();
 
+enum SelfRightOrientation {
+    SR_LEFT,
+    SR_RIGHT,
+    SR_UPRIGHT,
+    SR_NO_ACTION
+};
+
 void selfRightExtendLeft(){
     if (weaponsEnabled()){
         safeDigitalWrite(SELF_RIGHT_LEFT_EXTEND_DO, HIGH);
@@ -83,7 +90,7 @@ enum SelfRightState {
     WAIT_LOCKOUT_RETRACT
 };
 
-enum Orientation checked_orientation;
+enum SelfRightOrientation checked_orientation;
 static enum SelfRightState self_right_state = UPRIGHT;
 String hammer_command;
 struct SelfRightParams {
@@ -96,9 +103,9 @@ struct SelfRightParams {
 } __attribute__((packed));
 
 static struct SelfRightParams EEMEM saved_params = {
-    .min_hammer_self_right_angle = 30,
-    .max_hammer_self_right_angle = 40,
-    .max_hammer_move_duration = 2000000L,
+    .min_hammer_self_right_angle = 0,
+    .max_hammer_self_right_angle = 30,
+    .max_hammer_move_duration = 4000000L,
     .max_reorient_duration = 3000000L,
     .min_retract_duration = 1000000L,
     .min_vent_duration = 1000000L
@@ -140,24 +147,14 @@ static bool hammerSelfRightPositionAchieved(int16_t min, int16_t max)
 }
 
 // actions
-static void startHammerSelfRightPosition(int16_t min, int16_t max) {
+static void startHammerSelfRightPosition(int16_t min, int16_t max)
+{
     if(hammerSelfRightPositionAchieved(min, max))
         return;
 
-    int16_t hammer_position = getAngle();
-    // angle to travel in fire direction to get to min
-    int16_t fire_distance = 360 - hammer_position + min;
-    // angle to travel in retract direction to get to max
-    //int16_t retract_distance = hammer_position - max;
-
     hammer_move_start = micros();
-    if(fire_distance > 0 && fire_distance < 90) {
-        // negative speed moves the hammer in the fire direction
-        hammer_command = startElectricHammerMove(-1000);
-    } else {
-        // positive speed moves the hammer in the retract direction
-        hammer_command = startElectricHammerMove(1000);
-    }
+    // positive speed moves the hammer in the retract direction
+    hammer_command = startElectricHammerMove(1000);
 }
 
 static void startHammerRetract(void)
@@ -184,21 +181,40 @@ static enum SelfRightState checkHammerRetracted(const enum SelfRightState state)
 static enum SelfRightState doExtend(const enum SelfRightState state)
 {
     (void)state;
-    if((checked_orientation == ORN_LEFT) || (checked_orientation == ORN_TOP_LEFT)) {
+    if((checked_orientation == SR_LEFT)) {
         selfRightExtendLeft();
-    } else if((checked_orientation == ORN_RIGHT) || (checked_orientation == ORN_TOP_RIGHT)) {
+    } else if((checked_orientation == SR_RIGHT)) {
         selfRightExtendRight();
     }
     reorient_start = micros();
     return WAIT_UPRIGHT;
 }
 
+static void discretizeOrientation(void)
+{
+    switch(getOrientation())
+    {
+        case ORN_UPRIGHT:
+            checked_orientation = SR_UPRIGHT;
+            break;
+        case ORN_LEFT:
+            checked_orientation = SR_LEFT;
+            break;
+        case ORN_RIGHT:
+            checked_orientation = SR_RIGHT;
+            break;
+        default:
+            checked_orientation = SR_NO_ACTION;
+            break;
+    }
+}
+
 static enum SelfRightState checkOrientation(const enum SelfRightState state)
 {
     enum SelfRightState result = state;
-    checked_orientation = getOrientation();
-    if((checked_orientation == ORN_LEFT) ||
-       (checked_orientation == ORN_RIGHT)) {
+    discretizeOrientation();
+    if((checked_orientation != SR_NO_ACTION) &&
+       (checked_orientation != SR_UPRIGHT)) {
         if(hammerSelfRightPositionAchieved(params.min_hammer_self_right_angle,
                                            params.max_hammer_self_right_angle)) {
             result = EXTEND;
@@ -232,11 +248,11 @@ static enum SelfRightState checkHammerPositioned(const enum SelfRightState state
 
 void startBarRetract(void)
 {
-    if(checked_orientation == ORN_RIGHT)
+    if(checked_orientation == SR_RIGHT)
     {
         selfRightRetractRight();
     }
-    else if(checked_orientation == ORN_LEFT)
+    else if(checked_orientation == SR_LEFT)
     {
         selfRightRetractLeft();
     }
