@@ -372,8 +372,17 @@ COMMAND CHOMP IMUP LITTLE_ENDIAN "IMU Parameters"
         STATE MPU6050_DLPF_BW_5   6
     APPEND_PARAMETER PERIOD 32 INT 0 10000000 100000 "IMU read period"
     APPEND_PARAMETER STATIONARY 32 INT 0 4096 200 "Gyro axis stationary sum"
-    APPEND_PARAMETER MIN_CROSS 32 INT 0 15000000 3800000 "Minimum valid acceleration cross"
-    APPEND_PARAMETER MAX_CROSS 32 INT 0 15000000 5000000 "Maximum valid acceleration cross"
+        UNITS "degrees/second" "deg/s"
+        POLY_WRITE_CONVERSION 0.0 35.7
+    APPEND_PARAMETER UP_CROSS 16 INT 0 4096 128 "Maximum cross when upright"
+        UNITS "g" "g"
+        POLY_WRITE_CONVERSION 0.0 2048
+    APPEND_PARAMETER MIN_CROSS 16 INT 0 4096 1310 "Minimum valid acceleration cross"
+        UNITS "g" "g"
+        POLY_WRITE_CONVERSION 0.0 2048
+    APPEND_PARAMETER MAX_CROSS 16 INT 0 4096 2500 "Maximum valid acceleration cross"
+        UNITS "g" "g"
+        POLY_WRITE_CONVERSION 0.0 2048
     APPEND_PARAMETER X_THR 16 INT 0 4096 1024 "X side threshold"
     APPEND_PARAMETER Z_THR 16 INT 0 4096 1500 "Z upright threshold"
 

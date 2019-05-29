@@ -13,14 +13,15 @@ uint32_t last_imu_process;
 bool stationary, imu_read_valid;
 static enum Orientation best_orientation;
 static int32_t sum_angular_rate;
-static int32_t cross_norm;
+static int16_t cross_norm;
 
 struct IMUParameters {
     int8_t dlpf_mode;
     uint32_t imu_period;
     int32_t stationary_threshold;
-    int32_t min_valid_cross;
-    int32_t max_valid_cross;
+    int16_t upright_cross;
+    int16_t min_valid_cross;
+    int16_t max_valid_cross;
     int16_t x_threshold;
     int16_t z_threshold;
 } __attribute__((packed));
@@ -31,10 +32,11 @@ static struct IMUParameters EEMEM saved_params = {
     .dlpf_mode=MPU6050_DLPF_BW_20,
     .imu_period=100000,
     .stationary_threshold=200,
-    .min_valid_cross = 3800000,
-    .max_valid_cross = 5000000,
+    .upright_cross = 128,
+    .min_valid_cross = 1310,
+    .max_valid_cross = 2500,
     .x_threshold = 1024,
-    .z_threshold = 1500,
+    .z_threshold = 1600
 };
 
 
@@ -99,11 +101,16 @@ void processIMU(void) {
         // cx = ay*bz - az*by
         // cy = az*bx - ax*bz
         // cz = ax*by - ay*bx
-        int32_t cross_x =  acceleration[1]; // *1g = *2048/2048
+        int32_t cross_x =  acceleration[1]; // * 1.0 in z
         int32_t cross_y = -acceleration[0];
-        cross_norm = cross_x * cross_x + cross_y * cross_y;
-        if((params.min_valid_cross < cross_norm) &&
-           (cross_norm<params.max_valid_cross)) {
+        cross_norm = cross_x * cross_x / 2048 + cross_y * cross_y / 2048;
+        if((cross_norm < params.upright_cross) &&
+           (acceleration[2] > params.z_threshold))
+        {
+            best_orientation = ORN_UPRIGHT;
+            stationary = true;
+        } else if((params.min_valid_cross < cross_norm) &&
+                  (cross_norm<params.max_valid_cross)) {
             if(acceleration[0] > params.x_threshold)
             {
                 best_orientation = ORN_LEFT;
@@ -114,11 +121,6 @@ void processIMU(void) {
                 best_orientation = ORN_RIGHT;
                 stationary = true;
             }
-        }
-        else if(params.z_threshold < acceleration[2])
-        {
-            best_orientation = ORN_UPRIGHT;
-            stationary = true;
         } else {
             best_orientation = ORN_UNKNOWN;
             stationary = false;
