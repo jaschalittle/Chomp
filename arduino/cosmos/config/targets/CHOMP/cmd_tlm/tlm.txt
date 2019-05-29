@@ -177,7 +177,11 @@ TELEMETRY CHOMP ORN LITTLE_ENDIAN "Orientation Status"
         STATE UNKNOWN 3 RED
     APPEND_ITEM PAD 3 UINT
     APPEND_ITEM SAR 32 INT "Sum of angular rates"
-    APPEND_ITEM CNRM 32 INT "Zhat cross norm"
+        UNITS "degrees/second" "deg/s"
+        POLY_READ_CONVERSION 0.0 0.060976
+    APPEND_ITEM CNRM 16 INT "Zhat cross norm"
+        UNITS "g" "g"
+        POLY_READ_CONVERSION 0.0  0.000488281
 
 TELEMETRY CHOMP DMP LITTLE_ENDIAN "DMP orientation results"
     APPEND_ID_ITEM PKTID 8 UINT 18 "Packet ID which must be 18"
@@ -371,6 +375,7 @@ COMMAND CHOMP IMUP LITTLE_ENDIAN "IMU Parameters"
         STATE MPU6050_DLPF_BW_10  5
         STATE MPU6050_DLPF_BW_5   6
     APPEND_PARAMETER PERIOD 32 INT 0 10000000 100000 "IMU read period"
+        UNITS "microseconds" "us"
     APPEND_PARAMETER STATIONARY 32 INT 0 4096 200 "Gyro axis stationary sum"
         UNITS "degrees/second" "deg/s"
         POLY_WRITE_CONVERSION 0.0 35.7
@@ -384,7 +389,11 @@ COMMAND CHOMP IMUP LITTLE_ENDIAN "IMU Parameters"
         UNITS "g" "g"
         POLY_WRITE_CONVERSION 0.0 2048
     APPEND_PARAMETER X_THR 16 INT 0 4096 1024 "X side threshold"
-    APPEND_PARAMETER Z_THR 16 INT 0 4096 1500 "Z upright threshold"
+        UNITS "g" "g"
+        POLY_WRITE_CONVERSION 0.0 2048
+    APPEND_PARAMETER Z_THR 16 INT 0 4096 1600 "Z upright threshold"
+        UNITS "g" "g"
+        POLY_WRITE_CONVERSION 0.0 2048
 
 
 COMMAND CHOMP SRTP LITTLE_ENDIAN "Self Right Parameters"
