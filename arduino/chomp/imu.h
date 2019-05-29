@@ -14,5 +14,5 @@ bool getOmegaZ(int16_t *omega_z);
 enum Orientation getOrientation(void);
 void setIMUParameters(
     int8_t dlpf, int32_t imu_period, int32_t stationary_threshold,
-    int32_t min_valid_cross, int32_t max_valid_cross, int16_t x_threshold,
-    int16_t z_threshold);
+    int16_t upright_cross, int16_t min_valid_cross, int16_t max_valid_cross,
+    int16_t max_total_norm, int16_t x_threshold, int16_t z_threshold);

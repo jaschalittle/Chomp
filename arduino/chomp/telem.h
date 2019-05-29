@@ -57,7 +57,7 @@ bool sendSwingTelem(uint16_t datapoints_collected,
                     uint16_t start_angle);
 bool sendPWMTelem(bool targeting_enable, int16_t left_usec, int16_t left_drive, int16_t right_usec, int16_t right_drive, int16_t drive_distance);
 bool sendIMUTelem(int16_t (&a)[3], int16_t (&g)[3], int16_t temperature);
-bool sendORNTelem(bool stationary, uint8_t orientation, int32_t sum_angular_rate, int16_t cross_norm);
+bool sendORNTelem(bool stationary, uint8_t orientation, int32_t sum_angular_rate, int16_t total_norm, int16_t cross_norm);
 bool sendDMPTelem(size_t fifoCount, uint8_t intStatus, float w, float x, float y, float z);
 bool sendSelfRightTelem(uint8_t state);
 bool sendDriveTelem(int16_t const (&vwheel)[4], int16_t vweapon);

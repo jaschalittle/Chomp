@@ -84,8 +84,10 @@ struct IMUParameterInner {
     int8_t dlpf;
     uint32_t imu_period;
     int32_t stationary_threshold;
-    int32_t min_valid_cross;
-    int32_t max_valid_cross;
+    int16_t upright_cross;
+    int16_t min_valid_cross;
+    int16_t max_valid_cross;
+    int16_t max_total_norm;
     int16_t x_threshold;
     int16_t z_threshold;
 } __attribute__((packed));
@@ -199,8 +201,10 @@ void handle_commands(void) {
               setIMUParameters(
                     imup_cmd->inner.dlpf, imup_cmd->inner.imu_period,
                     imup_cmd->inner.stationary_threshold,
+                    imup_cmd->inner.upright_cross,
                     imup_cmd->inner.min_valid_cross,
                     imup_cmd->inner.max_valid_cross,
+                    imup_cmd->inner.max_total_norm,
                     imup_cmd->inner.x_threshold,
                     imup_cmd->inner.z_threshold);
               valid_command++;

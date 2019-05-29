@@ -179,6 +179,9 @@ TELEMETRY CHOMP ORN LITTLE_ENDIAN "Orientation Status"
     APPEND_ITEM SAR 32 INT "Sum of angular rates"
         UNITS "degrees/second" "deg/s"
         POLY_READ_CONVERSION 0.0 0.060976
+    APPEND_ITEM TNRM 16 INT "Total norm"
+        UNITS "g" "g"
+        POLY_READ_CONVERSION 0.0  0.000488281
     APPEND_ITEM CNRM 16 INT "Zhat cross norm"
         UNITS "g" "g"
         POLY_READ_CONVERSION 0.0  0.000488281
@@ -376,7 +379,7 @@ COMMAND CHOMP IMUP LITTLE_ENDIAN "IMU Parameters"
         STATE MPU6050_DLPF_BW_5   6
     APPEND_PARAMETER PERIOD 32 INT 0 10000000 100000 "IMU read period"
         UNITS "microseconds" "us"
-    APPEND_PARAMETER STATIONARY 32 INT 0 4096 200 "Gyro axis stationary sum"
+    APPEND_PARAMETER STATIONARY 32 INT 0 720 3 "Gyro axis stationary sum"
         UNITS "degrees/second" "deg/s"
         POLY_WRITE_CONVERSION 0.0 35.7
     APPEND_PARAMETER UP_CROSS 16 INT 0 2.0 0.06 "Maximum cross when upright"
@@ -385,13 +388,16 @@ COMMAND CHOMP IMUP LITTLE_ENDIAN "IMU Parameters"
     APPEND_PARAMETER MIN_CROSS 16 INT 0 2.0 0.6 "Minimum valid acceleration cross"
         UNITS "g" "g"
         POLY_WRITE_CONVERSION 0.0 2048
-    APPEND_PARAMETER MAX_CROSS 16 INT 0 2.0 0.90 "Maximum valid acceleration cross"
+    APPEND_PARAMETER MAX_CROSS 16 INT 0 2.0 1.2 "Maximum valid acceleration cross"
         UNITS "g" "g"
         POLY_WRITE_CONVERSION 0.0 2048
-    APPEND_PARAMETER X_THR 16 INT 0 2.0 0.5 "X side threshold"
+    APPEND_PARAMETER MAX_NORM 16 INT 0 4.0 1.75 "Maximum total norm"
         UNITS "g" "g"
         POLY_WRITE_CONVERSION 0.0 2048
-    APPEND_PARAMETER Z_THR 16 INT 0 2.0 0.8 "Z upright threshold"
+    APPEND_PARAMETER X_THR 16 INT 0 2.0 0.6 "X side threshold"
+        UNITS "g" "g"
+        POLY_WRITE_CONVERSION 0.0 2048
+    APPEND_PARAMETER Z_THR 16 INT 0 2.0 0.99 "Z upright threshold"
         UNITS "g" "g"
         POLY_WRITE_CONVERSION 0.0 2048
 
