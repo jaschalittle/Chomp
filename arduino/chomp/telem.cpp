@@ -288,10 +288,10 @@ struct ORNTelemInner {
     uint8_t orientation:4;
     uint8_t stationary:1;
     int32_t sum_angular_rate;
-    int32_t cross_norm;
+    int16_t cross_norm;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_ORN, ORNTelemInner> ORNTelemetry;
-bool sendORNTelem(bool stationary, uint8_t orientation, int32_t sum_angular_rate, int32_t cross_norm)
+bool sendORNTelem(bool stationary, uint8_t orientation, int32_t sum_angular_rate, int16_t cross_norm)
 {
     CHECK_ENABLED(TLM_ID_ORN);
     ORNTelemetry tlm;
