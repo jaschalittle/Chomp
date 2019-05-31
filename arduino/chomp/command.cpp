@@ -100,6 +100,8 @@ struct SelfRightCommandInner {
     uint32_t max_reorient_duration;
     uint32_t min_retract_duration;
     uint32_t min_vent_duration;
+    uint32_t manual_self_right_retract_duration;
+    uint32_t manual_self_right_dead_duration;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_SRT, SelfRightCommandInner> SelfRightCommand;
 
@@ -217,7 +219,9 @@ void handle_commands(void) {
                       srt_cmd->inner.max_hammer_move_duration,
                       srt_cmd->inner.max_reorient_duration,
                       srt_cmd->inner.min_retract_duration,
-                      srt_cmd->inner.min_vent_duration
+                      srt_cmd->inner.min_vent_duration,
+                      srt_cmd->inner.manual_self_right_retract_duration,
+                      srt_cmd->inner.manual_self_right_dead_duration
                       );
               break;
           case CMD_ID_LDDR:

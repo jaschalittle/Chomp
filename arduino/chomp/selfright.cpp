@@ -100,6 +100,9 @@ struct SelfRightParams {
     uint32_t max_reorient_duration;
     uint32_t min_retract_duration;
     uint32_t min_vent_duration;
+    uint32_t manual_self_right_retract_duration;
+    uint32_t manual_self_right_dead_duration;
+
 } __attribute__((packed));
 
 static struct SelfRightParams EEMEM saved_params = {
@@ -108,7 +111,9 @@ static struct SelfRightParams EEMEM saved_params = {
     .max_hammer_move_duration = 4000000L,
     .max_reorient_duration = 3000000L,
     .min_retract_duration = 1000000L,
-    .min_vent_duration = 1000000L
+    .min_vent_duration = 1000000L,
+    .manual_self_right_retract_duration = 1000000L,
+    .manual_self_right_dead_duration = 250000L
 };
 
 static struct SelfRightParams params;
@@ -123,7 +128,9 @@ void setSelfRightParameters(
         uint32_t p_max_hammer_move_duration,
         uint32_t p_max_reorient_duration,
         uint32_t p_min_retract_duration,
-        uint32_t p_min_vent_duration
+        uint32_t p_min_vent_duration,
+        uint32_t p_manual_self_right_retract_duration,
+        uint32_t p_manual_self_right_dead_duration
         )
 {
      params.min_hammer_self_right_angle = p_min_hammer_self_right_angle;
@@ -132,6 +139,8 @@ void setSelfRightParameters(
      params.max_reorient_duration = p_max_reorient_duration;
      params.min_retract_duration = p_min_retract_duration;
      params.min_vent_duration = p_min_vent_duration;
+     params.manual_self_right_retract_duration = p_manual_self_right_retract_duration;
+     params.manual_self_right_dead_duration = p_manual_self_right_dead_duration;
      saveSelfRightParameters();
 }
 
@@ -367,6 +376,38 @@ void autoSelfRight(bool enabled) {
 
 void telemetrySelfRight() {
     sendSelfRightTelem(self_right_state);
+}
+
+void manualSelfRight(uint16_t current_rc_bitfield, uint16_t diff)
+{
+    static uint32_t manual_self_right_retract_start = 0;
+    if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
+        selfRightOff();
+        selfRightExtendLeft();
+        manual_self_right_retract_start = 0;
+    }
+    if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
+        selfRightOff();
+        selfRightExtendRight();
+        manual_self_right_retract_start = 0;
+    }
+    if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
+       !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
+        selfRightOff();
+        manual_self_right_retract_start = micros() | 1;
+    }
+    if(manual_self_right_retract_start > 0)
+    {
+        if(micros() - manual_self_right_retract_start > params.manual_self_right_retract_duration)
+        {
+            selfRightOff();
+            manual_self_right_retract_start = 0;
+        }
+        else if(micros() - manual_self_right_retract_start > params.manual_self_right_dead_duration)
+        {
+            selfRightRetractBoth();
+        }
+    }
 }
 
 void saveSelfRightParameters() {
