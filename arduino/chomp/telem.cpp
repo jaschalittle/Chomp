@@ -94,14 +94,19 @@ bool sendSystemTelem(uint32_t loop_speed_min, uint32_t loop_speed_avg,
 struct SensorTelemetryInner {
     uint16_t pressure;
     uint16_t angle;
+    int16_t vacuum_left;
+    int16_t vacuum_right;
 } __attribute__((packed));
 typedef TelemetryPacket<TLM_ID_SNS, SensorTelemetryInner> SensorTelemetry;
 
-bool sendSensorTelem(int16_t pressure, uint16_t angle){
+bool sendSensorTelem(int16_t pressure, uint16_t angle, int16_t vacuum_left,
+                     int16_t vacuum_right){
     CHECK_ENABLED(TLM_ID_SNS);
     SensorTelemetry tlm;
     tlm.inner.pressure = pressure;
     tlm.inner.angle = angle;
+    tlm.inner.vacuum_left = vacuum_left;
+    tlm.inner.vacuum_right = vacuum_right;
     return Xbee.write((unsigned char *)&tlm, sizeof(tlm));
 }
 
@@ -510,4 +515,33 @@ bool sendObjectsTelemetry(uint8_t num_objects, const Object (&objects)[8])
     return (sendObjectsMeasuredTelemetry(num_objects, objects) +
             sendObjectsCalculatedTelemetry(num_objects, objects));
 }
+
+struct VacuumTelemInner {
+    uint16_t sample_period;
+    uint16_t datapoints;
+} __attribute__((packed));
+typedef TelemetryPacket<TLM_ID_VAC, VacuumTelemInner> VacuumTelemetry;
+
+bool sendVacuumTelemetry(uint16_t sample_period,
+                         uint16_t datapoints_collected,
+                         int16_t* left_vacuum,
+                         int16_t* right_vacuum)
+{
+    CHECK_ENABLED(TLM_ID_VAC);
+    VacuumTelemetry tlm;
+    tlm.inner.sample_period = sample_period;
+    tlm.inner.datapoints = datapoints_collected;
+    bool success = Xbee.write((unsigned char *)&tlm, sizeof(tlm)-sizeof(TLM_TERMINATOR));
+    if(success)
+    {
+        success &= Xbee.enqueue(
+            (uint8_t *)left_vacuum, sizeof(uint16_t)*datapoints_collected, NULL, NULL);
+        success &= Xbee.enqueue(
+            (uint8_t *)right_vacuum, sizeof(int16_t)*datapoints_collected, NULL, NULL);
+    }
+    success &= Xbee.write((uint8_t *)&tlm.terminator, sizeof(tlm.terminator));
+
+    return success;
+}
+
 

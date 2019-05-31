@@ -11,6 +11,7 @@ enum SBUSChannels {
     DANGER_MODE = 7,
     RANGE = 8,
     MANUAL_SELF_RIGHT = 9,
+    HOLD_DOWN = 10
 };
 
 // Boolean values coming in over RC are stored in a bitfield for ease of comparison
@@ -28,8 +29,8 @@ enum RCBitfield {
     DANGER_CTRL_BIT = 512,
     MANUAL_SELF_RIGHT_LEFT_BIT = 1024,
     MANUAL_SELF_RIGHT_RIGHT_BIT = 2048,
-    // =  4096,
-    // =  8192,
+    AUTO_HOLD_DOWN =  4096,
+    MANUAL_HOLD_DOWN =  8192,
     // = 16384,
     WEAPONS_ENABLE_BIT = 32768
 };

@@ -27,6 +27,7 @@ enum TelemetryPacketId {
     TLM_ID_SRT=20,
     TLM_ID_OBJM=21,
     TLM_ID_OBJC=22,
+    TLM_ID_VAC=23,
 };
 
 extern uint32_t enabled_telemetry;
@@ -42,7 +43,8 @@ bool sendSystemTelem(uint32_t loop_speed_min, uint32_t loop_speed_avg,
                      uint16_t sbus_overrun, uint8_t last_command,
                      uint16_t command_overrun, uint16_t invalid_command,
                      uint16_t valid_command);
-bool sendSensorTelem(int16_t pressure, uint16_t angle);
+bool sendSensorTelem(int16_t pressure, uint16_t angle, int16_t vacuum_left,
+                     int16_t vacuum_right);
 bool sendSbusTelem(uint16_t cmd_bitfield, int16_t hammer_intensity, int16_t hammer_distance);
 bool sendDebugMessageTelem(const char *msg);
 void debug_print(const String &msg);
@@ -82,4 +84,8 @@ void setTelemetryParams(uint32_t telemetry_interval,
                         uint32_t enabled_telemetry);
 bool isTLMEnabled(uint8_t tlm_id);
 bool sendObjectsTelemetry(uint8_t num_objects, const Object (&objects)[8]);
+bool sendVacuumTelemetry(uint16_t sample_period,
+                         uint16_t datapoints_collected,
+                         int16_t* left_data,
+                         int16_t* right_data);
 #endif //TELEM_H

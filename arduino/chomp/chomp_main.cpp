@@ -17,6 +17,7 @@
 #include "selfright.h"
 #include "autodrive.h"
 #include "autofire.h"
+#include "hold_down.h"
 
 uint32_t start_time, loop_speed_min, loop_speed_avg, loop_speed_max, loop_count;
 void reset_loop_stats(void) {
@@ -63,6 +64,7 @@ void chompSetup() {
     driveSetup();
     leddarWrapperInit();
     sensorSetup();
+    holdDownSafe();
     initializeIMU();
     reset_loop_stats();
     restoreDriveControlParameters();
@@ -71,6 +73,7 @@ void chompSetup() {
     restoreAutofireParameters();
     restoreSelfRightParameters();
     restoreTelemetryParameters();
+    restoreHoldDownParameters();
     debug_print("STARTUP");
     start_time = micros();
 }
@@ -125,7 +128,8 @@ void chompLoop() {
 
         autofire = willHit(tracked_object, hammer_distance, hammer_intensity);
         if((autofire==AF_HIT) && (current_rc_bitfield & AUTO_HAMMER_ENABLE_BIT)) {
-            fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, true);
+            fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, true,
+                 current_rc_bitfield & AUTO_HOLD_DOWN);
         }
 
         // Send subsampled leddar telem
@@ -173,7 +177,8 @@ void chompLoop() {
         if (current_rc_bitfield & DANGER_CTRL_BIT){
           noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
         } else {
-          fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/);
+          fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/,
+               current_rc_bitfield & AUTO_HOLD_DOWN);
         }
     }
     if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
@@ -191,6 +196,8 @@ void chompLoop() {
     }
 
     manualSelfRight(current_rc_bitfield, diff);
+
+    manualHoldDown(current_rc_bitfield & MANUAL_HOLD_DOWN);
 
     // always sent in telemetry, cache values here
     int16_t left_drive_value = getLeftRc();
@@ -221,7 +228,9 @@ void chompLoop() {
     uint32_t now = micros();
     if (isTimeToSendTelemetry(now)) {
         // get targeting RC command.
-        sendSensorTelem(getPressure(), getAngle());
+        int16_t vacuum_left, vacuum_right;
+        getVacuum(&vacuum_left, &vacuum_right);
+        sendSensorTelem(getPressure(), getAngle(), vacuum_left, vacuum_right);
         sendSystemTelem(loop_speed_min, loop_speed_avg/loop_count,
                         loop_speed_max, loop_count,
                         leddar_overrun,

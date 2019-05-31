@@ -11,5 +11,7 @@ void resetImu();
 bool readSensors(void);
 uint16_t getAngle(void);
 int16_t getPressure(void);
+bool readVacuum(int16_t* left, int16_t* right);
+void getVacuum(int16_t* left, int16_t* right);
 
 #endif // SENSORS_H

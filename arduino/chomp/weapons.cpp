@@ -7,6 +7,7 @@
 #include "telem.h"
 #include "selfright.h"
 #include <avr/wdt.h>
+#include "hold_down.h"
 
 extern HardwareSerial& DriveSerial;
 
@@ -89,7 +90,7 @@ void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timest
   vent_closed = false;  
 }
 
-void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
+void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire, bool auto_hold_down ){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -129,6 +130,10 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
             fire_time = micros();
             // Wait until hammer swing complete, up to timeout
             while (swing_length < SWING_TIMEOUT) {
+                // if(auto_hold_down && !autoHoldDown())
+                // {
+                //     continue;
+                // }
                 sensor_read_time = micros();
                 angle_read_ok = readAngle(&angle);
                 pressure_read_ok = readMlhPressure(&pressure);
@@ -181,6 +186,8 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
             if (flame_pulse) {
                 flameEnd();
             }
+            // If we have been accumulatting hold down traces, send them
+            //endHoldDownSample();
         } else if (!autofire) {
             // If we're *not* in autochomp mode, and the hammer is at a funny angle, it probably
             // means we're in a weird spot and maybe want to unstick ourselves with a

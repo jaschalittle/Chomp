@@ -6,6 +6,7 @@
 #include "autofire.h"
 #include "imu.h"
 #include "selfright.h"
+#include "hold_down.h"
 
 #define MAXIMUM_COMMAND_LENGTH 64
 enum Commands {
@@ -17,6 +18,7 @@ enum Commands {
     CMD_ID_IMUP = 15,
     CMD_ID_SRT = 16,
     CMD_ID_LDDR = 17,
+    CMD_ID_HLD = 18,
 };
 
 extern Track tracked_object;
@@ -111,6 +113,12 @@ struct LeddarCommandInner {
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_LDDR, LeddarCommandInner> LeddarCommand;
 
+struct HoldDownCommandInner {
+    uint16_t sample_period;
+} __attribute__((packed));
+typedef CommandPacket<CMD_ID_HLD, HoldDownCommandInner> HoldDownCommand;
+
+
 static uint8_t command_buffer[MAXIMUM_COMMAND_LENGTH];
 static size_t command_length=0;
 static bool command_ready = false;
@@ -147,6 +155,7 @@ void handle_commands(void) {
   IMUParameterCommand *imup_cmd;
   SelfRightCommand *srt_cmd;
   LeddarCommand *leddar_cmd;
+  HoldDownCommand *holddown_cmd;
   if(command_ready) {
       last_command = command_buffer[0];
       switch(last_command) {
@@ -228,6 +237,10 @@ void handle_commands(void) {
               leddar_cmd = (LeddarCommand *)command_buffer;
               setLeddarParameters(leddar_cmd->inner.min_detection_distance,
                                   leddar_cmd->inner.max_detection_distance);
+              break;
+          case CMD_ID_HLD:
+              holddown_cmd = (HoldDownCommand *)command_buffer;
+              setHoldDownParameters(holddown_cmd->inner.sample_period);
               break;
           default:
               invalid_command++;
