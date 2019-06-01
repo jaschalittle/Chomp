@@ -7,10 +7,9 @@ MULTITOOL_START "CHOMP"
   TOOL "LAUNCH CmdTlmServer -x 65 -y 52 -w 1024 -t 400 -c xbee.txt"
   DELAY 5
   TOOL "LAUNCH CmdSender -x 65 -y 52 -w 680 -t 748 --packet 'CHOMP TCNTRL'"
-  TOOL "LAUNCH CmdSender -x 65 -y 52 -w 680 -t 748 --packet 'CHOMP ADRV'"
-  TOOL "LAUNCH DataViewer -x 65 -y 500 -w 1200 -t 300"
   TOOL "LAUNCH PacketViewer -x 900 -y 400 -w 360 -t 360 --packet 'CHOMP ACK'"
   TOOL "LAUNCH TlmGrapher -x 0 -y 0 -w 1215 -t 776"
+  TOOL "LAUNCH TlmViewer -x 900 -y 800"
 MULTITOOL_END
 
 DIVIDER
