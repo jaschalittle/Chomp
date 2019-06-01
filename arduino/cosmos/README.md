@@ -2,7 +2,7 @@
 
 * Install some build dependencies
 
-    # apt-get install -y build-essential libssl-dev libreadline-dev zlib1g-dev libqt4-dev cmake
+    $ sudo apt-get install -y build-essential libssl-dev libreadline-dev zlib1g-dev libqt4-dev cmake
 
 * Install [rbenv](https://github.com/rbenv/rbenv#basic-github-checkout)
 
