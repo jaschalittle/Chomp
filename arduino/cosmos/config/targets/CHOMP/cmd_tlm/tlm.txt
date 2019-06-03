@@ -5,7 +5,11 @@ TELEMETRY CHOMP SNS LITTLE_ENDIAN "Sensor"
     APPEND_ITEM ANGLE 16 UINT "Angle"
         UNITS "Degrees" "deg"
     APPEND_ITEM VACUUM_LEFT 16 INT "Vacuum Left"
+        POLY_READ_CONVERSION -18.7099 0.01973618
+        UNITS "Pounds per square inch" "psi"
     APPEND_ITEM VACUUM_RIGHT 16 INT "Vacuum Right"
+        POLY_READ_CONVERSION -18.7099 0.01973618
+        UNITS "Pounds per square inch" "psi"
 
 TELEMETRY CHOMP PWM LITTLE_ENDIAN "PWM"
     APPEND_ID_ITEM PKTID 8 UINT 16 "Packet ID which must be 18"
@@ -295,7 +299,11 @@ TELEMETRY CHOMP VACUUM LITTLE_ENDIAN "Vacuum hold down trace"
         UNITS "microseconds" "us"
     APPEND_ITEM PT 16 UINT "Number of points collected"
     APPEND_ARRAY_ITEM LEFT 16 INT 2048 "Left vacuum data"
+        POLY_READ_CONVERSION -18.7099 0.01973618
+        UNITS "Pounds per square inch" "psi"
     APPEND_ARRAY_ITEM RIGHT 16 INT 2048 "Right vacuum data"
+        POLY_READ_CONVERSION -18.7099 0.01973618
+        UNITS "Pounds per square inch" "psi"
 
 
 COMMAND CHOMP TCNTRL LITTLE_ENDIAN "Telementry Control"
