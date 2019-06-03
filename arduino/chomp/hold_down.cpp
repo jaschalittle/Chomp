@@ -25,6 +25,7 @@ void holdDownSafe()
 {
     tlm_triggered = 0;
     digitalWrite(VACUUM_VALVE_DO, LOW);
+    pinMode(VACUUM_VALVE_DO, OUTPUT);
 }
 
 static void holdDownEnable(bool enable)
