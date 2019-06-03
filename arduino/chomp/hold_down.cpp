@@ -4,14 +4,14 @@
 #include "telem.h"
 #include "sensors.h"
 
-static void saveSelfRightParameters();
+static void saveHoldDownParameters();
 
 static uint32_t tlm_triggered;
 static uint16_t sample_index;
 static int16_t left_vacuum_trace[128];
 static int16_t right_vacuum_trace[128];
 struct HoldDownParams {
-    uint16_t sample_period;
+    uint32_t sample_period;
 } __attribute__((packed));
 
 static struct HoldDownParams EEMEM saved_params = {
@@ -88,7 +88,7 @@ void restoreHoldDownParameters() {
     eeprom_read_block(&params, &saved_params, sizeof(struct HoldDownParams));
 }
 
-void setHoldDownParameters(int16_t sample_period)
+void setHoldDownParameters(int32_t sample_period)
 {
     params.sample_period = sample_period;
     saveHoldDownParameters();

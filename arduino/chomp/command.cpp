@@ -114,7 +114,7 @@ struct LeddarCommandInner {
 typedef CommandPacket<CMD_ID_LDDR, LeddarCommandInner> LeddarCommand;
 
 struct HoldDownCommandInner {
-    uint16_t sample_period;
+    uint32_t sample_period;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_HLD, HoldDownCommandInner> HoldDownCommand;
 
