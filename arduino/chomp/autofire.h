@@ -17,6 +17,6 @@ bool omegaZLockout(int16_t *omegaZ);
 void setAutoFireParams(int16_t p_xtol,
                        int16_t p_ytol,
                        int16_t p_max_omegaz,
-                       int16_t telemetry_interval);
+                       uint32_t telemetry_interval);
 
 void restoreAutofireParameters(void);

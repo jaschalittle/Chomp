@@ -71,11 +71,11 @@ enum AutofireState willHit(const Track &tracked_object,
 void setAutoFireParams(int16_t p_xtol,
                        int16_t p_ytol,
                        int16_t p_max_omegaz,
-                       int16_t telemetry_interval){
+                       uint32_t telemetry_interval){
     params.xtol = p_xtol;
     params.ytol = p_ytol;
     params.max_omegaZ = p_max_omegaz;
-    telemetry_interval = telemetry_interval;
+    params.autofire_telem_interval = telemetry_interval;
     saveAutofireParameters();
 }
 

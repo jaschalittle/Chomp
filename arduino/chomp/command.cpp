@@ -55,7 +55,7 @@ struct AutoFireInner {
     int16_t xtol;
     int16_t ytol;
     int16_t max_omegaZ;
-    int32_t telemetry_interval;
+    uint32_t telemetry_interval;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_AF, AutoFireInner> AutoFireCommand;
 
