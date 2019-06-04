@@ -15,7 +15,7 @@ bool weaponsEnabled();
 
 void retract( bool check_velocity = true );
 
-void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire );
+void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire, bool auto_hold_down );
 
 void noAngleFire( uint16_t hammer_intensity, bool flame_pulse);
 

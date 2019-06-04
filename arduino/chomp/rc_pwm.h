@@ -15,4 +15,6 @@ bool getTargetingEnable();
 
 int16_t getDriveDistance();
 
+void getRCMicros(int16_t* left, int16_t* right);
+
 #endif // RC_H

@@ -7,6 +7,7 @@
 #include "telem.h"
 #include "selfright.h"
 #include <avr/wdt.h>
+#include "hold_down.h"
 
 extern HardwareSerial& DriveSerial;
 
@@ -75,7 +76,8 @@ void retract( bool check_velocity ){
 }
 
 // Helper to end a swing in case of timeout or hammer obstruction (zero velocity)
-void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timestep, uint16_t& vent_open_timestep, uint16_t timestep ){
+void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timestep, uint16_t& vent_open_timestep, uint16_t timestep,
+              bool auto_hold_down){
   if (throw_open) {
     throw_close_timestep = timestep;
   }
@@ -86,10 +88,16 @@ void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timest
     vent_open_timestep = timestep;
   }
   safeDigitalWrite(VENT_VALVE_DO, LOW);
-  vent_closed = false;  
+  vent_closed = false;
+  // Stop hold down and If we have been accumulatting hold down
+  // traces, send them
+  if(auto_hold_down)
+  {
+      autoHoldDownEnd();
+  }
 }
 
-void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
+void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire, bool auto_hold_down ){
     uint32_t fire_time;
     uint32_t swing_length = 0;
     uint32_t sensor_read_time;
@@ -113,16 +121,24 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
         uint16_t throw_close_angle_diff = min(MAX_SAFE_ANGLE, HAMMER_INTENSITIES_ANGLE[hammer_intensity]);
         uint16_t throw_close_angle = start_angle + throw_close_angle_diff;
         if (angle > THROW_BEGIN_ANGLE_MIN && angle < THROW_BEGIN_ANGLE_MAX) {
-            
+ 
             if (flame_pulse){
                 flameStart();
             }
+
+            uint32_t autohold_start = micros();
+            uint32_t now = autohold_start;
+            while(auto_hold_down && !autoHoldDown(autohold_start, now))
+            {
+                now = micros();
+            }
+
             // Seal vent (which is normally open)
             safeDigitalWrite(VENT_VALVE_DO, HIGH);
             vent_closed = true;
             // can we actually determine vent close time?
             delay(10);
-            
+
             // Open throw valve
             safeDigitalWrite(THROW_VALVE_DO, HIGH);
             throw_open = true;
@@ -152,14 +168,14 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
                     }
                     datapoints_collected++;
                 }
-                                
+
                 // Once past our throw close angle, start checking velocity 
                 if (angle > AUTO_RETRACT_MIN_ANGLE) {
                     float angular_velocity;
                     bool velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected, DATA_COLLECT_TIMESTEP/1000);
                     if (velocity_read_ok && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
                         // If the swing hasn't already ended, end it now
-                        endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
+                        endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep, auto_hold_down);
                         // Since our final velocity is low enough, auto-retract
                         retract( /*check_velocity*/ false );
                         break; // exit the while loop
@@ -176,8 +192,8 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire ){
                 swing_length = micros() - fire_time;
             } // while
             // If the swing hasn't already ended, end it now
-            endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
-            
+            endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep, auto_hold_down);
+
             if (flame_pulse) {
                 flameEnd();
             }

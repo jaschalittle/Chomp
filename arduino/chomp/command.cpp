@@ -6,6 +6,7 @@
 #include "autofire.h"
 #include "imu.h"
 #include "selfright.h"
+#include "hold_down.h"
 
 #define MAXIMUM_COMMAND_LENGTH 64
 enum Commands {
@@ -16,6 +17,8 @@ enum Commands {
     CMD_ID_ADRV = 14,
     CMD_ID_IMUP = 15,
     CMD_ID_SRT = 16,
+    CMD_ID_LDDR = 17,
+    CMD_ID_HLD = 18,
 };
 
 extern Track tracked_object;
@@ -43,6 +46,7 @@ struct ObjectSegmentationInner {
     int16_t min_object_size;
     int16_t max_object_size;
     int16_t edge_call_threshold;
+    uint8_t closest_only:1;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_OBJSEG, ObjectSegmentationInner> ObjectSegmentationCommand;
 
@@ -51,7 +55,7 @@ struct AutoFireInner {
     int16_t xtol;
     int16_t ytol;
     int16_t max_omegaZ;
-    int32_t telemetry_interval;
+    uint32_t telemetry_interval;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_AF, AutoFireInner> AutoFireCommand;
 
@@ -80,19 +84,41 @@ typedef CommandPacket<CMD_ID_TRKFLT, TrackingFilterInner> TrackingFilterCommand;
 
 struct IMUParameterInner {
     int8_t dlpf;
+    uint32_t imu_period;
+    int32_t stationary_threshold;
+    int16_t upright_cross;
+    int16_t min_valid_cross;
+    int16_t max_valid_cross;
+    int16_t max_total_norm;
+    int16_t x_threshold;
+    int16_t z_threshold;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_IMUP, IMUParameterInner> IMUParameterCommand;
 
 struct SelfRightCommandInner {
-    uint16_t min_hammer_forward_angle;
-    uint16_t max_hammer_forward_angle;
-    uint16_t min_hammer_back_angle;
-    uint16_t max_hammer_back_angle;
+    uint16_t min_hammer_self_right_angle;
+    uint16_t max_hammer_self_right_angle;
     uint32_t max_hammer_move_duration;
     uint32_t max_reorient_duration;
     uint32_t min_retract_duration;
-};
+    uint32_t min_vent_duration;
+    uint32_t manual_self_right_retract_duration;
+    uint32_t manual_self_right_dead_duration;
+} __attribute__((packed));
 typedef CommandPacket<CMD_ID_SRT, SelfRightCommandInner> SelfRightCommand;
+
+struct LeddarCommandInner {
+    uint16_t min_detection_distance;
+    uint16_t max_detection_distance;
+} __attribute__((packed));
+typedef CommandPacket<CMD_ID_LDDR, LeddarCommandInner> LeddarCommand;
+
+struct HoldDownCommandInner {
+    uint32_t sample_period;
+    uint32_t start_delay;
+} __attribute__((packed));
+typedef CommandPacket<CMD_ID_HLD, HoldDownCommandInner> HoldDownCommand;
+
 
 static uint8_t command_buffer[MAXIMUM_COMMAND_LENGTH];
 static size_t command_length=0;
@@ -129,6 +155,8 @@ void handle_commands(void) {
   AutoDriveCommand *adrv_cmd;
   IMUParameterCommand *imup_cmd;
   SelfRightCommand *srt_cmd;
+  LeddarCommand *leddar_cmd;
+  HoldDownCommand *holddown_cmd;
   if(command_ready) {
       last_command = command_buffer[0];
       switch(last_command) {
@@ -157,7 +185,8 @@ void handle_commands(void) {
               setObjectSegmentationParams(
                                       objseg_cmd->inner.min_object_size,
                                       objseg_cmd->inner.max_object_size,
-                                      objseg_cmd->inner.edge_call_threshold);
+                                      objseg_cmd->inner.edge_call_threshold,
+                                      objseg_cmd->inner.closest_only);
               valid_command++;
               break;
           case CMD_ID_AF:
@@ -181,20 +210,39 @@ void handle_commands(void) {
               break;
           case CMD_ID_IMUP:
               imup_cmd = (IMUParameterCommand *)command_buffer;
-              setIMUParameters(imup_cmd->inner.dlpf);
+              setIMUParameters(
+                    imup_cmd->inner.dlpf, imup_cmd->inner.imu_period,
+                    imup_cmd->inner.stationary_threshold,
+                    imup_cmd->inner.upright_cross,
+                    imup_cmd->inner.min_valid_cross,
+                    imup_cmd->inner.max_valid_cross,
+                    imup_cmd->inner.max_total_norm,
+                    imup_cmd->inner.x_threshold,
+                    imup_cmd->inner.z_threshold);
               valid_command++;
               break;
           case CMD_ID_SRT:
               srt_cmd = (SelfRightCommand *)command_buffer;
               setSelfRightParameters(
-                      srt_cmd->inner.min_hammer_forward_angle,
-                      srt_cmd->inner.max_hammer_forward_angle,
-                      srt_cmd->inner.min_hammer_back_angle,
-                      srt_cmd->inner.max_hammer_back_angle,
+                      srt_cmd->inner.min_hammer_self_right_angle,
+                      srt_cmd->inner.max_hammer_self_right_angle,
                       srt_cmd->inner.max_hammer_move_duration,
                       srt_cmd->inner.max_reorient_duration,
-                      srt_cmd->inner.min_retract_duration
+                      srt_cmd->inner.min_retract_duration,
+                      srt_cmd->inner.min_vent_duration,
+                      srt_cmd->inner.manual_self_right_retract_duration,
+                      srt_cmd->inner.manual_self_right_dead_duration
                       );
+              break;
+          case CMD_ID_LDDR:
+              leddar_cmd = (LeddarCommand *)command_buffer;
+              setLeddarParameters(leddar_cmd->inner.min_detection_distance,
+                                  leddar_cmd->inner.max_detection_distance);
+              break;
+          case CMD_ID_HLD:
+              holddown_cmd = (HoldDownCommand *)command_buffer;
+              setHoldDownParameters(holddown_cmd->inner.sample_period,
+                                    holddown_cmd->inner.start_delay);
               break;
           default:
               invalid_command++;

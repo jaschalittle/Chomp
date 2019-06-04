@@ -12,8 +12,8 @@ struct TrackingFilterParameters {
 
 
 struct TrackingFilterParameters EEMEM saved_tracking_params = {
-    .alpha = 10000,
-    .beta = 10000,
+    .alpha = 9000,
+    .beta = 8192,
     .track_lost_dt = 250000,
     .min_num_updates = 3,
     .max_off_track = 1000L*1000L,
@@ -89,7 +89,7 @@ int32_t Track::predict(uint32_t now, int16_t omegaZ) {
     return dt;
 }
 
-void Track::update(const Object& best_match, int16_t omegaZ) {
+void Track::update(const Object& best_match) {
     int32_t mx = best_match.xcoord();
     int32_t my = best_match.ycoord();
     if(!recent_update(best_match.Time)) {
@@ -135,7 +135,7 @@ bool Track::wants_update(uint32_t now, int32_t best_distance) {
 }
 
 bool Track::valid(uint32_t now) const {
-    return recent_update(micros()) && (num_updates>min_num_updates);
+    return recent_update(now) && (num_updates>min_num_updates);
 }
 
 int32_t Track::angle(void) const {

@@ -1,13 +1,13 @@
 #include "object.h"
 // size in mm
-// r = average radius = (min+max)/2
+// r = average radius = sum/(right - left)
 // (pi/180)*LEDDAR_FOV/LEDDAR_SEGMENTS = (pi/180)*99/16 ~ 0.108
 // theta = (left-right)*0.108
-// circumferential size = theta*r = (left-right)*(min+max)*0.108/2
+// circumferential size = theta*r = (left-right)*sum/(right - left)*0.108/2
 // leddar reports ranges in cm, so multiply this expression by 10
 // to get mm
 int16_t Object::size(void) const {
-    return (RightEdge-LeftEdge)*(MaxDistance+MinDistance)/4;
+    return SumDistance/2;
 }
 
 // average radius in mm
@@ -18,8 +18,9 @@ int16_t Object::radius(void) const {
 
 // angle in radians scaled by 2048
 int16_t Object::angle(void) const {
-    // 2048*.108/2 = 110.59
-    return -(((LeftEdge + RightEdge) - 17)*111);
+    // 2048*.108 = 221.2
+    // 7.5*221.2 = 1659
+    return - SumAngleIntensity * (int32_t)221 / SumIntensity + (int32_t)1659;
 }
 
 
@@ -35,7 +36,7 @@ int16_t Object::ycoord(void) const {
 }
 
 // distance squared in mm
-int32_t Object::distanceSq(const Object &other) const {
+inline int32_t Object::distanceSq(const Object &other) const {
     int32_t r = radius(), ro=other.radius();
     int32_t a = angle(), ao=other.angle();
     // x = radius()*cos(angle());

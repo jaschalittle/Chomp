@@ -7,10 +7,13 @@
 
 static uint16_t cached_angle;
 static int16_t cached_pressure;
+static int16_t vacuum_left, vacuum_right;
 
 void sensorSetup(){
     pinMode(ANGLE_AI, INPUT);
     pinMode(PRESSURE_AI, INPUT);
+    pinMode(VACUUM_AI_LEFT, INPUT);
+    pinMode(VACUUM_AI_RIGHT, INPUT);
 }
 
 // static const uint32_t pressure_sensor_range = 920 - 102;
@@ -64,9 +67,27 @@ int16_t getPressure(void) {
     return cached_pressure;
 }
 
+#define MIN_VACUUM 40
+#define MAX_VACUUM 950
+
+bool readVacuum(int16_t* left, int16_t* right)
+{
+    *left = analogRead(VACUUM_AI_LEFT);
+    *right = analogRead(VACUUM_AI_RIGHT);
+    return MIN_VACUUM < *left && *left < MAX_VACUUM &&
+           MIN_VACUUM < *right && *right < MAX_VACUUM;
+}
+
+void getVacuum(int16_t* left, int16_t* right)
+{
+    *left = vacuum_left;
+    *right = vacuum_right;
+}
 
 bool readSensors(void) {
-    return readAngle(&cached_angle) && readMlhPressure(&cached_pressure);
+    return readAngle(&cached_angle) &&
+           readMlhPressure(&cached_pressure) &&
+           readVacuum(&vacuum_left, &vacuum_right);
 }
 
 

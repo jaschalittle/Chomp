@@ -37,6 +37,9 @@
 #define AUX2_2A_DO 7
 #define AUX3_2A_DO A9
 
+#define VACUUM_AI_LEFT A2
+#define VACUUM_AI_RIGHT A3
+
 // These are handled as pin change interrupts on the PINB bank
 #define LEFT_RC_PIN 12             // Drive radio ch1
 #define RIGHT_RC_PIN 13            // Drive radio ch2

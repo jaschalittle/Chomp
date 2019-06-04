@@ -1,10 +1,12 @@
 import os
 import os.path
-import fnmatch
 import logging
 import ycm_core
 
-ARDUINO = os.environ['ARDUINO']
+try:
+    ARDUINO = os.environ['ARDUINO']
+except KeyError:
+    ARDUINO = "%s/Arudino" % os.environ['HOME']
 
 BASE_FLAGS = [
     '-Wall',

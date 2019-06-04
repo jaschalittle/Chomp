@@ -137,6 +137,9 @@ static bool parseSbus(){
 #define FLAME_PULSE_THRESHOLD 500
 #define FLAME_CTRL_THRESHOLD 1500
 
+#define AUTO_HOLD_DOWN_THRESHOLD 500
+#define MANUAL_HOLD_DOWN_THRESHOLD 1500
+
 #define GENTLE_HAM_F_THRESHOLD 500
 #define GENTLE_HAM_R_THRESHOLD 1500
 
@@ -164,7 +167,7 @@ static uint16_t computeRCBitfield() {
   if ( sbusChannels[HAMMER_CTRL] < HAMMER_RETRACT_THRESHOLD){
     bitfield |= HAMMER_RETRACT_BIT;
   }
-  
+
   // Full stick, flamethrower is on
   if ( sbusChannels[FLAME_CTRL] > FLAME_CTRL_THRESHOLD){
     bitfield |= FLAME_CTRL_BIT;
@@ -173,7 +176,15 @@ static uint16_t computeRCBitfield() {
   if ( sbusChannels[FLAME_CTRL] > FLAME_PULSE_THRESHOLD && sbusChannels[FLAME_CTRL] < FLAME_CTRL_THRESHOLD ){
     bitfield |= FLAME_PULSE_BIT;
   }
-  
+
+  if( sbusChannels[HOLD_DOWN] > MANUAL_HOLD_DOWN_THRESHOLD ){
+      bitfield |= MANUAL_HOLD_DOWN;
+  }
+  else if( AUTO_HOLD_DOWN_THRESHOLD < sbusChannels[HOLD_DOWN] &&
+      sbusChannels[HOLD_DOWN] < MANUAL_HOLD_DOWN_THRESHOLD ){
+      bitfield |= AUTO_HOLD_DOWN;
+  }
+
   if ( sbusChannels[GENTLE_HAM_CTRL] < GENTLE_HAM_F_THRESHOLD){
     bitfield |= GENTLE_HAM_F_BIT;
   }

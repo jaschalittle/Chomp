@@ -5,8 +5,6 @@
 
 // MAX_DETECTIONS should be <255
 #define MAX_DETECTIONS 50
-#define AMPLITUDE_THRESHOLDING_RANGE 125
-#define LEDDAR_AMPLITUDE_THRESHOLD 50
 
 extern HardwareSerial& LeddarSerial;
 
@@ -56,11 +54,27 @@ static const uint8_t CRC_LO[] =
     0x40
 };
 
+struct LeddarParameters {
+    int16_t min_detection_distance;
+    int16_t max_detection_distance;
+} __attribute__((packed));
+
+static struct LeddarParameters EEMEM saved_params = {
+    .min_detection_distance = 20,
+    .max_detection_distance = 600,
+};
+
+static struct LeddarParameters params;
+
+static void saveLeddarParmeters(void);
+static void restoreLeddarParameters(void);
+
 static Detection RawDetections[MAX_DETECTIONS];
 static uint8_t good_detections;
 static Detection MinimumDetections[LEDDAR_SEGMENTS];
 
 void leddarWrapperInit(){
+  restoreLeddarParameters();
   for(size_t i=0; i<LEDDAR_SEGMENTS; i++) {
     MinimumDetections[i].Segment = i;
   }
@@ -141,20 +155,17 @@ uint8_t parseDetections(){
   good_detections = 0;
   // Parse out detection info
   for ( uint16_t i = 0; i < detection_count; i++){
-    uint8_t offset = 3 + 5*i;
-    uint16_t *current = (uint16_t*)(receivedData + offset);
-    uint16_t distance = current[0];
-    uint16_t amplitude = current[1];
+      uint8_t offset = 3 + 5*i;
+      uint16_t *current = (uint16_t*)(receivedData + offset);
+      uint16_t distance = current[0];
+      uint16_t amplitude = current[1];
 
-    // filter near detections that are of insufficient amplitude
-    if (distance > AMPLITUDE_THRESHOLDING_RANGE || amplitude > LEDDAR_AMPLITUDE_THRESHOLD) {
       // flip the segment ID since we're upside down
       uint8_t segment = (LEDDAR_SEGMENTS-1) - (receivedData[offset+4]/LEDDAR_SEGMENTS);
       RawDetections[good_detections].Distance = distance;
       RawDetections[good_detections].Amplitude = amplitude;
       RawDetections[good_detections].Segment = segment;
       good_detections++;
-    }
   }
 
   return good_detections;
@@ -165,7 +176,6 @@ size_t getRawDetections(const Detection **detections) {
   return good_detections;
 }
 
-#define MIN_OBJECT_DISTANCE 20
 void calculateMinimumDetections(size_t good_detections) {
   for (size_t i=0; i < LEDDAR_SEGMENTS; i++) {
     MinimumDetections[i].reset();
@@ -173,7 +183,8 @@ void calculateMinimumDetections(size_t good_detections) {
   for (uint8_t i = 0; i < good_detections; i++) {
     uint8_t segment = RawDetections[i].Segment;
     if (RawDetections[i].Distance < MinimumDetections[segment].Distance &&
-        RawDetections[i].Distance > MIN_OBJECT_DISTANCE) {
+        RawDetections[i].Distance > params.min_detection_distance &&
+        RawDetections[i].Distance < params.max_detection_distance){
       MinimumDetections[segment] = RawDetections[i];
     }
   }
@@ -182,4 +193,20 @@ void calculateMinimumDetections(size_t good_detections) {
 size_t getMinimumDetections(const Detection (**detections)[LEDDAR_SEGMENTS]) {
  *detections = &MinimumDetections;
  return LEDDAR_SEGMENTS;
+}
+
+void setLeddarParameters(int16_t min_detection_distance,
+                         int16_t max_detection_distance)
+{
+    params.min_detection_distance = min_detection_distance;
+    params.max_detection_distance = max_detection_distance;
+    saveLeddarParmeters();
+}
+
+static void saveLeddarParmeters(void) {
+    eeprom_write_block(&params, &saved_params, sizeof(struct LeddarParameters));
+}
+
+void restoreLeddarParameters(void) {
+    eeprom_read_block(&params, &saved_params, sizeof(struct LeddarParameters));
 }

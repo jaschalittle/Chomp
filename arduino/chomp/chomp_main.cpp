@@ -17,6 +17,7 @@
 #include "selfright.h"
 #include "autodrive.h"
 #include "autofire.h"
+#include "hold_down.h"
 
 uint32_t start_time, loop_speed_min, loop_speed_avg, loop_speed_max, loop_count;
 void reset_loop_stats(void) {
@@ -50,10 +51,6 @@ extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
 uint32_t sensor_period=5000L;
 uint32_t leddar_max_request_period=100000L;
 
-uint32_t manual_self_right_retract_start = 0;
-uint32_t manual_self_right_retract_duration = 1000000;
-uint32_t manual_self_right_dead_duration = 250000;
-
 // parameters written in command
 Track tracked_object;
 
@@ -67,6 +64,7 @@ void chompSetup() {
     driveSetup();
     leddarWrapperInit();
     sensorSetup();
+    holdDownSafe();
     initializeIMU();
     reset_loop_stats();
     restoreDriveControlParameters();
@@ -75,6 +73,7 @@ void chompSetup() {
     restoreAutofireParameters();
     restoreSelfRightParameters();
     restoreTelemetryParameters();
+    restoreHoldDownParameters();
     debug_print("STARTUP");
     start_time = micros();
 }
@@ -105,6 +104,7 @@ void chompLoop() {
     // Check if data is available from the LEDDAR
     if (bufferDetections()){
 
+        uint32_t now = micros();
         // extract detections from LEDDAR packet
         uint8_t raw_detection_count = parseDetections();
 
@@ -116,22 +116,44 @@ void chompLoop() {
         const Detection (*minDetections)[LEDDAR_SEGMENTS] = NULL;
         getMinimumDetections(&minDetections);
 
-        trackObject(*minDetections, tracked_object);
+        Object objects[8];
+        uint8_t num_objects = segmentObjects(*minDetections, now, objects);
 
+        int8_t best_object = trackObject(now, objects, num_objects, tracked_object);
 
         // auto centering code
         new_autodrive = pidSteer(tracked_object, 
                                  drive_range, &drive_bias, &steer_bias);
 
 
-        autofire = willHit(tracked_object, hammer_distance, hammer_intensity);
+        bool auto_hold = current_rc_bitfield & AUTO_HOLD_DOWN;
+        autofire = willHit(tracked_object, hammer_distance, hammer_intensity,
+                           auto_hold);
         if((autofire==AF_HIT) && (current_rc_bitfield & AUTO_HAMMER_ENABLE_BIT)) {
-            fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, true);
+            fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, true,
+                 auto_hold);
         }
 
         // Send subsampled leddar telem
-        if (isTimeToSendLeddarTelem(micros())){
+        if (isTimeToSendLeddarTelem(now)){
             sendLeddarTelem(*minDetections, raw_detection_count);
+            sendObjectsTelemetry(num_objects, objects);
+
+            if(num_objects > 0)
+            {
+                sendTrackingTelemetry(
+                        objects[best_object].xcoord(), objects[best_object].ycoord(),
+                        objects[best_object].angle(), objects[best_object].radius(),
+                        tracked_object.x/16, tracked_object.vx/16,
+                        tracked_object.y/16, tracked_object.vy/16);
+            }
+            else
+            {
+                sendTrackingTelemetry(
+                        0, 0, 0, 0,
+                        tracked_object.x/16, tracked_object.vx/16,
+                        tracked_object.y/16, tracked_object.vy/16);
+            }
         }
     }
 
@@ -157,7 +179,8 @@ void chompLoop() {
         if (current_rc_bitfield & DANGER_CTRL_BIT){
           noAngleFire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT);
         } else {
-          fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/);
+          fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, false /*autofire*/,
+               current_rc_bitfield & AUTO_HOLD_DOWN);
         }
     }
     if( (diff & HAMMER_RETRACT_BIT) && (current_rc_bitfield & HAMMER_RETRACT_BIT)){
@@ -173,33 +196,10 @@ void chompLoop() {
     if( (current_rc_bitfield & GENTLE_HAM_R_BIT)) {
         gentleRetract(GENTLE_HAM_R_BIT);
     }
-    if( (diff & MANUAL_SELF_RIGHT_LEFT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_LEFT_BIT)){
-        selfRightOff();
-        selfRightExtendLeft();
-        manual_self_right_retract_start = 0;
-    }
-    if( (diff & MANUAL_SELF_RIGHT_RIGHT_BIT) && (current_rc_bitfield & MANUAL_SELF_RIGHT_RIGHT_BIT)){
-        selfRightOff();
-        selfRightExtendRight();
-        manual_self_right_retract_start = 0;
-    }
-    if( (diff & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT)) &&
-       !(current_rc_bitfield & (MANUAL_SELF_RIGHT_LEFT_BIT|MANUAL_SELF_RIGHT_RIGHT_BIT))){
-        selfRightOff();
-        manual_self_right_retract_start = micros() | 1;
-    }
-    if(manual_self_right_retract_start > 0)
-    {
-        if(micros() - manual_self_right_retract_start > manual_self_right_retract_duration)
-        {
-            selfRightOff();
-            manual_self_right_retract_start = 0;
-        }
-        else if(micros() - manual_self_right_retract_start > manual_self_right_dead_duration)
-        {
-            selfRightRetractBoth();
-        }
-    }
+
+    manualSelfRight(current_rc_bitfield, diff);
+
+    manualHoldDown(current_rc_bitfield & MANUAL_HOLD_DOWN);
 
     // always sent in telemetry, cache values here
     int16_t left_drive_value = getLeftRc();
@@ -209,8 +209,8 @@ void chompLoop() {
     // check for autodrive
     if(new_autodrive || new_rc) {
         if(targeting_enabled) {
-            left_drive_value += steer_bias - drive_bias;
-            right_drive_value += steer_bias + drive_bias;
+            left_drive_value -= steer_bias - drive_bias;
+            right_drive_value -= steer_bias + drive_bias;
             // values passed by reference to capture clamping
             drive(left_drive_value, right_drive_value);
         }
@@ -230,7 +230,9 @@ void chompLoop() {
     uint32_t now = micros();
     if (isTimeToSendTelemetry(now)) {
         // get targeting RC command.
-        sendSensorTelem(getPressure(), getAngle());
+        int16_t vacuum_left, vacuum_right;
+        getVacuum(&vacuum_left, &vacuum_right);
+        sendSensorTelem(getPressure(), getAngle(), vacuum_left, vacuum_right);
         sendSystemTelem(loop_speed_min, loop_speed_avg/loop_count,
                         loop_speed_max, loop_count,
                         leddar_overrun,
@@ -243,7 +245,9 @@ void chompLoop() {
         reset_loop_stats();
         int16_t hammer_angle = HAMMER_INTENSITIES_ANGLE[hammer_intensity];
         sendSbusTelem(current_rc_bitfield, hammer_angle, hammer_distance);
-        sendPWMTelem(targeting_enabled, left_drive_value, right_drive_value,
+        int16_t left_micros, right_micros;
+        getRCMicros(&left_micros, &right_micros);
+        sendPWMTelem(targeting_enabled, left_micros, left_drive_value, right_micros, right_drive_value,
                      drive_range);
         telemetryIMU();
         telemetrySelfRight();

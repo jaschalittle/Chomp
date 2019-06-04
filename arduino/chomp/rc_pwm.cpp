@@ -42,8 +42,8 @@ static bool TARGETING_ENABLE_pinstate = false;
 static volatile uint16_t TARGETING_ENABLE_pwm_val = 1500;
 static volatile uint32_t TARGETING_ENABLE_prev_time = 0;
 static bool DRIVE_DISTANCE_pinstate = false;
-static volatile int DRIVE_DISTANCE_pwm_val = 1500;
-static volatile int DRIVE_DISTANCE_prev_time = 0;
+static volatile int16_t DRIVE_DISTANCE_pwm_val = 1500;
+static volatile int16_t DRIVE_DISTANCE_prev_time = 0;
 
 static volatile uint8_t PBLAST = 0; // 0 so that we detect rising interrupts first.
 static volatile bool NEW_RC = false;
@@ -145,12 +145,18 @@ bool getTargetingEnable() {
     return TARGETING_ENABLE_pwm_val > 1700;
 }
 
-#define DRIVE_DISTANCE_PWM_MIN 1000
+void getRCMicros(int16_t* left, int16_t* right)
+{
+    if(left) *left = LEFT_RC_pwm_val;
+    if(right) *right = RIGHT_RC_pwm_val;
+}
+
+#define DRIVE_DISTANCE_PWM_MIN (int16_t)1000
 static int16_t max_drive_range=2000;
 static int16_t min_drive_range=500;
 static int16_t drive_range_scale=2;
 int16_t getDriveDistance() {
     return clip((DRIVE_DISTANCE_pwm_val - DRIVE_DISTANCE_PWM_MIN)*drive_range_scale,
-                0, max_drive_range) + min_drive_range;
+                (int16_t)0, max_drive_range) + min_drive_range;
 }
 

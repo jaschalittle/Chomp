@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DeviceProfile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <FirmwareID>Roboteq v1.8d MBL1XXX 1/8/2018</FirmwareID>
   <ControlBoardTree>
     <Nodes>
       <Node Text="Start-up">
@@ -454,13 +455,13 @@
               </Node>
               <Node Text="Range" Value="">
                 <Nodes>
-                  <Node Text="Input Min" Value="924">
+                  <Node Text="Input Min" Value="1000">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Center" Value="1526">
+                  <Node Text="Input Center" Value="1500">
                     <Nodes />
                   </Node>
-                  <Node Text="Input Max" Value="2127">
+                  <Node Text="Input Max" Value="2000">
                     <Nodes />
                   </Node>
                 </Nodes>
