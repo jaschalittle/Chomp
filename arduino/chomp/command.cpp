@@ -115,6 +115,7 @@ typedef CommandPacket<CMD_ID_LDDR, LeddarCommandInner> LeddarCommand;
 
 struct HoldDownCommandInner {
     uint32_t sample_period;
+    uint32_t start_delay;
 } __attribute__((packed));
 typedef CommandPacket<CMD_ID_HLD, HoldDownCommandInner> HoldDownCommand;
 
@@ -240,7 +241,8 @@ void handle_commands(void) {
               break;
           case CMD_ID_HLD:
               holddown_cmd = (HoldDownCommand *)command_buffer;
-              setHoldDownParameters(holddown_cmd->inner.sample_period);
+              setHoldDownParameters(holddown_cmd->inner.sample_period,
+                                    holddown_cmd->inner.start_delay);
               break;
           default:
               invalid_command++;

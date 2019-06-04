@@ -76,7 +76,8 @@ void retract( bool check_velocity ){
 }
 
 // Helper to end a swing in case of timeout or hammer obstruction (zero velocity)
-void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timestep, uint16_t& vent_open_timestep, uint16_t timestep ){
+void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timestep, uint16_t& vent_open_timestep, uint16_t timestep,
+              bool auto_hold_down){
   if (throw_open) {
     throw_close_timestep = timestep;
   }
@@ -88,6 +89,12 @@ void endSwing( bool& throw_open, bool& vent_closed, uint16_t& throw_close_timest
   }
   safeDigitalWrite(VENT_VALVE_DO, LOW);
   vent_closed = false;
+  // Stop hold down and If we have been accumulatting hold down
+  // traces, send them
+  if(auto_hold_down)
+  {
+      autoHoldDownEnd();
+  }
 }
 
 void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire, bool auto_hold_down ){
@@ -118,6 +125,14 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire, bool auto
             if (flame_pulse){
                 flameStart();
             }
+
+            uint32_t autohold_start = micros();
+            uint32_t now = autohold_start;
+            while(auto_hold_down && !autoHoldDown(autohold_start, now))
+            {
+                now = micros();
+            }
+
             // Seal vent (which is normally open)
             safeDigitalWrite(VENT_VALVE_DO, HIGH);
             vent_closed = true;
@@ -130,10 +145,6 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire, bool auto
             fire_time = micros();
             // Wait until hammer swing complete, up to timeout
             while (swing_length < SWING_TIMEOUT) {
-                // if(auto_hold_down && !autoHoldDown())
-                // {
-                //     continue;
-                // }
                 sensor_read_time = micros();
                 angle_read_ok = readAngle(&angle);
                 pressure_read_ok = readMlhPressure(&pressure);
@@ -164,7 +175,7 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire, bool auto
                     bool velocity_read_ok = angularVelocityBuffered(&angular_velocity, angle_data, datapoints_collected, DATA_COLLECT_TIMESTEP/1000);
                     if (velocity_read_ok && abs(angular_velocity) < RETRACT_BEGIN_VEL_MAX) {
                         // If the swing hasn't already ended, end it now
-                        endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
+                        endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep, auto_hold_down);
                         // Since our final velocity is low enough, auto-retract
                         retract( /*check_velocity*/ false );
                         break; // exit the while loop
@@ -181,13 +192,11 @@ void fire( uint16_t hammer_intensity, bool flame_pulse, bool autofire, bool auto
                 swing_length = micros() - fire_time;
             } // while
             // If the swing hasn't already ended, end it now
-            endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep);
-            
+            endSwing(throw_open, vent_closed, throw_close_timestep, vent_open_timestep, timestep, auto_hold_down);
+
             if (flame_pulse) {
                 flameEnd();
             }
-            // If we have been accumulatting hold down traces, send them
-            //endHoldDownSample();
         } else if (!autofire) {
             // If we're *not* in autochomp mode, and the hammer is at a funny angle, it probably
             // means we're in a weird spot and maybe want to unstick ourselves with a

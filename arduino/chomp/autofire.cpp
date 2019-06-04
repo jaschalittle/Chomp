@@ -2,6 +2,7 @@
 #include "autofire.h"
 #include "imu.h"
 #include "telem.h"
+#include "hold_down.h"
 
 extern uint8_t HAMMER_INTENSITIES_ANGLE[9];
 
@@ -39,7 +40,8 @@ bool omegaZLockout(int32_t *omegaZ) {
 
 int8_t nsteps=3;
 enum AutofireState willHit(const Track &tracked_object,
-                           int16_t depth, int16_t hammer_intensity) {
+                           int16_t depth, int16_t hammer_intensity,
+                           bool auto_hold) {
     int32_t omegaZ=0;
     uint32_t now = micros();
     bool hit = false;
@@ -49,6 +51,10 @@ enum AutofireState willHit(const Track &tracked_object,
     int32_t x=0, y=0;
     if(valid && !lockout) {
         swing=swingDuration(hammer_intensity)*1000;
+        if(auto_hold)
+        {
+            swing += getAutoholdStartDelay();
+        }
         x=tracked_object.x;
         y=tracked_object.y;
         int32_t dt=swing/nsteps;

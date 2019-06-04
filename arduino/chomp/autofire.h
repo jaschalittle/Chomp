@@ -10,7 +10,8 @@ enum AutofireState {
 };
 
 enum AutofireState willHit(const Track &tracked_object,
-                           int16_t depth, int16_t hammer_intensity);
+                           int16_t depth, int16_t hammer_intensity,
+                           bool auto_hold);
 
 bool omegaZLockout(int16_t *omegaZ);
 

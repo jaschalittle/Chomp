@@ -12,10 +12,12 @@ static int16_t left_vacuum_trace[128];
 static int16_t right_vacuum_trace[128];
 struct HoldDownParams {
     uint32_t sample_period;
+    uint32_t start_delay;
 } __attribute__((packed));
 
 static struct HoldDownParams EEMEM saved_params = {
-    .sample_period = 10000
+    .sample_period = 10000,
+    .start_delay = 300000
 };
 
 static struct HoldDownParams params;
@@ -85,9 +87,21 @@ void manualHoldDown(bool enable)
     }
 }
 
-bool autoHoldDown()
+bool autoHoldDown(uint32_t start, uint32_t now)
 {
-    return true;
+    holdDownEnable(true);
+    sampleHoldDownVacuum();
+    if(now - start > params.start_delay)
+    {
+        return true;
+    }
+    return false;
+}
+
+void autoHoldDownEnd()
+{
+    holdDownEnable(false);
+    endHoldDownSample();
 }
 
 void saveHoldDownParameters() {
@@ -98,9 +112,14 @@ void restoreHoldDownParameters() {
     eeprom_read_block(&params, &saved_params, sizeof(struct HoldDownParams));
 }
 
-void setHoldDownParameters(int32_t sample_period)
+void setHoldDownParameters(uint32_t sample_period, uint32_t start_delay)
 {
     params.sample_period = sample_period;
+    params.start_delay = start_delay;
     saveHoldDownParameters();
 }
 
+uint32_t getAutoholdStartDelay()
+{
+    return params.start_delay;
+}

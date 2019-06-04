@@ -126,10 +126,12 @@ void chompLoop() {
                                  drive_range, &drive_bias, &steer_bias);
 
 
-        autofire = willHit(tracked_object, hammer_distance, hammer_intensity);
+        bool auto_hold = current_rc_bitfield & AUTO_HOLD_DOWN;
+        autofire = willHit(tracked_object, hammer_distance, hammer_intensity,
+                           auto_hold);
         if((autofire==AF_HIT) && (current_rc_bitfield & AUTO_HAMMER_ENABLE_BIT)) {
             fire(hammer_intensity, current_rc_bitfield & FLAME_PULSE_BIT, true,
-                 current_rc_bitfield & AUTO_HOLD_DOWN);
+                 auto_hold);
         }
 
         // Send subsampled leddar telem
