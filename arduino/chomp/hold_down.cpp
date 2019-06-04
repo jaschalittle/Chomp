@@ -60,12 +60,15 @@ static void sampleHoldDownVacuum()
                    right_vacuum_trace + sample_index);
         sample_index++;
     }
-    else if((sample_index > 0) && (sample_index < 128) &&
+    else if((sample_index > 0) &&
             (micros() - tlm_triggered > sample_index * params.sample_period))
     {
         readVacuum(left_vacuum_trace + sample_index,
                    right_vacuum_trace + sample_index);
-        sample_index++;
+        if(sample_index < 127)
+        {
+            sample_index++;
+        }
     }
 }
 
