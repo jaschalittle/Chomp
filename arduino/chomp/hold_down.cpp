@@ -24,6 +24,7 @@ static struct HoldDownParams params;
 void holdDownSafe()
 {
     tlm_triggered = 0;
+    sample_index = 0;
     digitalWrite(VACUUM_VALVE_DO, LOW);
     pinMode(VACUUM_VALVE_DO, OUTPUT);
 }
@@ -37,7 +38,13 @@ void endHoldDownSample()
 {
     if(sample_index > 0)
     {
-        sendVacuumTelemetry(params.sample_period, sample_index,
+        if(sample_index < 127)
+        {
+            left_vacuum_trace[sample_index] = 0;
+            left_vacuum_trace[sample_index] = 0;
+            sample_index++;
+        }
+        sendVacuumTelemetry(params.sample_period, 128,
                 left_vacuum_trace, right_vacuum_trace);
     }
     sample_index = 0;
