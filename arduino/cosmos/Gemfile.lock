@@ -41,7 +41,7 @@ GEM
     puma (3.12.1)
     qtbindings (4.8.6.5)
     rack (2.0.8)
-    rake (12.3.2)
+    rake (13.0.1)
     rdoc (6.1.1)
     ruby-termios (0.9.6)
     rubyzip (1.2.3)
